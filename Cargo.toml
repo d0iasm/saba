@@ -1,0 +1,20 @@
+[package]
+authors = ["d0iasm"]
+name = "toybr"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "toybr"
+path = "src/lib.rs"
+
+[[bin]]
+name = "toybr"
+path = "src/main.rs"
+
+[dependencies]
+gtk4 = "0.4.7"
+gdk4 = "0.4.7"
+gio = "0.15.11"
+once_cell = "1.11.0"
+dns-lookup = "1.0.8"
