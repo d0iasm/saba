@@ -1,7 +1,7 @@
 //! https://262.ecma-international.org/12.0/#sec-ecmascript-language-lexical-grammar
 
-use std::string::{String, ToString};
-use std::vec::Vec;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 
 static RESERVED_WORDS: [&str; 3] = ["var", "function", "return"];
 

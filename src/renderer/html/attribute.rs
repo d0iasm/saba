@@ -1,4 +1,4 @@
-use std::string::String;
+use alloc::string::String;
 
 /// used in html/token.rs and html/dom.rs
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -5,9 +5,9 @@ use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::CssToken;
 use crate::renderer::html::dom::*;
 use crate::renderer::layout::color::*;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::vec::Vec;
+use alloc::rc::Rc;
+use alloc::vec::Vec;
+use core::cell::RefCell;
 
 #[derive(Debug, Clone)]
 pub struct RenderStyle {

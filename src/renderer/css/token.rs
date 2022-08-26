@@ -4,8 +4,8 @@
 //! 4. Tokenization
 //! https://www.w3.org/TR/css-syntax-3/#tokenization
 
-use std::string::String;
-use std::vec::Vec;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq)]
 /// https://www.w3.org/TR/css-syntax-3/#consume-token

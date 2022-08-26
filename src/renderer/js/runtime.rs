@@ -3,12 +3,12 @@ use crate::renderer::html::dom::Node as DomNode;
 use crate::renderer::html::dom::NodeKind as DomNodeKind;
 use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
-use std::cell::RefCell;
+use alloc::rc::Rc;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use core::cell::RefCell;
+use core::ops::Add;
 use std::collections::HashMap;
-use std::ops::Add;
-use std::rc::Rc;
-use std::string::{String, ToString};
-use std::vec::Vec;
 
 #[derive(Debug, Clone)]
 /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types

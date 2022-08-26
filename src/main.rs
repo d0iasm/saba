@@ -3,6 +3,8 @@ mod http;
 mod renderer;
 mod url;
 
+extern crate alloc;
+
 use crate::http::HttpClient;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;

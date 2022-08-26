@@ -6,9 +6,9 @@
 
 use crate::renderer::css::token::*;
 
-use std::string::String;
-use std::string::ToString;
-use std::vec::Vec;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 // e.g.
 // div {

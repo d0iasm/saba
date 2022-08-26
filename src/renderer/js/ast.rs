@@ -2,9 +2,9 @@
 //! https://astexplorer.net/
 
 use crate::renderer::js::token::{JsLexer, Token};
-use std::rc::Rc;
-use std::string::{String, ToString};
-use std::vec::Vec;
+use alloc::rc::Rc;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone)]
 pub struct Program {

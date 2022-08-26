@@ -1,10 +1,10 @@
 use crate::url::ParsedUrl;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use dns_lookup::lookup_host;
 use std::io::prelude::*;
 use std::io::Read;
 use std::net::TcpStream;
-use std::string::String;
-use std::vec::Vec;
 
 #[derive(Debug, Clone)]
 struct Header {
@@ -28,6 +28,10 @@ impl HttpClient {
     pub fn get(&self, url: &ParsedUrl) -> std::io::Result<HttpResponse> {
         let ips = lookup_host(&url.host)?.into_iter();
         let ipv4s: Vec<std::net::IpAddr> = ips.filter(|ip| ip.is_ipv4()).collect();
+
+        if ipv4s.len() < 1 {
+            panic!("failed to get IPv4 address");
+        }
 
         let mut stream = TcpStream::connect((ipv4s[0], url.port))?;
 

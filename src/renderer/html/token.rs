@@ -2,10 +2,10 @@
 //! https://html.spec.whatwg.org/multipage/parsing.html#tokenization
 
 use crate::renderer::html::attribute::Attribute;
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::assert;
 use core::iter::Iterator;
-use std::string::String;
-use std::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum State {

@@ -3,11 +3,11 @@
 
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
-use std::cell::RefCell;
-use std::rc::{Rc, Weak};
-use std::string::String;
-use std::string::ToString;
-use std::vec::Vec;
+use alloc::rc::{Rc, Weak};
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::cell::RefCell;
 
 #[derive(Debug, Clone)]
 /// https://dom.spec.whatwg.org/#interface-node
