@@ -41,7 +41,6 @@ pub enum CssToken {
 pub struct CssTokenizer {
     pos: usize,
     input: Vec<char>,
-    cache: Option<CssToken>,
 }
 
 impl CssTokenizer {
@@ -49,7 +48,6 @@ impl CssTokenizer {
         Self {
             pos: 0,
             input: css.chars().collect(),
-            cache: None,
         }
     }
 
