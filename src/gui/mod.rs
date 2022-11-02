@@ -4,6 +4,7 @@ use crate::renderer::html::dom::{ElementKind, NodeKind};
 use crate::renderer::layout::render_tree::{DisplayType, FontSize, RenderObject, RenderTree};
 use browser_window::BrowserWindow;
 use core::cell::RefCell;
+use core::result::Result;
 use glib::{clone, closure_local};
 use gtk4::glib;
 use gtk4::prelude::*;
@@ -199,7 +200,7 @@ fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, parent_content_are
     }
 }
 
-pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
+pub fn start_browser_window(handle_input: fn(String) -> Result<RenderTree, String>) {
     let application = Application::builder().application_id("vulbr").build();
 
     application.connect_activate(
@@ -210,8 +211,14 @@ pub fn start_browser_window(handle_input: fn(String) -> RenderTree) {
 
             window.connect_closure("start-handle-input", false, closure_local!(move |window: BrowserWindow, url: String| {
                 println!("start-handle-input {:?}", url);
-                let render_tree = handle_input(url);
-                paint_render_tree(&render_tree.root, &window.get_content_area());
+                match handle_input(url) {
+                    Ok(tree) => {
+                        paint_render_tree(&tree.root, &window.get_content_area());
+                    }
+                    Err(error_message) => {
+                        println!("{:?}", error_message);
+                    }
+                }
             }));
 
             window.show();

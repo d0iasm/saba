@@ -4,4 +4,5 @@ extern crate alloc;
 
 pub mod http;
 pub mod renderer;
+pub mod stdlib;
 pub mod url;

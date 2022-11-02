@@ -16,6 +16,7 @@ use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::render_tree::*;
 use crate::url::ParsedUrl;
 use core::cell::RefCell;
+use core::result::Result;
 use std::rc::Rc;
 use std::string::String;
 
@@ -91,41 +92,8 @@ fn print_ast(program: &Program) {
     }
 }
 
-fn handle_input(url: String) -> RenderTree {
-    // parse url
-    let parsed_url = ParsedUrl::new(url.to_string());
-    println!("---------- input url ----------");
-    println!("{:?}", parsed_url);
-
-    // send a HTTP request and get a response
-    let client = HttpClient::new();
-    let response = match client.get(&parsed_url) {
-        Ok(res) => {
-            println!("status code in HttpResponse: {:?}", res.status_code());
-
-            // redirect to Location
-            if res.status_code() == 302 {
-                let parsed_redirect_url = ParsedUrl::new(res.header("Location"));
-
-                let redirect_client = HttpClient::new();
-                let redirect_res = match redirect_client.get(&parsed_redirect_url) {
-                    Ok(res) => res,
-                    Err(e) => panic!("failed to get http response: {:?}", e),
-                };
-
-                redirect_res
-            } else {
-                res
-            }
-        }
-        Err(e) => panic!("failed to get http response: {:?}", e),
-    };
-
-    println!("---------- http response ----------");
-    println!("{:?}", response.body());
-
+fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
     // html
-    let html = response.body();
     let html_tokenizer = HtmlTokenizer::new(html);
     let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
     println!("---------- document object model (dom) ----------");
@@ -167,7 +135,7 @@ fn handle_input(url: String) -> RenderTree {
         println!("---------- render tree ----------");
         print_render_object(&render_tree.root, 0);
 
-        return render_tree;
+        return Ok(render_tree);
     }
 
     // apply css to html and create RenderTree
@@ -175,7 +143,65 @@ fn handle_input(url: String) -> RenderTree {
     println!("---------- render tree ----------");
     print_render_object(&render_tree.root, 0);
 
-    return render_tree;
+    Ok(render_tree)
+}
+
+fn handle_input(url: String) -> Result<RenderTree, String> {
+    // parse url
+    let parsed_url = match ParsedUrl::new(url.to_string()) {
+        Ok(url) => url,
+        Err(error_message) => {
+            return build_render_tree(
+                format!(
+                    "<html><head></head><body><h1>Error</h1><p>{}</p></body></html>",
+                    error_message
+                ),
+                url.clone(),
+            );
+        }
+    };
+    println!("---------- input url ----------");
+    println!("{:?}", parsed_url);
+
+    // send a HTTP request and get a response
+    let client = HttpClient::new();
+    let response = match client.get(&parsed_url) {
+        Ok(res) => {
+            println!("status code in HttpResponse: {:?}", res.status_code());
+
+            // redirect to Location
+            if res.status_code() == 302 {
+                let parsed_redirect_url = match ParsedUrl::new(res.header("Location")) {
+                    Ok(url) => url,
+                    Err(error_message) => {
+                        return build_render_tree(
+                            format!(
+                                "<html><head></head><body><h1>Error</h1><p>{}</p></body></html>",
+                                error_message
+                            ),
+                            url.clone(),
+                        );
+                    }
+                };
+
+                let redirect_client = HttpClient::new();
+                let redirect_res = match redirect_client.get(&parsed_redirect_url) {
+                    Ok(res) => res,
+                    Err(e) => panic!("failed to get http response: {:?}", e),
+                };
+
+                redirect_res
+            } else {
+                res
+            }
+        }
+        Err(e) => panic!("failed to get http response: {:?}", e),
+    };
+
+    println!("---------- http response ----------");
+    println!("{:?}", response.body());
+
+    build_render_tree(response.body(), url.clone())
 }
 
 fn main() {

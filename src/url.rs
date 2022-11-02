@@ -4,6 +4,7 @@
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
+use core::result::Result;
 
 #[derive(Debug)]
 enum Protocol {
@@ -36,17 +37,19 @@ pub struct ParsedUrl {
 }
 
 impl ParsedUrl {
-    fn extract_scheme(url: &String) -> Protocol {
+    fn extract_scheme(url: &String) -> Result<Protocol, String> {
         let splitted_url: Vec<&str> = url.split("://").collect();
         if splitted_url.len() == 2 && splitted_url[0] == Protocol::Http.to_string() {
-            Protocol::Http
-        } else if splitted_url.len() == 2 && splitted_url[0] == Protocol::Https.to_string() {
-            Protocol::Https
+            Ok(Protocol::Http)
+            /*
+            } else if splitted_url.len() == 2 && splitted_url[0] == Protocol::Https.to_string() {
+                Protocol::Https
+                    */
         } else if splitted_url.len() == 1 {
             // No scheme. Set "HTTP" as a default behavior.
-            Protocol::Http
+            Ok(Protocol::Http)
         } else {
-            panic!("unsupported scheme: {}", url);
+            Err(format!("unsupported scheme: {}", url))
         }
     }
 
@@ -80,7 +83,7 @@ impl ParsedUrl {
         }
     }
 
-    pub fn new(original_url: String) -> Self {
+    pub fn new(original_url: String) -> Result<Self, String> {
         // HTTP format
         // http://<host>:<port>/<path>?<searchpart>
         //
@@ -89,7 +92,7 @@ impl ParsedUrl {
         // possible format:
         // https://url.spec.whatwg.org/#urls
 
-        let scheme = Self::extract_scheme(&original_url);
+        let scheme = Self::extract_scheme(&original_url)?;
         let url = Self::remove_scheme(&original_url, &scheme);
 
         let host = Self::extract_host(&url);
@@ -103,11 +106,11 @@ impl ParsedUrl {
             None => scheme.default_port_number(),
         };
 
-        Self {
+        Ok(Self {
             _scheme: scheme,
             host,
             port,
             path,
-        }
+        })
     }
 }
