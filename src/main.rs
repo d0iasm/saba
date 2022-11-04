@@ -46,6 +46,13 @@ fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
     }
 }
 
+/// for debug
+fn print_ast(program: &Program) {
+    for node in program.body() {
+        println!("{:?}", node);
+    }
+}
+
 fn dom_to_html(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
     match node {
         Some(n) => {
@@ -85,11 +92,14 @@ fn dom_to_html(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
     }
 }
 
-/// for debug
-fn print_ast(program: &Program) {
-    for node in program.body() {
-        println!("{:?}", node);
-    }
+fn build_error_render_tree(error_message: String, url: String) -> Result<RenderTree, String> {
+    build_render_tree(
+        format!(
+            "<html><head></head><body><h1>Error</h1><p>{}</p></body></html>",
+            error_message
+        ),
+        url.clone(),
+    )
 }
 
 fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
@@ -151,13 +161,7 @@ fn handle_input(url: String) -> Result<RenderTree, String> {
     let parsed_url = match ParsedUrl::new(url.to_string()) {
         Ok(url) => url,
         Err(error_message) => {
-            return build_render_tree(
-                format!(
-                    "<html><head></head><body><h1>Error</h1><p>{}</p></body></html>",
-                    error_message
-                ),
-                url.clone(),
-            );
+            return build_error_render_tree(error_message, url.clone());
         }
     };
     println!("---------- input url ----------");
@@ -174,13 +178,7 @@ fn handle_input(url: String) -> Result<RenderTree, String> {
                 let parsed_redirect_url = match ParsedUrl::new(res.header("Location")) {
                     Ok(url) => url,
                     Err(error_message) => {
-                        return build_render_tree(
-                            format!(
-                                "<html><head></head><body><h1>Error</h1><p>{}</p></body></html>",
-                                error_message
-                            ),
-                            url.clone(),
-                        );
+                        return build_error_render_tree(error_message, url.clone());
                     }
                 };
 

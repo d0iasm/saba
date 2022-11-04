@@ -9,21 +9,21 @@ use core::result::Result;
 #[derive(Debug)]
 enum Protocol {
     Http,
-    Https,
+    _Https,
 }
 
 impl Protocol {
     fn to_string(&self) -> String {
         match self {
             Protocol::Http => String::from("http"),
-            Protocol::Https => String::from("https"),
+            Protocol::_Https => String::from("https"),
         }
     }
 
     fn default_port_number(&self) -> u16 {
         match self {
             Protocol::Http => 80,
-            Protocol::Https => 443,
+            Protocol::_Https => 443,
         }
     }
 }
