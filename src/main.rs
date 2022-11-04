@@ -5,7 +5,7 @@ mod url;
 
 extern crate alloc;
 
-use crate::http::HttpClient;
+use crate::http::{HttpClient, HttpResponse};
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
 use crate::renderer::html::dom::*;
@@ -156,14 +156,9 @@ fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
     Ok(render_tree)
 }
 
-fn handle_input(url: String) -> Result<RenderTree, String> {
+fn get_http_response(url: String) -> Result<HttpResponse, String> {
     // parse url
-    let parsed_url = match ParsedUrl::new(url.to_string()) {
-        Ok(url) => url,
-        Err(error_message) => {
-            return build_error_render_tree(error_message, url.clone());
-        }
-    };
+    let parsed_url = ParsedUrl::new(url.to_string())?;
     println!("---------- input url ----------");
     println!("{:?}", parsed_url);
 
@@ -175,17 +170,12 @@ fn handle_input(url: String) -> Result<RenderTree, String> {
 
             // redirect to Location
             if res.status_code() == 302 {
-                let parsed_redirect_url = match ParsedUrl::new(res.header("Location")) {
-                    Ok(url) => url,
-                    Err(error_message) => {
-                        return build_error_render_tree(error_message, url.clone());
-                    }
-                };
+                let parsed_redirect_url = ParsedUrl::new(res.header("Location"))?;
 
                 let redirect_client = HttpClient::new();
                 let redirect_res = match redirect_client.get(&parsed_redirect_url) {
                     Ok(res) => res,
-                    Err(e) => panic!("failed to get http response: {:?}", e),
+                    Err(e) => return Err(format!("failed to get http response: {:?}", e)),
                 };
 
                 redirect_res
@@ -193,13 +183,22 @@ fn handle_input(url: String) -> Result<RenderTree, String> {
                 res
             }
         }
-        Err(e) => panic!("failed to get http response: {:?}", e),
+        Err(e) => return Err(format!("failed to get http response: {:?}", e)),
     };
 
     println!("---------- http response ----------");
     println!("{:?}", response.body());
 
-    build_render_tree(response.body(), url.clone())
+    Ok(response)
+}
+
+fn handle_input(url: String) -> Result<RenderTree, String> {
+    let response = match get_http_response(url.clone()) {
+        Ok(res) => res,
+        Err(error_message) => return build_error_render_tree(error_message, url.clone()),
+    };
+
+    build_render_tree(response.body(), url)
 }
 
 fn main() {
