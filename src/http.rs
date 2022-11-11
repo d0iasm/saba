@@ -1,6 +1,7 @@
 use crate::url::ParsedUrl;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::result::Result;
 use dns_lookup::lookup_host;
 use std::io::prelude::*;
 use std::io::Read;
@@ -25,15 +26,21 @@ impl HttpClient {
         Self {}
     }
 
-    pub fn get(&self, url: &ParsedUrl) -> std::io::Result<HttpResponse> {
-        let ips = lookup_host(&url.host)?.into_iter();
+    pub fn get(&self, url: &ParsedUrl) -> Result<HttpResponse, String> {
+        let ips = match lookup_host(&url.host) {
+            Ok(ips) => ips.into_iter(),
+            Err(error) => return Err(format!("{:?}", error)),
+        };
         let ipv4s: Vec<std::net::IpAddr> = ips.filter(|ip| ip.is_ipv4()).collect();
 
         if ipv4s.len() < 1 {
             panic!("failed to get IPv4 address");
         }
 
-        let mut stream = TcpStream::connect((ipv4s[0], url.port))?;
+        let mut stream = match TcpStream::connect((ipv4s[0], url.port)) {
+            Ok(stream) => stream,
+            Err(error) => return Err(format!("{:?}", error)),
+        };
 
         let mut request = String::from("GET /");
         request.push_str(&url.path);
@@ -50,10 +57,10 @@ impl HttpClient {
 
         println!("request: {:?}", request);
 
-        stream.write(request.as_bytes())?;
+        let _ = stream.write(request.as_bytes());
 
         let mut buf = String::new();
-        stream.read_to_string(&mut buf)?;
+        let _ = stream.read_to_string(&mut buf);
 
         Ok(HttpResponse::new(buf))
     }

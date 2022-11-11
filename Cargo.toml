@@ -3,6 +3,7 @@ authors = ["d0iasm"]
 name = "toybr"
 version = "0.1.0"
 edition = "2021"
+default-run = "toybr"
 
 [lib]
 name = "toybr"
@@ -12,9 +13,18 @@ path = "src/lib.rs"
 name = "toybr"
 path = "src/main.rs"
 
+[[bin]]
+name = "toybr_nostd"
+path = "src/main_nostd.rs"
+required-features = ["nostd"]
+
+[features]
+default = ["gtk4", "gdk4", "gio", "once_cell"]
+nostd = []
+
 [dependencies]
-gtk4 = "0.4.7"
-gdk4 = "0.4.7"
-gio = "0.15.11"
-once_cell = "1.11.0"
+gtk4 = { version = "0.4.7", optional = true }
+gdk4 = { version = "0.4.7", optional = true }
+gio = { version = "0.15.11", optional = true }
+once_cell = { version = "1.11.0", optional = true }
 dns-lookup = "1.0.8"
