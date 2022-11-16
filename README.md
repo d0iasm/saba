@@ -6,15 +6,11 @@ A toy Web browser on single process / thread
 For Linux,
 
 ```
-$ cargo run
-
-or
-
-$ cargo run --bin toybr
+$ cargo run -vv --features std --bin toybr
 ```
 
 For [Wasabi OS](https://github.com/hikalium/wasabi),
 
 ```
-$ cargo run --features nostd --bin toybr_nostd --target x86_64-unknown-elf.json
+$ cargo run -vv --features nostd --bin toybr_nostd --target x86_64-unknown-elf.json -Z build-std=core,alloc
 ```
