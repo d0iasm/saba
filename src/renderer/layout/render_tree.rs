@@ -9,6 +9,13 @@ use alloc::rc::Rc;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
+/// https://w3c.github.io/csswg-drafts/css-text/#white-space-property
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum WhiteSpace {
+    Normal,
+    Pre,
+}
+
 #[derive(Debug, Clone)]
 pub struct RenderStyle {
     background_color: Option<Color>,
@@ -19,6 +26,7 @@ pub struct RenderStyle {
     margin: Option<BoxInfo>,
     padding: Option<BoxInfo>,
     font_size: Option<FontSize>,
+    white_space: WhiteSpace,
 }
 
 impl RenderStyle {
@@ -32,6 +40,7 @@ impl RenderStyle {
             margin: None,
             padding: None,
             font_size: Self::default_font_size(node),
+            white_space: Self::default_white_space(node),
         }
     }
 
@@ -63,6 +72,16 @@ impl RenderStyle {
                 _ => None,
             },
             _ => None,
+        }
+    }
+
+    fn default_white_space(node: &Rc<RefCell<Node>>) -> WhiteSpace {
+        match &node.borrow().kind() {
+            NodeKind::Element(element) => match element.kind() {
+                ElementKind::P => WhiteSpace::Normal,
+                _ => WhiteSpace::Normal,
+            },
+            _ => WhiteSpace::Normal,
         }
     }
 
@@ -149,6 +168,10 @@ impl RenderStyle {
         } else {
             FontSize::Medium
         }
+    }
+
+    pub fn white_space(&self) -> WhiteSpace {
+        self.white_space
     }
 
     pub fn margin_top(&self) -> f64 {

@@ -1,7 +1,9 @@
 mod browser_window;
 
 use crate::renderer::html::dom::{ElementKind, NodeKind};
-use crate::renderer::layout::render_tree::{DisplayType, FontSize, RenderObject, RenderTree};
+use crate::renderer::layout::render_tree::{
+    DisplayType, FontSize, RenderObject, RenderTree, WhiteSpace,
+};
 use browser_window::BrowserWindow;
 use core::cell::RefCell;
 use core::result::Result;
@@ -156,6 +158,13 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             } else if obj.borrow().style.font_size() == FontSize::XLarge {
                 markup_attrs.push_str(&format!("size=\"x-large\""));
             }
+
+            let text = if obj.borrow().style.white_space() == WhiteSpace::Normal {
+                // TODO: This white space can be different from HTML spec.
+                text.split_whitespace().collect::<Vec<&str>>().join(" ")
+            } else {
+                text.to_string()
+            };
 
             // TODO: investigate why this needs.
             label.set_xalign(0.0);
