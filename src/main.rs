@@ -1,8 +1,6 @@
 pub mod gui;
 pub mod http;
-//pub mod net;
 pub mod renderer;
-//pub mod stdlib;
 pub mod url;
 
 extern crate alloc;
@@ -58,12 +56,12 @@ fn print_ast(program: &Program) {
 fn dom_to_html(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
     match node {
         Some(n) => {
-            // open tag
+            // open a tag
             match n.borrow().kind() {
                 NodeKind::Document => {}
                 NodeKind::Element(ref e) => {
                     html.push_str("<");
-                    html.push_str(&Element::element_kind_to_string(e.kind()));
+                    html.push_str(&e.kind().to_string());
                     for attr in e.attributes() {
                         html.push_str(" ");
                         html.push_str(&attr.name);
@@ -77,12 +75,12 @@ fn dom_to_html(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
 
             dom_to_html(&n.borrow().first_child(), html);
 
-            // close tag
+            // close a tag
             match n.borrow().kind() {
                 NodeKind::Document => {}
                 NodeKind::Element(ref e) => {
                     html.push_str("</");
-                    html.push_str(&Element::element_kind_to_string(e.kind()));
+                    html.push_str(&e.kind().to_string());
                     html.push_str(">");
                 }
                 NodeKind::Text(_s) => {}

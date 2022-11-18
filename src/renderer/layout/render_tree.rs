@@ -79,6 +79,7 @@ impl RenderStyle {
         match &node.borrow().kind() {
             NodeKind::Element(element) => match element.kind() {
                 ElementKind::P => WhiteSpace::Normal,
+                ElementKind::Pre => WhiteSpace::Pre,
                 _ => WhiteSpace::Normal,
             },
             _ => WhiteSpace::Normal,
@@ -107,6 +108,9 @@ impl RenderStyle {
         if self.font_size.is_none() {
             self.font_size = Some(parent_style.font_size().clone());
         }
+
+        // TODO: check if it's ok to inherit parent white space always
+        self.white_space = parent_style.white_space();
     }
 
     pub fn background_color(&self) -> Color {
@@ -416,7 +420,7 @@ impl RenderObject {
         match &self.kind() {
             NodeKind::Element(e) => match selector {
                 Selector::TypeSelector(type_name) => {
-                    if Element::element_kind_to_string(e.kind()) == *type_name {
+                    if e.kind().to_string() == *type_name {
                         return true;
                     }
                     return false;

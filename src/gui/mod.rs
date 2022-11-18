@@ -26,7 +26,8 @@ fn should_create_new_box(kind: &NodeKind) -> bool {
             | ElementKind::Script
             | ElementKind::H1
             | ElementKind::H2
-            | ElementKind::P => false,
+            | ElementKind::P
+            | ElementKind::Pre => false,
             // TODO: correct?
             ElementKind::Li | ElementKind::Ul => true,
             ElementKind::Body | ElementKind::Div | ElementKind::A => true,
@@ -46,6 +47,7 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             | ElementKind::H1
             | ElementKind::H2
             | ElementKind::P
+            | ElementKind::Pre
             | ElementKind::Body => {}
             ElementKind::Li => {
                 let bullet = Label::builder()

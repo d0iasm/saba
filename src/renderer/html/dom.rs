@@ -8,6 +8,8 @@ use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 use core::cell::RefCell;
+use core::fmt::{Display, Formatter};
+use core::str::FromStr;
 
 #[derive(Debug, Clone)]
 /// https://dom.spec.whatwg.org/#interface-node
@@ -37,6 +39,13 @@ impl Node {
         self.kind.clone()
     }
 
+    fn element_kind(&self) -> Option<ElementKind> {
+        match self.kind {
+            NodeKind::Document | NodeKind::Text(_) => None,
+            NodeKind::Element(ref e) => Some(e.kind()),
+        }
+    }
+
     pub fn update_first_child(&mut self, first_child: Option<Rc<RefCell<Node>>>) {
         self.first_child = first_child;
     }
@@ -60,7 +69,7 @@ impl Node {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq)]
 pub enum NodeKind {
     /// https://dom.spec.whatwg.org/#interface-document
     Document,
@@ -89,8 +98,6 @@ impl PartialEq for NodeKind {
     }
 }
 
-impl Eq for NodeKind {}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// https://dom.spec.whatwg.org/#interface-element
 pub struct Element {
@@ -99,69 +106,10 @@ pub struct Element {
 }
 
 impl Element {
-    pub fn new(kind: ElementKind, attributes: Vec<Attribute>) -> Self {
-        Self { kind, attributes }
-    }
-
-    // associated function
-    fn str_to_element_kind(name: &str) -> ElementKind {
-        if name == "html" {
-            ElementKind::Html
-        } else if name == "head" {
-            ElementKind::Head
-        } else if name == "style" {
-            ElementKind::Style
-        } else if name == "script" {
-            ElementKind::Script
-        } else if name == "body" {
-            ElementKind::Body
-        } else if name == "h1" {
-            ElementKind::H1
-        } else if name == "h2" {
-            ElementKind::H2
-        } else if name == "p" {
-            ElementKind::P
-        } else if name == "ul" {
-            ElementKind::Ul
-        } else if name == "li" {
-            ElementKind::Li
-        } else if name == "div" {
-            ElementKind::Div
-        } else if name == "a" {
-            ElementKind::A
-        } else {
-            unimplemented!("not supported this tag name: {}", name);
-        }
-    }
-
-    // associated function
-    pub fn element_kind_to_string(kind: ElementKind) -> String {
-        if kind == ElementKind::Html {
-            "html".to_string()
-        } else if kind == ElementKind::Head {
-            "head".to_string()
-        } else if kind == ElementKind::Style {
-            "style".to_string()
-        } else if kind == ElementKind::Script {
-            "script".to_string()
-        } else if kind == ElementKind::Body {
-            "body".to_string()
-        } else if kind == ElementKind::H1 {
-            "h1".to_string()
-        } else if kind == ElementKind::H2 {
-            "h2".to_string()
-        } else if kind == ElementKind::P {
-            "p".to_string()
-        } else if kind == ElementKind::Ul {
-            "ul".to_string()
-        } else if kind == ElementKind::Li {
-            "li".to_string()
-        } else if kind == ElementKind::Div {
-            "div".to_string()
-        } else if kind == ElementKind::A {
-            "a".to_string()
-        } else {
-            unimplemented!("not supported this element kind: {:?}", kind);
+    pub fn new(element_name: &str, attributes: Vec<Attribute>) -> Self {
+        Self {
+            kind: ElementKind::from_str(element_name).unwrap(),
+            attributes,
         }
     }
 
@@ -192,6 +140,8 @@ pub enum ElementKind {
     H2,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-p-element
     P,
+    /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+    Pre,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-ul-element
     Ul,
     /// https://html.spec.whatwg.org/multipage/grouping-content.html#the-li-element
@@ -200,6 +150,49 @@ pub enum ElementKind {
     Div,
     /// https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element
     A,
+}
+
+impl Display for ElementKind {
+    fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
+        match self {
+            ElementKind::Html => write!(f, "html"),
+            ElementKind::Head => write!(f, "head"),
+            ElementKind::Style => write!(f, "style"),
+            ElementKind::Script => write!(f, "script"),
+            ElementKind::Body => write!(f, "body"),
+            ElementKind::H1 => write!(f, "h1"),
+            ElementKind::H2 => write!(f, "h2"),
+            ElementKind::P => write!(f, "p"),
+            ElementKind::Pre => write!(f, "pre"),
+            ElementKind::Ul => write!(f, "ul"),
+            ElementKind::Li => write!(f, "li"),
+            ElementKind::Div => write!(f, "div"),
+            ElementKind::A => write!(f, "a"),
+        }
+    }
+}
+
+impl FromStr for ElementKind {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "html" => Ok(ElementKind::Html),
+            "head" => Ok(ElementKind::Head),
+            "style" => Ok(ElementKind::Style),
+            "script" => Ok(ElementKind::Script),
+            "body" => Ok(ElementKind::Body),
+            "h1" => Ok(ElementKind::H1),
+            "h2" => Ok(ElementKind::H2),
+            "p" => Ok(ElementKind::P),
+            "pre" => Ok(ElementKind::Pre),
+            "ul" => Ok(ElementKind::Ul),
+            "li" => Ok(ElementKind::Li),
+            "div" => Ok(ElementKind::Div),
+            "a" => Ok(ElementKind::A),
+            _ => Err(format!("unimplemented element name {:?}", s)),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -246,9 +239,7 @@ impl HtmlParser {
 
     /// Creates an element node.
     fn create_element(&self, tag: &str, attributes: Vec<Attribute>) -> Node {
-        let kind = Element::str_to_element_kind(tag);
-
-        return Node::new(NodeKind::Element(Element::new(kind, attributes)));
+        return Node::new(NodeKind::Element(Element::new(tag, attributes)));
     }
 
     /// Creates an element node for the token and insert it to the appropriate place for inserting
@@ -339,7 +330,7 @@ impl HtmlParser {
             None => return false,
         };
 
-        if current.borrow().kind == NodeKind::Element(Element::new(element_kind, Vec::new())) {
+        if current.borrow().element_kind() == Some(element_kind) {
             self.stack_of_open_elements.pop();
             return true;
         }
@@ -357,7 +348,7 @@ impl HtmlParser {
                 None => return,
             };
 
-            if current.borrow().kind == NodeKind::Element(Element::new(element_kind, Vec::new())) {
+            if current.borrow().element_kind() == Some(element_kind) {
                 return;
             }
         }
@@ -366,9 +357,7 @@ impl HtmlParser {
     /// Returns true if the stack of open elements has NodeKind::Element::<element_kind> node.
     fn contain_in_stack(&mut self, element_kind: ElementKind) -> bool {
         for i in 0..self.stack_of_open_elements.len() {
-            if self.stack_of_open_elements[i].borrow().kind
-                == NodeKind::Element(Element::new(element_kind, Vec::new()))
-            {
+            if self.stack_of_open_elements[i].borrow().element_kind() == Some(element_kind) {
                 return true;
             }
         }
@@ -551,53 +540,123 @@ impl HtmlParser {
                             self_closing: _,
                             ref attributes,
                         }) => {
-                            // "Process the token using the rules for the "in head" insertion mode."
-                            if tag == "script" {
-                                // https://html.spec.whatwg.org/multipage/parsing.html#parsing-html-fragments
-                                // "script
-                                // Switch the tokenizer to the script data state."
-                                self.t.switch_context(State::ScriptData);
+                            match tag.as_str() {
+                                // A start tag whose tag name is one of: "base", "basefont",
+                                // "bgsound", "link", "meta", "noframes", "script", "style",
+                                // "template", "title"
+                                "script" => {
+                                    // Process the token using the rules for the "in head" insertion mode.
+                                    //
+                                    // https://html.spec.whatwg.org/multipage/parsing.html#parsing-html-fragments
+                                    // Switch the tokenizer to the script data state.
+                                    self.t.switch_context(State::ScriptData);
 
-                                self.mode = InsertionMode::InHead;
-                                continue;
+                                    self.mode = InsertionMode::InHead;
+                                    continue;
+                                }
+                                // A start tag whose tag name is one of: "address", "article",
+                                // "aside", "blockquote", "center", "details", "dialog", "dir",
+                                // "div", "dl", "fieldset", "figcaption", "figure", "footer",
+                                // "header", "hgroup", "main", "menu", "nav", "ol", "p", "section",
+                                // "summary", "ul"
+                                "div" | "p" | "ul" => {
+                                    // If the stack of open elements has a p element in button
+                                    // scope, then close a p element.
+                                    //
+                                    // Insert an HTML element for the token.
+                                    self.insert_element(tag, attributes.to_vec());
+                                    token = self.t.next();
+                                    continue;
+                                }
+                                // A start tag whose tag name is one of: "h1", "h2", "h3", "h4",
+                                // "h5", "h6"
+                                "h1" | "h2" => {
+                                    // If the stack of open elements has a p element in button
+                                    // scope, then close a p element.
+                                    //
+                                    // If the current node is an HTML element whose tag name is one
+                                    // of "h1", "h2", "h3", "h4", "h5", or "h6", then this is a
+                                    // parse error; pop the current node off the stack of open
+                                    // elements.
+                                    //
+                                    // Insert an HTML element for the token.
+                                    self.insert_element(tag, attributes.to_vec());
+                                    token = self.t.next();
+                                    continue;
+                                }
+                                // A start tag whose tag name is one of: "pre", "listing"
+                                "pre" => {
+                                    // If the stack of open elements has a p element in button
+                                    // scope, then close a p element.
+                                    //
+                                    // Insert an HTML element for the token.
+                                    //
+                                    // If the next token is a U+000A LINE FEED (LF) character
+                                    // token, then ignore that token and move on to the next one.
+                                    // (Newlines at the start of pre blocks are ignored as an
+                                    // authoring convenience.)
+                                    //
+                                    // Set the frameset-ok flag to "not ok".
+                                    self.insert_element(tag, attributes.to_vec());
+                                    token = self.t.next();
+                                    continue;
+                                }
+                                // A start tag whose tag name is "li"
+                                "li" => {
+                                    // Run these steps:
+                                    //
+                                    // 1. Set the frameset-ok flag to "not ok".
+                                    //
+                                    // 2. Initialize node to be the current node (the bottommost node
+                                    // of the stack).
+                                    //
+                                    // 3. Loop: If node is an li element, then run these substeps:
+                                    // 3-1. Generate implied end tags, except for li elements.
+                                    // 3-2. If the current node is not an li element, then this is a
+                                    // parse error.
+                                    // 3-3. Pop elements from the stack of open elements until an li
+                                    // element has been popped from the stack.
+                                    // 3-4. Jump to the step labeled done below.
+                                    //
+                                    // 4. If node is in the special category, but is not an address,
+                                    // div, or p element, then jump to the step labeled done below.
+                                    //
+                                    // 5. Otherwise, set node to the previous entry in the stack of
+                                    // open elements and return to the step labeled loop.
+                                    //
+                                    // 6. Done: If the stack of open elements has a p element in
+                                    // button scope, then close a p element.
+                                    //
+                                    // 7. Finally, insert an HTML element for the token.
+                                    self.insert_element(tag, attributes.to_vec());
+                                    token = self.t.next();
+                                    continue;
+                                }
+                                // A start tag whose tag name is "a"
+                                "a" => {
+                                    // If the list of active formatting elements contains an a
+                                    // element between the end of the list and the last marker on
+                                    // the list (or the start of the list if there is no marker on
+                                    // the list), then this is a parse error; run the adoption
+                                    // agency algorithm for the token, then remove that element
+                                    // from the list of active formatting elements and the stack of
+                                    // open elements if the adoption agency algorithm didn't
+                                    // already remove it (it might not have if the element is not
+                                    // in table scope).
+                                    //
+                                    // Reconstruct the active formatting elements, if any.
+                                    //
+                                    // Insert an HTML element for the token. Push onto the list of
+                                    // active formatting elements that element.
+                                    self.insert_element(tag, attributes.to_vec());
+                                    token = self.t.next();
+                                    continue;
+                                }
+                                _ => {
+                                    println!("warning: unknown tag {:?}", tag);
+                                    token = self.t.next();
+                                }
                             }
-                            if tag == "ul" {
-                                self.insert_element(tag, attributes.to_vec());
-                                token = self.t.next();
-                                continue;
-                            }
-                            if tag == "li" {
-                                self.insert_element(tag, attributes.to_vec());
-                                token = self.t.next();
-                                continue;
-                            }
-                            if tag == "div" {
-                                self.insert_element(tag, attributes.to_vec());
-                                token = self.t.next();
-                                continue;
-                            }
-                            if tag == "h1" {
-                                self.insert_element(tag, attributes.to_vec());
-                                token = self.t.next();
-                                continue;
-                            }
-                            if tag == "h2" {
-                                self.insert_element(tag, attributes.to_vec());
-                                token = self.t.next();
-                                continue;
-                            }
-                            if tag == "p" {
-                                self.insert_element(tag, attributes.to_vec());
-                                token = self.t.next();
-                                continue;
-                            }
-                            if tag == "a" {
-                                self.insert_element(tag, attributes.to_vec());
-                                token = self.t.next();
-                                continue;
-                            }
-                            println!("warning: unknown tag {:?}", tag);
-                            token = self.t.next();
                         }
                         Some(HtmlToken::EndTag {
                             ref tag,
@@ -809,7 +868,9 @@ fn get_target_element_node(
 ) -> Option<Rc<RefCell<Node>>> {
     match node {
         Some(n) => {
-            if n.borrow().kind == NodeKind::Element(Element::new(element_kind, Vec::new())) {
+            if n.borrow().kind
+                == NodeKind::Element(Element::new(&element_kind.to_string(), Vec::new()))
+            {
                 return Some(n.clone());
             }
             let result1 = get_target_element_node(n.borrow().first_child(), element_kind);
