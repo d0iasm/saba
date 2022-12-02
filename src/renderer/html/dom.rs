@@ -108,7 +108,8 @@ pub struct Element {
 impl Element {
     pub fn new(element_name: &str, attributes: Vec<Attribute>) -> Self {
         Self {
-            kind: ElementKind::from_str(element_name).unwrap(),
+            kind: ElementKind::from_str(element_name)
+                .expect("failed to convert string to ElementKind"),
             attributes,
         }
     }
@@ -662,64 +663,85 @@ impl HtmlParser {
                             ref tag,
                             self_closing: _,
                         }) => {
-                            if tag == "body" {
-                                self.mode = InsertionMode::AfterBody;
-                                token = self.t.next();
-                                if !self.contain_in_stack(ElementKind::Body) {
-                                    // Parse error. Ignore the token.
+                            match tag.as_str() {
+                                // An end tag whose tag name is "body"
+                                "body" => {
+                                    self.mode = InsertionMode::AfterBody;
+                                    let element_kind = ElementKind::from_str(tag)
+                                        .expect("failed to convert string to ElementKind");
+                                    token = self.t.next();
+                                    if !self.contain_in_stack(ElementKind::Body) {
+                                        // Parse error. Ignore the token.
+                                        continue;
+                                    }
+                                    self.pop_until(element_kind);
                                     continue;
                                 }
-                                self.pop_until(ElementKind::Body);
-                                continue;
-                            }
-                            if tag == "html" {
-                                // If the stack of open elements does not have a body element in
-                                // scope, this is a parse error; ignore the token.
-                                if self.pop_current_node(ElementKind::Body) {
-                                    self.mode = InsertionMode::AfterBody;
-                                    assert!(self.pop_current_node(ElementKind::Html));
-                                } else {
+                                // An end tag whose tag name is "html"
+                                "html" => {
+                                    // If the stack of open elements does not have a body element in
+                                    // scope, this is a parse error; ignore the token.
+                                    if self.pop_current_node(ElementKind::Body) {
+                                        self.mode = InsertionMode::AfterBody;
+                                        assert!(self.pop_current_node(ElementKind::Html));
+                                    } else {
+                                        token = self.t.next();
+                                    }
+                                    continue;
+                                }
+                                // An end tag whose tag name is one of: "address", "article",
+                                // "aside", "blockquote", "button", "center", "details", "dialog",
+                                // "dir", "div", "dl", "fieldset", "figcaption", "figure",
+                                // "footer", "header", "hgroup", "listing", "main", "menu", "nav",
+                                // "ol", "pre", "section", "summary", "ul"
+                                "div" | "pre" | "ul" => {
+                                    let element_kind = ElementKind::from_str(tag)
+                                        .expect("failed to convert string to ElementKind");
+                                    token = self.t.next();
+                                    self.pop_until(element_kind);
+                                    continue;
+                                }
+                                // An end tag whose tag name is "p"
+                                "p" => {
+                                    let element_kind = ElementKind::from_str(tag)
+                                        .expect("failed to convert string to ElementKind");
+                                    token = self.t.next();
+                                    self.pop_until(element_kind);
+                                    continue;
+                                }
+                                // An end tag whose tag name is "li"
+                                "li" => {
+                                    let element_kind = ElementKind::from_str(tag)
+                                        .expect("failed to convert string to ElementKind");
+                                    token = self.t.next();
+                                    self.pop_until(element_kind);
+                                    continue;
+                                }
+                                // An end tag whose tag name is one of: "h1", "h2", "h3", "h4",
+                                // "h5", "h6"
+                                "h1" | "h2" => {
+                                    let element_kind = ElementKind::from_str(tag)
+                                        .expect("failed to convert string to ElementKind");
+                                    token = self.t.next();
+                                    self.pop_until(element_kind);
+                                    continue;
+                                }
+                                // An end tag whose tag name is one of: "a", "b", "big", "code",
+                                // "em", "font", "i", "nobr", "s", "small", "strike", "strong",
+                                // "tt", "u"
+                                "a" => {
+                                    // Run the adoption agency algorithm for the token.
+                                    let element_kind = ElementKind::from_str(tag)
+                                        .expect("failed to convert string to ElementKind");
+                                    token = self.t.next();
+                                    self.pop_until(element_kind);
+                                    continue;
+                                }
+                                _ => {
+                                    println!("warning: unknown tag {:?}", tag);
                                     token = self.t.next();
                                 }
-                                continue;
                             }
-                            if tag == "ul" {
-                                token = self.t.next();
-                                self.pop_until(ElementKind::Ul);
-                                continue;
-                            }
-                            if tag == "li" {
-                                token = self.t.next();
-                                self.pop_until(ElementKind::Li);
-                                continue;
-                            }
-                            if tag == "div" {
-                                token = self.t.next();
-                                self.pop_until(ElementKind::Div);
-                                continue;
-                            }
-                            if tag == "h1" {
-                                token = self.t.next();
-                                self.pop_until(ElementKind::H1);
-                                continue;
-                            }
-                            if tag == "h2" {
-                                token = self.t.next();
-                                self.pop_until(ElementKind::H2);
-                                continue;
-                            }
-                            if tag == "p" {
-                                token = self.t.next();
-                                self.pop_until(ElementKind::P);
-                                continue;
-                            }
-                            if tag == "a" {
-                                token = self.t.next();
-                                self.pop_until(ElementKind::A);
-                                continue;
-                            }
-                            println!("warning: unknown tag {:?}", tag);
-                            token = self.t.next();
                         }
                         Some(HtmlToken::Char(c)) => {
                             self.insert_char(c);
