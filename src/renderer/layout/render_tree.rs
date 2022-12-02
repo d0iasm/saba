@@ -285,6 +285,10 @@ impl RenderObject {
         }
     }
 
+    pub fn node(&self) -> Rc<RefCell<Node>> {
+        self.node.clone()
+    }
+
     pub fn kind(&self) -> NodeKind {
         self.node.borrow().kind().clone()
     }

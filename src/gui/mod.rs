@@ -36,7 +36,8 @@ fn should_create_new_box(kind: &NodeKind) -> bool {
     }
 }
 
-fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
+// Return true if children nodes need to be skipped.
+fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) -> bool {
     match &obj.borrow().kind() {
         NodeKind::Document => {}
         NodeKind::Element(element) => match element.kind() {
@@ -90,11 +91,20 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 content_area.append(&div);
             }
             ElementKind::A => {
+                let text = match obj.borrow().first_child() {
+                    Some(text_obj) => match text_obj.borrow().node().borrow().kind() {
+                        NodeKind::Text(text) => text,
+                        _ => "".to_string(),
+                    },
+                    _ => "".to_string(),
+                };
+
                 let link = LinkButton::builder()
                     .margin_start(obj.borrow().style.margin_left() as i32)
                     .margin_top(obj.borrow().style.margin_top() as i32)
                     .margin_end(obj.borrow().style.margin_right() as i32)
                     .margin_bottom(obj.borrow().style.margin_bottom() as i32)
+                    .label(&text)
                     .build();
 
                 let attrs = match obj.borrow().kind() {
@@ -121,9 +131,12 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                 });
 
                 content_area.append(&link);
+
+                return true;
             }
         },
         NodeKind::Text(text) => {
+            /*
             // Note: this is a hacky way to update label in <a>. This assumes the following
             // structure.
             // |------------------|     |--------------------|
@@ -142,6 +155,7 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
                     }
                 }
             }
+            */
 
             let label = Label::builder()
                 .justify(Justification::Left)
@@ -175,12 +189,17 @@ fn paint_render_object(obj: &Rc<RefCell<RenderObject>>, content_area: &Box) {
             content_area.append(&label);
         }
     }
+
+    false
 }
 
 fn paint_render_tree(obj: &Option<Rc<RefCell<RenderObject>>>, parent_content_area: &Box) {
     match obj {
         Some(o) => {
-            paint_render_object(o, &parent_content_area);
+            let skip = paint_render_object(o, &parent_content_area);
+            if skip {
+                return;
+            }
 
             if should_create_new_box(&o.borrow().kind()) {
                 let new_content_area = if o.borrow().style.display() == DisplayType::Inline {

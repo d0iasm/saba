@@ -216,6 +216,13 @@ pub struct HtmlParser {
     t: HtmlTokenizer,
     /// https://html.spec.whatwg.org/multipage/parsing.html#the-stack-of-open-elements
     stack_of_open_elements: Vec<Rc<RefCell<Node>>>,
+    /// https://html.spec.whatwg.org/multipage/parsing.html#list-of-active-formatting-elements
+    /// Initially, the list of active formatting elements is empty. It is used to handle mis-nested
+    /// formatting element tags.
+    ///     Formatting:
+    ///         The following HTML elements are those that end up in the list of active formatting
+    ///         elements: a, b, big, code, em, font, i, nobr, s, small, strike, strong, tt, and u.
+    list_of_active_formatting_elements: Vec<Rc<RefCell<Node>>>,
     /// https://html.spec.whatwg.org/multipage/parsing.html#original-insertion-mode
     original_insertion_mode: InsertionMode,
 }
@@ -227,6 +234,7 @@ impl HtmlParser {
             mode: InsertionMode::Initial,
             t,
             stack_of_open_elements: Vec::new(),
+            list_of_active_formatting_elements: Vec::new(),
             original_insertion_mode: InsertionMode::Initial,
         }
     }
@@ -365,6 +373,15 @@ impl HtmlParser {
 
         false
     }
+
+    /// https://html.spec.whatwg.org/multipage/parsing.html#reconstruct-the-active-formatting-elements
+    fn reconstruct_the_active_formatting_elements(&mut self) {}
+
+    /// https://html.spec.whatwg.org/multipage/parsing.html#push-onto-the-list-of-active-formatting-elements
+    fn push_onto_the_list_of_active_formatting_elements(&mut self) {}
+
+    /// https://html.spec.whatwg.org/multipage/parsing.html#adoption-agency-algorithm
+    fn run_adoption_agency_algorithm(&mut self) {}
 
     pub fn construct_tree(&mut self) -> Rc<RefCell<Node>> {
         let mut token = self.t.next();
@@ -743,7 +760,11 @@ impl HtmlParser {
                                 }
                             }
                         }
+                        // Any other character token
                         Some(HtmlToken::Char(c)) => {
+                            // TODO: Reconstruct the active formatting elements, if any.
+                            // Insert the token's character.
+                            // TODO: Set the frameset-ok flag to "not ok".
                             self.insert_char(c);
                             token = self.t.next();
                             continue;
