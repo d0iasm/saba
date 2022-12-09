@@ -12,7 +12,13 @@ pub mod stdlib;
 //pub mod url;
 
 use crate::alloc::string::ToString;
-//use crate::renderer::layout::render_tree::RenderTree;
+/*
+use crate::renderer::css::cssom::*;
+use crate::renderer::css::token::*;
+use crate::renderer::html::dom::*;
+use crate::renderer::html::token::*;
+use crate::renderer::layout::render_tree::*;
+*/
 use crate::stdlib::create_window;
 use alloc::string::String;
 use core::panic::PanicInfo;
@@ -88,17 +94,13 @@ fn start_browser() {
     let _window = create_window();
 
     // Send a request to the initial page.
-    println!("aaa");
-    let html = default_page();
+    // For now,
+    let _html = default_page();
 
-    /*
-    let response = match get_http_response(url.clone()) {
-        Ok(res) => res,
-        Err(error_message) => return build_error_render_tree(error_message, url.clone()),
-    };
+    println!("test println");
 
-    build_render_tree(response.body(), url)
-    */
+    //let url = "http://example.com";
+    //build_render_tree(html, url.to_string());
 }
 
 /*
@@ -112,6 +114,7 @@ fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
     let css_tokenizer = CssTokenizer::new(style);
     let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
 
+    /*
     // js
     let js = get_js_content(dom_root.clone());
     let lexer = JsLexer::new(js);
@@ -134,6 +137,7 @@ fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
 
         return Ok(render_tree);
     }
+    */
 
     // apply css to html and create RenderTree
     let render_tree = RenderTree::new(dom_root.clone(), &cssom);

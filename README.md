@@ -7,6 +7,7 @@ For Linux,
 
 ```
 $ cargo run -vv --features std --bin toybr
+$ cargo run -vv --features std --bin toybr --target aarch64-apple-darwin -Z build-std=core,alloc,compiler_builtins -Z build-std-features=compiler-builtins-mem
 ```
 
 For [Wasabi OS](https://github.com/hikalium/wasabi),
