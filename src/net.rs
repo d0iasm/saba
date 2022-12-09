@@ -1,4 +1,6 @@
+use crate::alloc::string::ToString;
 use crate::stdlib::*;
+use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::result::Result;
@@ -56,7 +58,7 @@ impl FileDescriptor {
     }
 }
 
-fn ip_to_int(ip: &str) -> u32 {
+fn _ip_to_int(ip: &str) -> u32 {
     let ip_blocks: Vec<&str> = ip.split('.').collect();
     if ip_blocks.len() != 4 {
         return 0;
@@ -68,17 +70,17 @@ fn ip_to_int(ip: &str) -> u32 {
         | (ip_blocks[0].parse::<u32>().unwrap())
 }
 
-fn inet_addr(host: &str) -> u32 {
+fn _inet_addr(host: &str) -> u32 {
     let v: Vec<&str> = host.splitn(2, ':').collect();
     let ip = if v.len() == 2 || v.len() == 1 {
         v[0]
     } else {
         panic!("invalid host name: {}", host);
     };
-    ip_to_int(ip)
+    _ip_to_int(ip)
 }
 
-fn htons(port: u16) -> u16 {
+fn _htons(port: u16) -> u16 {
     if cfg!(target_endian = "big") {
         port
     } else {
@@ -86,25 +88,25 @@ fn htons(port: u16) -> u16 {
     }
 }
 
-struct TcpStream {
+struct _TcpStream {
     socket_fd: FileDescriptor,
     socket_addr: SockAddr,
 }
 
-impl TcpStream {
-    pub fn connect(socket_addr: SockAddr) -> Result<TcpStream, String> {
+impl _TcpStream {
+    pub fn _connect(socket_addr: SockAddr) -> Result<Self, String> {
         let socket_fd = match socket(AF_INET, SOCK_STREAM, 0) {
             Some(fd) => fd,
             None => return Err("can't create a socket file descriptor".to_string()),
         };
 
-        Ok(TcpStream {
+        Ok(Self {
             socket_fd,
             socket_addr,
         })
     }
 
-    pub fn write(&mut self, request: &mut String) -> Result<usize, String> {
+    pub fn _write(&mut self, request: &mut String) -> Result<usize, String> {
         if sendto(&self.socket_fd, request, 0, &self.socket_addr) < 0 {
             return Err(format!("failed to send a request {}", request));
         }
@@ -112,7 +114,7 @@ impl TcpStream {
         Ok(42)
     }
 
-    pub fn read_to_string(&mut self, buf: &mut String) -> Result<usize, String> {
+    pub fn _read_to_string(&mut self, _buf: &mut String) -> Result<usize, String> {
         let mut buf = [0; 1000];
         let length = recvfrom(&self.socket_fd, &mut buf, 0, &mut self.socket_addr);
         if length < 0 {
@@ -122,7 +124,7 @@ impl TcpStream {
         Ok(length as usize)
     }
 
-    pub fn shutdown(&self) -> Result<(), String> {
+    pub fn _shutdown(&self) -> Result<(), String> {
         close(&self.socket_fd);
         Ok(())
     }
