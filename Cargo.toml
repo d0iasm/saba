@@ -5,23 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "toybr"
-path = "src/main.rs"
-required-features = ["std"]
-
-[[bin]]
-name = "toybr_nostd"
-path = "src/main_nostd.rs"
-required-features = ["nostd"]
-
-[features]
-default = []
-std = ["dep:gtk4", "dep:gdk4", "dep:gio", "dep:once_cell", "dep:dns-lookup"]
-nostd = []
+name="toybr"
+test=false
 
 [dependencies]
-gtk4 = { version = "0.4.7", optional = true }
-gdk4 = { version = "0.4.7", optional = true }
-gio = { version = "0.15.11", optional = true }
-once_cell = { version = "1.11.0", optional = true }
-dns-lookup = { version = "1.0.8", optional = true }
