@@ -1,14 +1,17 @@
+use crate::println;
 use crate::renderer::html::dom::get_element_by_id;
 use crate::renderer::html::dom::Node as DomNode;
 use crate::renderer::html::dom::NodeKind as DomNodeKind;
 use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
+use alloc::format;
 use alloc::rc::Rc;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::borrow::Borrow;
 use core::cell::RefCell;
 use core::ops::Add;
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 #[derive(Debug, Clone)]
 /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types
@@ -33,10 +36,12 @@ impl RuntimeValue {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
             RuntimeValue::HtmlElement {
-                object,
+                object: _,
                 property: _,
             } => {
-                format!("{:?}", object.borrow().kind())
+                format!("HtmlElement")
+                // TODO: fix
+                //format!("{:?}", object.borrow().kind())
             }
         }
     }
@@ -183,7 +188,7 @@ impl JsRuntime {
     ) -> (bool, Option<RuntimeValue>) {
         if func == &RuntimeValue::StringLiteral("console.log".to_string()) {
             match self.eval(&arguments[0], env.clone()) {
-                Some(arg) => {
+                Some(_arg) => {
                     println!("[console.log] {:?}", arg.to_string());
                     return (true, None);
                 }
@@ -228,8 +233,6 @@ impl JsRuntime {
         node: &Option<Rc<Node>>,
         env: Rc<RefCell<Environment>>,
     ) -> Option<RuntimeValue> {
-        use std::borrow::Borrow;
-
         let node = match node {
             Some(n) => n,
             None => return None,

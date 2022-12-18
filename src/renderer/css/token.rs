@@ -95,7 +95,7 @@ impl CssTokenizer {
     fn consume_numeric_token(&mut self) -> f64 {
         let mut num = 0f64;
         let mut floating = false;
-        let mut floating_count = 0;
+        let mut floating_digit = 1f64;
 
         loop {
             if self.pos >= self.input.len() {
@@ -107,10 +107,8 @@ impl CssTokenizer {
             match c {
                 '0'..='9' => {
                     if floating {
-                        floating_count += 1;
-                        num = num
-                            + ((c.to_digit(10).unwrap() as f64)
-                                * ((1f64 / 10f64).powi(floating_count)));
+                        floating_digit *= 1f64 / 10f64;
+                        num = num + (c.to_digit(10).unwrap() as f64) * floating_digit;
                     } else {
                         num = num * 10.0 + (c.to_digit(10).unwrap() as f64);
                     }

@@ -4,11 +4,12 @@
 //! 5. Parsing
 //! https://www.w3.org/TR/css-syntax-3/#parsing
 
+use crate::println;
 use crate::renderer::css::token::*;
-
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
+use core::iter::Peekable;
 
 // e.g.
 // div {
@@ -151,7 +152,7 @@ pub enum ComponentValue {
 
 #[derive(Debug, Clone)]
 pub struct CssParser {
-    t: std::iter::Peekable<CssTokenizer>,
+    t: Peekable<CssTokenizer>,
 }
 
 impl CssParser {

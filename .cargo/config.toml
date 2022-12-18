@@ -2,6 +2,12 @@
 build-std = ["core", "compiler_builtins", "alloc"]
 build-std-features = ["compiler-builtins-mem"]
 
+[build]
+target = "x86_64-unknown-elf.json"
+
+[lib]
+target = "x86_64-unknown-elf.json"
+
 [profile.dev]
 panic = "abort"
 

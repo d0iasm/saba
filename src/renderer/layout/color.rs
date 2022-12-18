@@ -1,3 +1,4 @@
+use crate::println;
 /// Helper struct and methods to handle color name, color code and RGB value.
 use alloc::string::String;
 use alloc::string::ToString;

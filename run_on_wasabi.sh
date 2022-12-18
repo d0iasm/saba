@@ -1,10 +1,11 @@
 #!/bin/bash -xe
 
 HOME_PATH=$PWD
-OS_PATH="./os/wasabi"
+BASE_PATH="../"
+OS_PATH=$BASE_PATH"wasabi"
 APP_PATH=$OS_PATH"/app/toybr"
 
-# install Wasabi OS (https://github.com/hikalium/wasabi) under ./os directory
+# install Wasabi OS (https://github.com/hikalium/wasabi)
 if [ -d $OS_PATH ]
 then
   echo $OS_PATH" exists"
@@ -14,7 +15,7 @@ then
 else
   echo $OS_PATH" doesn't exist"
   echo "cloning wasabi project..."
-  cd ./os
+  cd $BASE_PATH
   git clone git@github.com:hikalium/wasabi.git
 fi
 
@@ -32,4 +33,10 @@ fi
 
 # copy Toybr application except `os` and `target` directories to Wasabi
 echo "copying the toybr application to wasabi OS..."
-cp -R `ls ./ -A | grep -v "os" | grep -v "target"` $APP_PATH
+cp -R `ls -A ./ | grep -v "target" | grep -v ".git"` $APP_PATH
+
+cd $OS_PATH
+make font
+make run
+
+cd $HOME_PATH

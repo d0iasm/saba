@@ -1,8 +1,10 @@
 //! This is a part of "13.2.6 Tree construction" in the HTML spec.
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
+use crate::println;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
+use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::string::ToString;
@@ -151,6 +153,27 @@ pub enum ElementKind {
     Div,
     /// https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element
     A,
+}
+
+impl ElementKind {
+    pub fn to_string(&self) -> String {
+        match self {
+            ElementKind::Html => "html",
+            ElementKind::Head => "head",
+            ElementKind::Style => "style",
+            ElementKind::Script => "script",
+            ElementKind::Body => "body",
+            ElementKind::H1 => "h1",
+            ElementKind::H2 => "h2",
+            ElementKind::P => "p",
+            ElementKind::Pre => "pre",
+            ElementKind::Ul => "ul",
+            ElementKind::Li => "li",
+            ElementKind::Div => "div",
+            ElementKind::A => "a",
+        }
+        .to_string()
+    }
 }
 
 impl Display for ElementKind {
