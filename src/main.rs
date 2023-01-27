@@ -15,9 +15,14 @@ use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
 use crate::renderer::html::dom::*;
 use crate::renderer::html::token::*;
+use crate::renderer::js::ast::JsParser;
+use crate::renderer::js::runtime::JsRuntime;
+use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::render_tree::*;
 use crate::stdlib::create_window;
+use alloc::rc::Rc;
 use alloc::string::String;
+use core::cell::RefCell;
 use core::panic::PanicInfo;
 
 macro_rules! entry_point {
@@ -39,6 +44,45 @@ fn panic(_info: &PanicInfo) -> ! {
     unimplemented!();
 }
 
+fn dom_to_html(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
+    match node {
+        Some(n) => {
+            // open a tag
+            match n.borrow().kind() {
+                NodeKind::Document => {}
+                NodeKind::Element(ref e) => {
+                    html.push_str("<");
+                    html.push_str(&e.kind().to_string());
+                    for attr in e.attributes() {
+                        html.push_str(" ");
+                        html.push_str(&attr.name);
+                        html.push_str("=");
+                        html.push_str(&attr.value);
+                    }
+                    html.push_str(">");
+                }
+                NodeKind::Text(ref s) => html.push_str(s),
+            }
+
+            dom_to_html(&n.borrow().first_child(), html);
+
+            // close a tag
+            match n.borrow().kind() {
+                NodeKind::Document => {}
+                NodeKind::Element(ref e) => {
+                    html.push_str("</");
+                    html.push_str(&e.kind().to_string());
+                    html.push_str(">");
+                }
+                NodeKind::Text(_s) => {}
+            }
+
+            dom_to_html(&n.borrow().next_sibling(), html);
+        }
+        None => return,
+    }
+}
+
 fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
     // html
     let html_tokenizer = HtmlTokenizer::new(html);
@@ -49,7 +93,6 @@ fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
     let css_tokenizer = CssTokenizer::new(style);
     let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
 
-    /*
     // js
     let js = get_js_content(dom_root.clone());
     let lexer = JsLexer::new(js);
@@ -72,7 +115,6 @@ fn build_render_tree(html: String, url: String) -> Result<RenderTree, String> {
 
         return Ok(render_tree);
     }
-    */
 
     // apply css to html and create RenderTree
     let render_tree = RenderTree::new(dom_root.clone(), &cssom);
