@@ -1,11 +1,11 @@
 //! https://www.w3.org/TR/css-box-3/
 //! https://www.w3.org/TR/css-layout-api-1/
 
+use crate::css::cssom::*;
+use crate::css::token::CssToken;
+use crate::html::dom::*;
+use crate::layout::color::*;
 use crate::println;
-use crate::renderer::css::cssom::*;
-use crate::renderer::css::token::CssToken;
-use crate::renderer::html::dom::*;
-use crate::renderer::layout::color::*;
 use alloc::rc::Rc;
 use alloc::vec::Vec;
 use core::cell::RefCell;

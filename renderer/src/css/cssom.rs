@@ -4,8 +4,8 @@
 //! 5. Parsing
 //! https://www.w3.org/TR/css-syntax-3/#parsing
 
+use crate::css::token::*;
 use crate::println;
-use crate::renderer::css::token::*;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;

@@ -1,7 +1,7 @@
 //! https://github.com/estree/estree
 //! https://astexplorer.net/
 
-use crate::renderer::js::token::{JsLexer, Token};
+use crate::js::token::{JsLexer, Token};
 use alloc::rc::Rc;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;

@@ -6,24 +6,23 @@ extern crate alloc;
 
 //pub mod http;
 pub mod net;
-pub mod renderer;
 pub mod stdlib;
 pub mod url;
 
 use crate::alloc::string::ToString;
-use crate::renderer::css::cssom::*;
-use crate::renderer::css::token::*;
-use crate::renderer::html::dom::*;
-use crate::renderer::html::token::*;
-use crate::renderer::js::ast::JsParser;
-use crate::renderer::js::runtime::JsRuntime;
-use crate::renderer::js::token::JsLexer;
-use crate::renderer::layout::render_tree::*;
 use crate::stdlib::create_window;
 use alloc::rc::Rc;
 use alloc::string::String;
 use core::cell::RefCell;
 use core::panic::PanicInfo;
+use renderer::css::cssom::*;
+use renderer::css::token::*;
+use renderer::html::dom::*;
+use renderer::html::token::*;
+use renderer::js::ast::JsParser;
+use renderer::js::runtime::JsRuntime;
+use renderer::js::token::JsLexer;
+use renderer::layout::render_tree::*;
 
 macro_rules! entry_point {
     // c.f. https://docs.rs/bootloader/0.6.4/bootloader/macro.entry_point.html

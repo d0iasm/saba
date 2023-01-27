@@ -9,4 +9,7 @@ name="toybr"
 test=false
 
 [dependencies]
-hashbrown = "0.13.1"
+renderer = { path = "./renderer"}
+
+[workspace]
+members = ["renderer"]

@@ -1,9 +1,9 @@
+use crate::html::dom::get_element_by_id;
+use crate::html::dom::Node as DomNode;
+use crate::html::dom::NodeKind as DomNodeKind;
+use crate::js::ast::Node;
+use crate::js::ast::Program;
 use crate::println;
-use crate::renderer::html::dom::get_element_by_id;
-use crate::renderer::html::dom::Node as DomNode;
-use crate::renderer::html::dom::NodeKind as DomNodeKind;
-use crate::renderer::js::ast::Node;
-use crate::renderer::js::ast::Program;
 use alloc::format;
 use alloc::rc::Rc;
 use alloc::string::{String, ToString};

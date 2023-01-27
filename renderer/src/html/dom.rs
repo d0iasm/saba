@@ -1,9 +1,9 @@
 //! This is a part of "13.2.6 Tree construction" in the HTML spec.
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
+use crate::html::attribute::Attribute;
+use crate::html::token::{HtmlToken, HtmlTokenizer, State};
 use crate::println;
-use crate::renderer::html::attribute::Attribute;
-use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
