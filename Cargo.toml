@@ -5,11 +5,12 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name="toybr"
-test=false
+name = "toybr"
+test = false
+path = "gui/default/src/main.rs"
 
 [dependencies]
 renderer = { path = "./renderer"}
 
 [workspace]
-members = ["renderer"]
+members = ["renderer", "gui/wasabi", "gui/default"]

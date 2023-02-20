@@ -1,6 +1,10 @@
 # toybr
 A toy Web browser on single process / thread
 
+```
+$ docker run -v /Users/asami/src/x86test:/x86test --rm -it hikalium/wasabi-builder:latest
+```
+
 ## how to run
 
 For Linux,
