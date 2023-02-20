@@ -5,6 +5,18 @@ A toy Web browser on single process / thread
 $ docker run -v /Users/asami/src/x86test:/x86test --rm -it hikalium/wasabi-builder:latest
 ```
 
+# How to set up GitHub Codespaces
+
+```
+# install Rust
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# set up nightly Rust compiler
+$ rustup default nightly
+
+$ rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
+```
+
 ## how to run
 
 For Linux,

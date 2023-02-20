@@ -4,9 +4,11 @@ build-std-features = ["compiler-builtins-mem"]
 
 [build]
 target = "x86_64-unknown-elf.json"
+rustflags = ["-C", "link-args=-nostartfiles"]
 
 [lib]
 target = "x86_64-unknown-elf.json"
+rustflags = ["-C", "link-args=-nostartfiles"]
 
 [profile.dev]
 panic = "abort"
