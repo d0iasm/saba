@@ -3,7 +3,7 @@
 {
 	"name": "Rust",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/rust:0-1-bullseye"
+	"image": "mcr.microsoft.com/devcontainers/rust:0-1-bullseye",
 
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
 	// "mounts": [
@@ -21,7 +21,10 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "rustup default nightly",
+	"postCreateCommand": [
+		"rustup default nightly",
+		"rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu"
+	]
 
 	// Configure tool-specific properties.
 	// "customizations": {},
