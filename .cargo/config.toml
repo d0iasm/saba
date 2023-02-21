@@ -4,11 +4,17 @@ build-std-features = ["compiler-builtins-mem"]
 
 [build]
 target = "x86_64-unknown-linux-gnu"
-rustflags = ["-C", "link-args=-nostartfiles"]
+rustflags = ["-C", "link-args=-nostartfiles -static -nostdlib"]
 
 [lib]
 target = "x86_64-unknown-linux-gnu"
-rustflags = ["-C", "link-args=-nostartfiles"]
+rustflags = ["-C", "link-args=-nostartfiles -static -nostdlib"]
+
+[target.x86_64-unknown-linux-gnu]
+runner = "qemu-system-x86_64 -machine q35 -cpu qemu64 -drive format=raw,file="
+#runner = "qemu-system-x86_64 -machine ubuntu -kernel"
+#runner = "qemu-x86_64"
+#runner = "qemu-x86_64-static"
 
 [profile.dev]
 panic = "abort"
