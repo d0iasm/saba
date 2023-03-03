@@ -5,6 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+<<<<<<< HEAD
 bitflags = "1.2"
 lazy_static = "1.4"
 skia-bindings = "0.58.0"
@@ -14,3 +15,6 @@ glutin-winit = { version = "0.3"}
 winit = { version = "0.28.1"}
 raw-window-handle = { version = "0.5.0" }
 gl-rs = { package = "gl", version = "0.14.0" }
+=======
+renderer = { path = "../renderer"}
+>>>>>>> parent of d03c239 (try to use GUI library for executing a browser on host computer)

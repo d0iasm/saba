@@ -7,11 +7,10 @@ edition = "2021"
 [[bin]]
 name = "toybr"
 test = false
-path = "src/main.rs"
+path = "gui/src/main.rs"
 
 [dependencies]
 renderer = { path = "./renderer"}
-gui = { path = "./gui"}
 
 [workspace]
 members = ["renderer", "gui"]
