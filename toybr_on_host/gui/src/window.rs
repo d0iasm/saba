@@ -1,5 +1,5 @@
-use crate::*;
 use piston_window::*;
+use renderer::layout::render_tree::RenderTree;
 
 pub struct Window {
     pub canvas: PistonWindow,
@@ -17,12 +17,14 @@ impl Window {
         Self { canvas: window }
     }
 
-    pub fn start(&mut self) {
+    pub fn start(&mut self, handle_input: fn(String) -> RenderTree) {
+        handle_input("http://example.com".to_string());
         while let Some(e) = self.canvas.next() {
-            println(&format!("-------------------------- {:?}", e));
+            //println(&format!("-------------------------- {:?}", e));
             self.canvas.draw_2d(&e, |c, g, _| {
                 clear([1.0; 4], g);
                 let orange = [1.0, 0.5, 0.0, 1.0];
+
                 line(
                     orange,
                     5.0,
@@ -33,4 +35,8 @@ impl Window {
             });
         }
     }
+
+    fn draw_text(&mut self) {}
+    fn draw_rect(&mut self) {}
+    fn draw_line(&mut self) {}
 }
