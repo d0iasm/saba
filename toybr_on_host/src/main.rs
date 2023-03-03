@@ -1,7 +1,8 @@
 use gui::*;
 
 fn main() {
-    draw();
-
     println("hello");
+
+    let mut window = window::Window::new();
+    window.start();
 }
