@@ -177,6 +177,9 @@ fn handle_input(url: String) -> RenderTree {
 fn main() {
     println("hello");
 
-    let mut window = window::Window::new();
-    window.start(handle_input);
+    //let mut window = window::Window::new();
+    //window.start(handle_input);
+
+    let mut cpu_driver = gui::driver::Cpu;
+    window::draw(&mut cpu_driver, std::path::Path::new("./output"));
 }
