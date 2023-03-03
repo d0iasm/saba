@@ -1,59 +1,270 @@
-use graphics::rectangle::Rectangle;
-use piston_window::*;
+use gl::types::*;
+use gl_rs as gl;
+use glutin::{
+    config::{ConfigTemplateBuilder, GlConfig},
+    context::{
+        ContextApi, ContextAttributesBuilder, NotCurrentGlContextSurfaceAccessor,
+        PossiblyCurrentContext,
+    },
+    display::{GetGlDisplay, GlDisplay},
+    prelude::GlSurface,
+    surface::{Surface as GlutinSurface, SurfaceAttributesBuilder, WindowSurface},
+};
+use glutin_winit::DisplayBuilder;
+use raw_window_handle::HasRawWindowHandle;
 
-pub struct Window {
-    pub canvas: PistonWindow,
-}
+use std::{
+    ffi::CString,
+    num::NonZeroU32,
+    time::{Duration, Instant},
+};
 
-impl Window {
-    pub fn new() -> Self {
-        let mut window: PistonWindow = WindowSettings::new("toybr", (1024, 768))
-            .exit_on_esc(true)
-            .graphics_api(OpenGL::V3_2)
-            .build()
-            .unwrap();
-        window.set_lazy(true);
+use winit::{
+    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::{Window, WindowBuilder},
+};
 
-        Self { canvas: window }
+use skia_safe::{
+    gpu::{gl::FramebufferInfo, BackendRenderTarget, SurfaceOrigin},
+    Color, ColorType, Surface,
+};
+
+mod renderer;
+
+pub fn draw() {
+    let el = EventLoop::new();
+    let winit_window_builder = WindowBuilder::new().with_title("rust-skia-gl-window");
+
+    let template = ConfigTemplateBuilder::new()
+        .with_alpha_size(8)
+        .with_transparency(true);
+
+    let display_builder = DisplayBuilder::new().with_window_builder(Some(winit_window_builder));
+    let (window, gl_config) = display_builder
+        .build(&el, template, |configs| {
+            // Find the config with the maximum number of samples, so our display will
+            // be smooth.
+            configs
+                .reduce(|accum, config| {
+                    let transparency_check = config.supports_transparency().unwrap_or(false)
+                        & !accum.supports_transparency().unwrap_or(false);
+
+                    if transparency_check || config.num_samples() > accum.num_samples() {
+                        config
+                    } else {
+                        accum
+                    }
+                })
+                .unwrap()
+        })
+        .unwrap();
+    println!("Picked a config with {} samples", gl_config.num_samples());
+    let mut window = window.expect("Could not create window with OpenGL context");
+    let raw_window_handle = window.raw_window_handle();
+
+    // The context creation part. It can be created before surface and that's how
+    // it's expected in multithreaded + multiwindow operation mode, since you
+    // can send NotCurrentContext, but not Surface.
+    let context_attributes = ContextAttributesBuilder::new().build(Some(raw_window_handle));
+
+    // Since glutin by default tries to create OpenGL core context, which may not be
+    // present we should try gles.
+    let fallback_context_attributes = ContextAttributesBuilder::new()
+        .with_context_api(ContextApi::Gles(None))
+        .build(Some(raw_window_handle));
+    let not_current_gl_context = unsafe {
+        gl_config
+            .display()
+            .create_context(&gl_config, &context_attributes)
+            .unwrap_or_else(|_| {
+                gl_config
+                    .display()
+                    .create_context(&gl_config, &fallback_context_attributes)
+                    .expect("failed to create context")
+            })
+    };
+
+    let (width, height): (u32, u32) = window.inner_size().into();
+
+    let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
+        raw_window_handle,
+        NonZeroU32::new(width).unwrap(),
+        NonZeroU32::new(height).unwrap(),
+    );
+
+    let gl_surface = unsafe {
+        gl_config
+            .display()
+            .create_window_surface(&gl_config, &attrs)
+            .expect("Could not create gl window surface")
+    };
+
+    let gl_context = not_current_gl_context
+        .make_current(&gl_surface)
+        .expect("Could not make GL context current when setting up skia renderer");
+
+    gl::load_with(|s| {
+        gl_config
+            .display()
+            .get_proc_address(CString::new(s).unwrap().as_c_str())
+    });
+    let interface = skia_safe::gpu::gl::Interface::new_load_with(|name| {
+        if name == "eglGetCurrentDisplay" {
+            return std::ptr::null();
+        }
+        gl_config
+            .display()
+            .get_proc_address(CString::new(name).unwrap().as_c_str())
+    })
+    .expect("Could not create interface");
+
+    let mut gr_context = skia_safe::gpu::DirectContext::new_gl(Some(interface), None)
+        .expect("Could not create direct context");
+
+    let fb_info = {
+        let mut fboid: GLint = 0;
+        unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+
+        FramebufferInfo {
+            fboid: fboid.try_into().unwrap(),
+            format: skia_safe::gpu::gl::Format::RGBA8.into(),
+        }
+    };
+
+    window.set_inner_size(winit::dpi::Size::new(winit::dpi::LogicalSize::new(
+        1024.0, 1024.0,
+    )));
+
+    fn create_surface(
+        window: &mut Window,
+        fb_info: FramebufferInfo,
+        gr_context: &mut skia_safe::gpu::DirectContext,
+        num_samples: usize,
+        stencil_size: usize,
+    ) -> Surface {
+        let size = window.inner_size();
+        let size = (
+            size.width.try_into().expect("Could not convert width"),
+            size.height.try_into().expect("Could not convert height"),
+        );
+        let backend_render_target =
+            BackendRenderTarget::new_gl(size, num_samples, stencil_size, fb_info);
+
+        Surface::from_backend_render_target(
+            gr_context,
+            &backend_render_target,
+            SurfaceOrigin::BottomLeft,
+            ColorType::RGBA8888,
+            None,
+            None,
+        )
+        .expect("Could not create skia surface")
     }
-}
+    let num_samples = gl_config.num_samples() as usize;
+    let stencil_size = gl_config.stencil_size() as usize;
 
-pub fn draw_line(window: &mut Window) {
-    while let Some(e) = window.canvas.next() {
-        println!("-------------------------- {:?}", e);
-        window.canvas.draw_2d(&e, |c, g, _| {
-            clear([1.0; 4], g);
-            let orange = [1.0, 0.5, 0.0, 1.0];
-            line(
-                orange,
-                5.0,
-                [320.0 - 1.0 * 15.0, 20.0, 380.0 - 1.0 * 15.0, 80.0],
-                c.transform,
-                g,
-            );
-            let magenta = [1.0, 0.0, 0.5, 1.0];
-            polygon(
-                magenta,
-                &[[420.0, 20.0], [480.0, 20.0], [480.0 - 1.0 * 15.0, 80.0]],
-                c.transform,
-                g,
-            );
-        });
-    }
-}
+    let surface = create_surface(
+        &mut window,
+        fb_info,
+        &mut gr_context,
+        num_samples,
+        stencil_size,
+    );
 
-pub fn draw_rect(window: &mut Window) {
-    while let Some(e) = window.canvas.next() {
-        println!("!!!!!!!!!!!!!!!!!!!!!!!!!!1 {:?}", e);
-        window.canvas.draw_2d(&e, |c, g, _| {
-            clear([1.0; 4], g);
-            let black = [0.0, 0.0, 0.0, 1.0];
-            let red = [1.0, 0.0, 0.0, 1.0];
-            let rect = math::margin_rectangle([20.0, 20.0, 60.0, 60.0], 0.0);
-            rectangle(red, rect, c.transform, g);
-            Rectangle::new_border(black, 2.0).draw(rect, &c.draw_state, c.transform, g);
-        });
+    let mut frame = 0usize;
+
+    // Guarantee the drop order inside the FnMut closure. `Window` _must_ be dropped after
+    // `DirectContext`.
+    //
+    // https://github.com/rust-skia/rust-skia/issues/476
+    struct Env {
+        surface: Surface,
+        gl_surface: GlutinSurface<WindowSurface>,
+        gr_context: skia_safe::gpu::DirectContext,
+        gl_context: PossiblyCurrentContext,
+        window: Window,
     }
+
+    let mut env = Env {
+        surface,
+        gl_surface,
+        gl_context,
+        gr_context,
+        window,
+    };
+    let mut previous_frame_start = Instant::now();
+
+    el.run(move |event, _, control_flow| {
+        let frame_start = Instant::now();
+        let mut draw_frame = false;
+
+        #[allow(deprecated)]
+        match event {
+            Event::LoopDestroyed => {}
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::CloseRequested => {
+                    *control_flow = ControlFlow::Exit;
+                    return;
+                }
+                WindowEvent::Resized(physical_size) => {
+                    env.surface = create_surface(
+                        &mut env.window,
+                        fb_info,
+                        &mut env.gr_context,
+                        num_samples,
+                        stencil_size,
+                    );
+                    /* First resize the opengl drawable */
+                    let (width, height): (u32, u32) = physical_size.into();
+                    env.gl_surface.resize(
+                        &env.gl_context,
+                        NonZeroU32::new(width).unwrap(),
+                        NonZeroU32::new(height).unwrap(),
+                    );
+                }
+                WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            virtual_keycode,
+                            modifiers,
+                            ..
+                        },
+                    ..
+                } => {
+                    if modifiers.logo() {
+                        if let Some(VirtualKeyCode::Q) = virtual_keycode {
+                            *control_flow = ControlFlow::Exit;
+                        }
+                    }
+                    frame = frame.saturating_sub(10);
+                    env.window.request_redraw();
+                }
+                _ => (),
+            },
+            Event::RedrawRequested(_) => {
+                draw_frame = true;
+            }
+            _ => (),
+        }
+        let expected_frame_length_seconds = 1.0 / 20.0;
+        let frame_duration = Duration::from_secs_f32(expected_frame_length_seconds);
+
+        if frame_start - previous_frame_start > frame_duration {
+            draw_frame = true;
+            previous_frame_start = frame_start;
+        }
+        if draw_frame {
+            frame += 1;
+            let canvas = env.surface.canvas();
+            canvas.clear(Color::WHITE);
+            renderer::render_frame(frame % 360, 12, 60, canvas);
+            env.gr_context.flush_and_submit();
+            env.gl_surface.swap_buffers(&env.gl_context).unwrap();
+        }
+
+        *control_flow = ControlFlow::WaitUntil(previous_frame_start + frame_duration)
+    });
 }
 
 pub fn print(text: &str) {
