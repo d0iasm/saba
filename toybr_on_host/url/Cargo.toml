@@ -1,0 +1,5 @@
+[package]
+authors = ["d0iasm"]
+name = "url"
+version = "0.1.0"
+edition = "2021"
