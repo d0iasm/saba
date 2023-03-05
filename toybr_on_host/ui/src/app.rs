@@ -1,14 +1,3 @@
-/// A simple example demonstrating how to handle user input. This is
-/// a bit out of the scope of the library as it does not provide any
-/// input handling out of the box. However, it may helps some to get
-/// started.
-///
-/// This is a very simple example:
-///   * A input box always focused. Every character you type is registered
-///   here
-///   * Pressing Backspace erases a character
-///   * Pressing Enter pushes the current input in the history of previous
-///   messages
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -37,7 +26,7 @@ enum InputMode {
 pub struct Browser {
     input_url: String,
     input_mode: InputMode,
-    messages: Vec<String>,
+    contents: Vec<String>,
     logs: Vec<String>,
 }
 
@@ -46,7 +35,7 @@ impl Browser {
         Self {
             input_url: String::new(),
             input_mode: InputMode::Normal,
-            messages: Vec::new(),
+            contents: Vec::new(),
             logs: Vec::new(),
         }
     }
@@ -67,7 +56,10 @@ impl Browser {
         self.logs.push(log.to_string());
     }
 
-    pub fn start(&mut self, handle_input: fn(String) -> RenderTree) -> Result<(), Box<dyn Error>> {
+    pub fn start(
+        &mut self,
+        handle_input: fn(&mut Browser, String) -> RenderTree,
+    ) -> Result<(), Box<dyn Error>> {
         // set up terminal
         enable_raw_mode()?;
         let mut stdout = io::stdout();
@@ -81,11 +73,13 @@ impl Browser {
 
         // restore terminal
         disable_raw_mode()?;
+        /*
         execute!(
             terminal.backend_mut(),
             LeaveAlternateScreen,
             DisableMouseCapture
         )?;
+        */
         terminal.show_cursor()?;
 
         if let Err(err) = res {
@@ -98,7 +92,7 @@ impl Browser {
     fn run_app<B: Backend>(
         &mut self,
         terminal: &mut Terminal<B>,
-        handle_input: fn(String) -> RenderTree,
+        handle_input: fn(&mut Browser, String) -> RenderTree,
     ) -> io::Result<()> {
         loop {
             terminal.draw(|frame| self.ui(frame))?;
@@ -117,8 +111,8 @@ impl Browser {
                     InputMode::Editing => match key.code {
                         KeyCode::Enter => {
                             let url: String = self.input_url.drain(..).collect();
-                            handle_input(url.clone());
-                            self.messages.push(url);
+                            handle_input(self, url.clone());
+                            self.contents.push(url);
                         }
                         KeyCode::Char(c) => {
                             self.input_url.push(c);
@@ -142,10 +136,10 @@ impl Browser {
             //.margin(2)
             .constraints(
                 [
-                    Constraint::Percentage(3),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(67),
-                    Constraint::Percentage(20),
+                    Constraint::Percentage(5),
+                    Constraint::Percentage(5),
+                    Constraint::Percentage(50),
+                    Constraint::Percentage(40),
                 ]
                 .as_ref(),
             )
@@ -203,8 +197,8 @@ impl Browser {
         }
 
         // box for main content
-        let messages: Vec<ListItem> = self
-            .messages
+        let contents: Vec<ListItem> = self
+            .contents
             .iter()
             .enumerate()
             .map(|(i, m)| {
@@ -212,13 +206,21 @@ impl Browser {
                 ListItem::new(content)
             })
             .collect();
-        let messages =
-            List::new(messages).block(Block::default().borders(Borders::ALL).title("Content"));
-        frame.render_widget(messages, chunks[2]);
+        let contents =
+            List::new(contents).block(Block::default().borders(Borders::ALL).title("Content"));
+        frame.render_widget(contents, chunks[2]);
 
         // box for console logs
-        let input = Paragraph::new(self.input_url.as_ref())
-            .block(Block::default().borders(Borders::ALL).title("Console"));
-        frame.render_widget(input, chunks[3]);
+        let logs: Vec<ListItem> = self
+            .logs
+            .iter()
+            .enumerate()
+            .map(|(i, m)| {
+                let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
+                ListItem::new(content)
+            })
+            .collect();
+        let logs = List::new(logs).block(Block::default().borders(Borders::ALL).title("Console"));
+        frame.render_widget(logs, chunks[3]);
     }
 }
