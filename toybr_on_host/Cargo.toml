@@ -11,9 +11,9 @@ path = "src/main.rs"
 
 [dependencies]
 renderer = { path = "./renderer"}
-gui = { path = "./gui"}
+ui = { path = "./ui"}
 net = { path = "./net"}
 url = { path = "./url"}
 
 [workspace]
-members = ["renderer", "gui", "net", "url"]
+members = ["renderer", "ui", "net", "url"]

@@ -3,7 +3,6 @@ extern crate alloc;
 use alloc::rc::Rc;
 use alloc::string::String;
 use core::cell::RefCell;
-use gui::*;
 use net::http::HttpClient;
 use renderer::css::cssom::*;
 use renderer::css::token::*;
@@ -13,8 +12,8 @@ use renderer::js::ast::{JsParser, Program};
 use renderer::js::runtime::JsRuntime;
 use renderer::js::token::JsLexer;
 use renderer::layout::render_tree::*;
+use ui::*;
 use url::ParsedUrl;
-
 /// for debug
 fn print_dom(node: &Option<Rc<RefCell<Node>>>, depth: usize) {
     match node {
@@ -175,11 +174,6 @@ fn handle_input(url: String) -> RenderTree {
 }
 
 fn main() {
-    println("hello");
-
-    //let mut window = window::Window::new();
-    //window.start(handle_input);
-
-    let mut cpu_driver = gui::driver::Cpu;
-    window::draw(&mut cpu_driver, std::path::Path::new("./output"));
+    let mut browser = ui::app::Browser::new();
+    let _ = browser.start(handle_input);
 }
