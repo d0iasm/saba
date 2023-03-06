@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -6,11 +7,11 @@ use crossterm::{
         LeaveAlternateScreen,
     },
 };
-use renderer::layout::render_tree::RenderTree;
+use renderer::layout::render_tree::LayoutTree;
 use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
     widgets::{Block, Borders, List, ListItem, Paragraph},
@@ -23,11 +24,36 @@ enum InputMode {
     Editing,
 }
 
+enum LogLevel {
+    Debug,
+    Error,
+}
+
+struct Log {
+    level: LogLevel,
+    log: String,
+}
+
+impl Log {
+    fn new(level: LogLevel, log: String) -> Self {
+        Self { level, log }
+    }
+}
+
+impl ToString for Log {
+    fn to_string(&self) -> String {
+        match self.level {
+            LogLevel::Debug => format!("[DEBUG] {}", self.log),
+            LogLevel::Error => format!("[ERROR] {}", self.log),
+        }
+    }
+}
+
 pub struct Browser {
     input_url: String,
     input_mode: InputMode,
     contents: Vec<String>,
-    logs: Vec<String>,
+    logs: Vec<Log>,
 }
 
 impl Browser {
@@ -48,17 +74,17 @@ impl Browser {
         println!("{}", text);
     }
 
-    pub fn console_debug(&mut self, log: &str) {
-        self.logs.push(log.to_string());
+    pub fn console_debug(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Debug, log));
     }
 
-    pub fn console_error(&mut self, log: &str) {
-        self.logs.push(log.to_string());
+    pub fn console_error(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Error, log));
     }
 
     pub fn start(
         &mut self,
-        handle_input: fn(&mut Browser, String) -> RenderTree,
+        handle_input: fn(&mut Browser, String) -> LayoutTree,
     ) -> Result<(), Box<dyn Error>> {
         // set up terminal
         enable_raw_mode()?;
@@ -73,13 +99,11 @@ impl Browser {
 
         // restore terminal
         disable_raw_mode()?;
-        /*
         execute!(
             terminal.backend_mut(),
             LeaveAlternateScreen,
             DisableMouseCapture
         )?;
-        */
         terminal.show_cursor()?;
 
         if let Err(err) = res {
@@ -92,7 +116,7 @@ impl Browser {
     fn run_app<B: Backend>(
         &mut self,
         terminal: &mut Terminal<B>,
-        handle_input: fn(&mut Browser, String) -> RenderTree,
+        handle_input: fn(&mut Browser, String) -> LayoutTree,
     ) -> io::Result<()> {
         loop {
             terminal.draw(|frame| self.ui(frame))?;
@@ -215,8 +239,8 @@ impl Browser {
             .logs
             .iter()
             .enumerate()
-            .map(|(i, m)| {
-                let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
+            .map(|(_, log)| {
+                let content = vec![Spans::from(Span::raw(format!("{}", log.to_string())))];
                 ListItem::new(content)
             })
             .collect();

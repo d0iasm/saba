@@ -17,7 +17,7 @@ pub enum WhiteSpace {
 }
 
 #[derive(Debug, Clone)]
-pub struct RenderStyle {
+pub struct ComputedStyle {
     background_color: Option<Color>,
     color: Option<Color>,
     display: DisplayType,
@@ -29,7 +29,7 @@ pub struct RenderStyle {
     white_space: WhiteSpace,
 }
 
-impl RenderStyle {
+impl ComputedStyle {
     pub fn new(node: &Rc<RefCell<Node>>) -> Self {
         Self {
             background_color: None,
@@ -86,7 +86,7 @@ impl RenderStyle {
         }
     }
 
-    fn inherit(&mut self, parent_style: &RenderStyle) {
+    fn inherit(&mut self, parent_style: &ComputedStyle) {
         if self.color.is_none() {
             self.color = Some(parent_style.color().clone());
         }
@@ -263,27 +263,29 @@ impl LayoutPosition {
 }
 
 #[derive(Debug, Clone)]
-pub struct RenderObject {
+pub struct LayoutObject {
     // Similar structure with Node in renderer/dom.rs.
     node: Rc<RefCell<Node>>,
-    first_child: Option<Rc<RefCell<RenderObject>>>,
-    next_sibling: Option<Rc<RefCell<RenderObject>>>,
+    first_child: Option<Rc<RefCell<LayoutObject>>>,
+    next_sibling: Option<Rc<RefCell<LayoutObject>>>,
     // CSS information.
-    pub style: RenderStyle,
+    pub style: ComputedStyle,
     // Layout information.
     position: LayoutPosition,
 }
 
-impl RenderObject {
+impl LayoutObject {
     fn new(node: Rc<RefCell<Node>>) -> Self {
         Self {
             node: node.clone(),
             first_child: None,
             next_sibling: None,
-            style: RenderStyle::new(&node),
+            style: ComputedStyle::new(&node),
             position: LayoutPosition::new(0.0, 0.0),
         }
     }
+
+    pub fn paint(&self) {}
 
     pub fn node(&self) -> Rc<RefCell<Node>> {
         self.node.clone()
@@ -293,11 +295,11 @@ impl RenderObject {
         self.node.borrow().kind().clone()
     }
 
-    pub fn first_child(&self) -> Option<Rc<RefCell<RenderObject>>> {
+    pub fn first_child(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.first_child.as_ref().map(|n| n.clone())
     }
 
-    pub fn next_sibling(&self) -> Option<Rc<RefCell<RenderObject>>> {
+    pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.next_sibling.as_ref().map(|n| n.clone())
     }
 
@@ -383,7 +385,7 @@ impl RenderObject {
         }
     }
 
-    fn layout(&mut self, parent_style: &RenderStyle, parent_position: &LayoutPosition) {
+    fn layout(&mut self, parent_style: &ComputedStyle, parent_position: &LayoutPosition) {
         match parent_style.display {
             DisplayType::Inline => {
                 match self.style.display() {
@@ -453,11 +455,11 @@ impl RenderObject {
 }
 
 #[derive(Debug, Clone)]
-pub struct RenderTree {
-    pub root: Option<Rc<RefCell<RenderObject>>>,
+pub struct LayoutTree {
+    pub root: Option<Rc<RefCell<LayoutObject>>>,
 }
 
-impl RenderTree {
+impl LayoutTree {
     pub fn new(root: Rc<RefCell<Node>>, cssom: &StyleSheet) -> Self {
         let mut tree = Self {
             root: Self::create_render_tree(&Some(root), &None, cssom),
@@ -470,12 +472,12 @@ impl RenderTree {
 
     fn create_render_object(
         node: &Option<Rc<RefCell<Node>>>,
-        parent_obj: &Option<Rc<RefCell<RenderObject>>>,
+        parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
         cssom: &StyleSheet,
-    ) -> Option<Rc<RefCell<RenderObject>>> {
+    ) -> Option<Rc<RefCell<LayoutObject>>> {
         match node {
             Some(n) => {
-                let render_object = Rc::new(RefCell::new(RenderObject::new(n.clone())));
+                let render_object = Rc::new(RefCell::new(LayoutObject::new(n.clone())));
                 if let Some(parent) = parent_obj {
                     render_object
                         .borrow_mut()
@@ -483,7 +485,7 @@ impl RenderTree {
                         .inherit(&parent.borrow().style);
                 }
 
-                // apply CSS rules to RenderObject.
+                // apply CSS rules to LayoutObject.
                 for rule in &cssom.rules {
                     if render_object.borrow().is_node_selected(&rule.selector) {
                         render_object
@@ -505,9 +507,9 @@ impl RenderTree {
     /// Converts DOM tree to render tree.
     fn create_render_tree(
         node: &Option<Rc<RefCell<Node>>>,
-        parent_obj: &Option<Rc<RefCell<RenderObject>>>,
+        parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
         cssom: &StyleSheet,
-    ) -> Option<Rc<RefCell<RenderObject>>> {
+    ) -> Option<Rc<RefCell<LayoutObject>>> {
         let render_object = Self::create_render_object(&node, parent_obj, cssom);
 
         if render_object.is_none() {
@@ -588,8 +590,8 @@ impl RenderTree {
 
     fn layout_node(
         &self,
-        node: &Option<Rc<RefCell<RenderObject>>>,
-        parent_style: &RenderStyle,
+        node: &Option<Rc<RefCell<LayoutObject>>>,
+        parent_style: &ComputedStyle,
         parent_position: &LayoutPosition,
     ) {
         match node {
@@ -609,7 +611,7 @@ impl RenderTree {
     /// Calculate the layout position.
     fn layout(&mut self) {
         let fake_node = Rc::new(RefCell::new(Node::new(NodeKind::Document)));
-        let fake_style = RenderStyle::new(&fake_node);
+        let fake_style = ComputedStyle::new(&fake_node);
         let fake_position = LayoutPosition::new(0.0, 0.0);
         self.layout_node(&self.root, &fake_style, &fake_position);
     }

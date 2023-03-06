@@ -28,7 +28,7 @@ fn print_dom(node: &Option<Rc<RefCell<Node>>>, depth: usize) {
 }
 
 /// for debug
-fn print_render_object(node: &Option<Rc<RefCell<RenderObject>>>, depth: usize) {
+fn print_render_object(node: &Option<Rc<RefCell<LayoutObject>>>, depth: usize) {
     match node {
         Some(n) => {
             print!("{}", "  ".repeat(depth));
@@ -86,17 +86,17 @@ fn print_ast(program: &Program) {
     }
 }
 
-fn handle_input(browser: &mut Browser, url: String) -> RenderTree {
+fn handle_input(browser: &mut Browser, url: String) -> LayoutTree {
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
-    browser.console_debug("---------- input url ----------");
-    browser.console_debug(&format!("{:?}", parsed_url));
+    browser.console_debug("---------- input url ----------".to_string());
+    browser.console_debug(format!("{:?}", parsed_url));
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
     let response = match client.get(&parsed_url) {
         Ok(res) => {
-            browser.console_debug(&format!(
+            browser.console_debug(format!(
                 "status code in HttpResponse: {:?}",
                 res.status_code()
             ));
@@ -119,14 +119,14 @@ fn handle_input(browser: &mut Browser, url: String) -> RenderTree {
         Err(e) => panic!("failed to get http response: {:?}", e),
     };
 
-    browser.console_debug("---------- http response ----------");
-    browser.console_debug(&format!("{:?}", response.body()));
+    browser.console_debug("---------- http response ----------".to_string());
+    browser.console_debug(format!("{:?}", response.body()));
 
     // html
     let html = response.body();
     let html_tokenizer = HtmlTokenizer::new(html);
     let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
-    browser.console_debug("---------- document object model (dom) ----------");
+    browser.console_debug("---------- document object model (dom) ----------".to_string());
     //print_dom(&Some(dom_root.clone()), 0);
 
     // css
@@ -135,8 +135,8 @@ fn handle_input(browser: &mut Browser, url: String) -> RenderTree {
     let css_tokenizer = CssTokenizer::new(style);
     let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
 
-    browser.console_debug("---------- css object model (cssom) ----------");
-    browser.console_debug(&format!("{:?}", cssom));
+    browser.console_debug("---------- css object model (cssom) ----------".to_string());
+    browser.console_debug(format!("{:?}", cssom));
 
     // js
     let js = get_js_content(dom_root.clone());
@@ -144,15 +144,18 @@ fn handle_input(browser: &mut Browser, url: String) -> RenderTree {
 
     let mut parser = JsParser::new(lexer);
     let ast = parser.parse_ast();
-    browser.console_debug("---------- javascript abstract syntax tree (ast) ----------");
+    browser
+        .console_debug("---------- javascript abstract syntax tree (ast) ----------".to_string());
     print_ast(&ast);
 
-    browser.console_debug("---------- javascript runtime ----------");
+    browser.console_debug("---------- javascript runtime ----------".to_string());
     let mut runtime = JsRuntime::new(dom_root.clone(), url.clone());
     runtime.execute(&ast);
 
     if runtime.dom_modified() {
-        browser.console_debug("---------- modified document object model (dom) ----------");
+        browser.console_debug(
+            "---------- modified document object model (dom) ----------".to_string(),
+        );
         let mut modified_html = String::new();
         dom_to_html(&runtime.dom_root(), &mut modified_html);
 
@@ -160,17 +163,17 @@ fn handle_input(browser: &mut Browser, url: String) -> RenderTree {
         let modified_dom_root = HtmlParser::new(html_tokenizer).construct_tree();
         //print_dom(&Some(modified_dom_root.clone()), 0);
 
-        // apply css to html and create RenderTree
-        let render_tree = RenderTree::new(modified_dom_root.clone(), &cssom);
-        browser.console_debug("---------- render tree ----------");
+        // apply css to html and create LayoutTree
+        let render_tree = LayoutTree::new(modified_dom_root.clone(), &cssom);
+        browser.console_debug("---------- render tree ----------".to_string());
         //print_render_object(&render_tree.root, 0);
 
         return render_tree;
     }
 
-    // apply css to html and create RenderTree
-    let render_tree = RenderTree::new(dom_root.clone(), &cssom);
-    browser.console_debug("---------- render tree ----------");
+    // apply css to html and create LayoutTree
+    let render_tree = LayoutTree::new(dom_root.clone(), &cssom);
+    browser.console_debug("---------- render tree ----------".to_string());
     //print_render_object(&render_tree.root, 0);
 
     return render_tree;
