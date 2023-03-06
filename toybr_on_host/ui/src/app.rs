@@ -7,7 +7,7 @@ use crossterm::{
         LeaveAlternateScreen,
     },
 };
-use renderer::layout::render_tree::LayoutTree;
+use renderer::layout::layout_tree_builder::LayoutTree;
 use std::{error::Error, io};
 use tui::{
     backend::{Backend, CrosstermBackend},

@@ -11,7 +11,8 @@ use renderer::html::token::*;
 use renderer::js::ast::{JsParser, Program};
 use renderer::js::runtime::JsRuntime;
 use renderer::js::token::JsLexer;
-use renderer::layout::render_tree::*;
+use renderer::layout::layout_object::*;
+use renderer::layout::layout_tree_builder::*;
 use ui::app::Browser;
 use url::ParsedUrl;
 /// for debug
