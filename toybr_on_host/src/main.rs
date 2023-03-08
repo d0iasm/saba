@@ -4,17 +4,13 @@ use alloc::rc::Rc;
 use alloc::string::String;
 use core::cell::RefCell;
 use net::http::HttpClient;
-use renderer::css::cssom::*;
-use renderer::css::token::*;
+use renderer::frame::frame::Frame;
 use renderer::html::dom::*;
-use renderer::html::token::*;
-use renderer::js::ast::{JsParser, Program};
-use renderer::js::runtime::JsRuntime;
-use renderer::js::token::JsLexer;
+use renderer::js::ast::Program;
 use renderer::layout::layout_object::*;
-use renderer::layout::layout_tree_builder::*;
-use ui::app::Browser;
+use renderer::ui::UiObject;
 use url::ParsedUrl;
+
 /// for debug
 fn print_dom(node: &Option<Rc<RefCell<Node>>>, depth: usize) {
     match node {
@@ -41,45 +37,6 @@ fn print_render_object(node: &Option<Rc<RefCell<LayoutObject>>>, depth: usize) {
     }
 }
 
-fn dom_to_html(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
-    match node {
-        Some(n) => {
-            // open tag
-            match n.borrow().kind() {
-                NodeKind::Document => {}
-                NodeKind::Element(ref e) => {
-                    html.push_str("<");
-                    html.push_str(&e.kind().to_string());
-                    for attr in e.attributes() {
-                        html.push_str(" ");
-                        html.push_str(&attr.name);
-                        html.push_str("=");
-                        html.push_str(&attr.value);
-                    }
-                    html.push_str(">");
-                }
-                NodeKind::Text(ref s) => html.push_str(s),
-            }
-
-            dom_to_html(&n.borrow().first_child(), html);
-
-            // close tag
-            match n.borrow().kind() {
-                NodeKind::Document => {}
-                NodeKind::Element(ref e) => {
-                    html.push_str("</");
-                    html.push_str(&e.kind().to_string());
-                    html.push_str(">");
-                }
-                NodeKind::Text(_s) => {}
-            }
-
-            dom_to_html(&n.borrow().next_sibling(), html);
-        }
-        None => return,
-    }
-}
-
 /// for debug
 fn print_ast(program: &Program) {
     for node in program.body() {
@@ -87,21 +44,14 @@ fn print_ast(program: &Program) {
     }
 }
 
-fn handle_input(browser: &mut Browser, url: String) -> LayoutTree {
+fn handle_url<U: UiObject>(url: String) -> Result<Frame<U>, String> {
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
-    browser.console_debug("---------- input url ----------".to_string());
-    browser.console_debug(format!("{:?}", parsed_url));
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
     let response = match client.get(&parsed_url) {
         Ok(res) => {
-            browser.console_debug(format!(
-                "status code in HttpResponse: {:?}",
-                res.status_code()
-            ));
-
             // redirect to Location
             if res.status_code() == 302 {
                 let parsed_redirect_url = ParsedUrl::new(res.header("Location"));
@@ -109,7 +59,7 @@ fn handle_input(browser: &mut Browser, url: String) -> LayoutTree {
                 let redirect_client = HttpClient::new();
                 let redirect_res = match redirect_client.get(&parsed_redirect_url) {
                     Ok(res) => res,
-                    Err(e) => panic!("failed to get http response: {:?}", e),
+                    Err(e) => return Err(format!("{:?}", e)),
                 };
 
                 redirect_res
@@ -117,70 +67,14 @@ fn handle_input(browser: &mut Browser, url: String) -> LayoutTree {
                 res
             }
         }
-        Err(e) => panic!("failed to get http response: {:?}", e),
+        Err(e) => return Err(format!("failed to get http response: {:?}", e)),
     };
 
-    browser.console_debug("---------- http response ----------".to_string());
-    browser.console_debug(format!("{:?}", response.body()));
+    let frame = Frame::new(url, response.body());
 
-    // html
-    let html = response.body();
-    let html_tokenizer = HtmlTokenizer::new(html);
-    let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
-    browser.console_debug("---------- document object model (dom) ----------".to_string());
-    //print_dom(&Some(dom_root.clone()), 0);
-
-    // css
-    let style = get_style_content(dom_root.clone());
-    //load_css(style.as_bytes());
-    let css_tokenizer = CssTokenizer::new(style);
-    let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
-
-    browser.console_debug("---------- css object model (cssom) ----------".to_string());
-    browser.console_debug(format!("{:?}", cssom));
-
-    // js
-    let js = get_js_content(dom_root.clone());
-    let lexer = JsLexer::new(js);
-
-    let mut parser = JsParser::new(lexer);
-    let ast = parser.parse_ast();
-    browser
-        .console_debug("---------- javascript abstract syntax tree (ast) ----------".to_string());
-    print_ast(&ast);
-
-    browser.console_debug("---------- javascript runtime ----------".to_string());
-    let mut runtime = JsRuntime::new(dom_root.clone(), url.clone());
-    runtime.execute(&ast);
-
-    if runtime.dom_modified() {
-        browser.console_debug(
-            "---------- modified document object model (dom) ----------".to_string(),
-        );
-        let mut modified_html = String::new();
-        dom_to_html(&runtime.dom_root(), &mut modified_html);
-
-        let html_tokenizer = HtmlTokenizer::new(modified_html);
-        let modified_dom_root = HtmlParser::new(html_tokenizer).construct_tree();
-        //print_dom(&Some(modified_dom_root.clone()), 0);
-
-        // apply css to html and create LayoutTree
-        let render_tree = LayoutTree::new(modified_dom_root.clone(), &cssom);
-        browser.console_debug("---------- render tree ----------".to_string());
-        //print_render_object(&render_tree.root, 0);
-
-        return render_tree;
-    }
-
-    // apply css to html and create LayoutTree
-    let render_tree = LayoutTree::new(dom_root.clone(), &cssom);
-    browser.console_debug("---------- render tree ----------".to_string());
-    //print_render_object(&render_tree.root, 0);
-
-    return render_tree;
+    Ok(frame)
 }
 
 fn main() {
-    let mut browser = Browser::new();
-    let _ = browser.start(handle_input);
+    let _ = ui::app::start(handle_url);
 }
