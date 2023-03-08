@@ -118,6 +118,14 @@ impl<U: UiObject> Frame<U> {
         self.modified = runtime.dom_modified();
     }
 
+    pub fn dom_root(&self) -> Option<Rc<RefCell<Node>>> {
+        self.dom_root.clone()
+    }
+
+    pub fn style(&self) -> Option<StyleSheet> {
+        self.style.clone()
+    }
+
     pub fn layout_object_root(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.layout_object_root.clone()
     }
