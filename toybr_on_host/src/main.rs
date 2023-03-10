@@ -1,12 +1,16 @@
 extern crate alloc;
 
+use alloc::rc::Rc;
 use alloc::string::String;
+use browser::Browser;
+use core::cell::RefCell;
 use net::http::HttpClient;
-use renderer::frame::frame::Frame;
+use net::http::HttpResponse;
 use renderer::ui::UiObject;
+use ui::app::Tui;
 use url::ParsedUrl;
 
-fn handle_url<U: UiObject>(url: String) -> Result<Frame<U>, String> {
+fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, String> {
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
 
@@ -32,11 +36,15 @@ fn handle_url<U: UiObject>(url: String) -> Result<Frame<U>, String> {
         Err(e) => return Err(format!("failed to get http response: {:?}", e)),
     };
 
-    let frame = Frame::new(url, response.body());
-
-    Ok(frame)
+    Ok(response)
 }
 
 fn main() {
-    let _ = ui::app::start(handle_url);
+    let ui = Tui::new();
+    let mut browser = Browser::new(Rc::new(RefCell::new(ui)));
+    //let page = Rc::downgrade(&browser.page());
+    let page = browser.page();
+    browser.ui().borrow_mut().set_page(page);
+
+    browser.start(handle_url::<Tui>);
 }

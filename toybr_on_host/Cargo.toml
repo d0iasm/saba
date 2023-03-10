@@ -10,10 +10,11 @@ test = false
 path = "src/main.rs"
 
 [dependencies]
+browser = { path = "./browser"}
 renderer = { path = "./renderer"}
-ui = { path = "./ui"}
 net = { path = "./net"}
+ui = { path = "./ui"}
 url = { path = "./url"}
 
 [workspace]
-members = ["renderer", "ui", "net", "url"]
+members = ["browser", "renderer", "net", "ui", "url"]

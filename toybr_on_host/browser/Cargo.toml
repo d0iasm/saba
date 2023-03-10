@@ -1,9 +1,10 @@
 [package]
 authors = ["d0iasm"]
-name = "renderer"
+name = "browser"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+renderer = { path = "../renderer"}
+ui = { path = "../ui"}
 net = { path = "../net"}
-hashbrown = "0.13.2"

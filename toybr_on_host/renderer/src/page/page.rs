@@ -12,55 +12,60 @@ use crate::layout::layout_tree_builder::*;
 use crate::ui::UiObject;
 use alloc::rc::Rc;
 use core::cell::RefCell;
+use net::http::HttpResponse;
 
 /// Represents a page. It only supports a main frame.
-pub struct Frame<U: UiObject> {
+pub struct Page<U: UiObject> {
     ui: Option<Rc<RefCell<U>>>,
-    url: String,
+    url: Option<String>,
     dom_root: Option<Rc<RefCell<Node>>>,
     style: Option<StyleSheet>,
     layout_object_root: Option<Rc<RefCell<LayoutObject>>>,
     modified: bool,
 }
 
-impl<U: UiObject> Frame<U> {
-    pub fn new(url: String, html: String) -> Self {
-        let mut frame = Self {
+impl<U: UiObject> Page<U> {
+    pub fn new() -> Self {
+        Self {
             ui: None,
-            url,
+            url: None,
             dom_root: None,
             style: None,
             layout_object_root: None,
             modified: false,
-        };
+        }
+    }
 
-        frame.set_dom_root(html);
-        frame.set_style();
+    pub fn receive_response(&mut self, response: HttpResponse) {
+        self.set_dom_root(response.body());
+        self.set_style();
 
-        frame.execute_js();
+        self.execute_js();
 
-        while frame.modified {
-            let dom = match frame.dom_root.clone() {
+        while self.modified {
+            let dom = match self.dom_root.clone() {
                 Some(dom) => dom,
                 None => {
-                    frame.set_layout_object_root();
-                    return frame;
+                    self.set_layout_object_root();
+                    return;
                 }
             };
 
             let modified_html = dom_to_html(&Some(dom));
 
-            frame.set_dom_root(modified_html);
-            frame.set_style();
+            self.set_dom_root(modified_html);
+            self.set_style();
 
-            frame.modified = false;
+            self.modified = false;
 
-            frame.execute_js();
+            self.execute_js();
         }
 
-        frame.set_layout_object_root();
+        self.set_layout_object_root();
+    }
 
-        frame
+    pub fn set_url(&mut self, url: String) {
+        self.url = Some(url);
     }
 
     pub fn set_ui_object(&mut self, ui: Rc<RefCell<U>>) {
@@ -112,7 +117,12 @@ impl<U: UiObject> Frame<U> {
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
 
-        let mut runtime = JsRuntime::new(dom, self.url.clone());
+        let url = match self.url.clone() {
+            Some(url) => url,
+            None => return,
+        };
+
+        let mut runtime = JsRuntime::new(dom, url);
         runtime.execute(&ast);
 
         self.modified = runtime.dom_modified();
