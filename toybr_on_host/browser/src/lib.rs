@@ -1,6 +1,7 @@
 extern crate alloc;
 
 use alloc::rc::Rc;
+use common::error::Error;
 use core::cell::RefCell;
 use net::http::HttpResponse;
 use renderer::page::page::Page;
@@ -18,9 +19,7 @@ impl<U: UiObject> Browser<U> {
         Self { ui, page }
     }
 
-    pub fn start(&mut self, handle_url: fn(String) -> Result<HttpResponse, String>) {
-        self.ui.borrow_mut().start(handle_url);
-        /*
+    pub fn start(&mut self, handle_url: fn(String) -> Result<HttpResponse, Error>) {
         match self.ui.borrow_mut().start(handle_url) {
             Ok(_) => {}
             Err(e) => {
@@ -29,7 +28,6 @@ impl<U: UiObject> Browser<U> {
                     .console_error(format!("browser is terminated by {:?}", e));
             }
         }
-        */
     }
 
     pub fn ui(&self) -> Rc<RefCell<U>> {

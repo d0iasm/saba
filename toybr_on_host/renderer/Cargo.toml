@@ -6,4 +6,5 @@ edition = "2021"
 
 [dependencies]
 net = { path = "../net"}
+common = { path = "../common"}
 hashbrown = "0.13.2"

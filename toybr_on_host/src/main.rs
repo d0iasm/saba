@@ -3,6 +3,7 @@ extern crate alloc;
 use alloc::rc::Rc;
 use alloc::string::String;
 use browser::Browser;
+use common::error::Error;
 use core::cell::RefCell;
 use net::http::HttpClient;
 use net::http::HttpResponse;
@@ -10,7 +11,7 @@ use renderer::ui::UiObject;
 use ui::app::Tui;
 use url::ParsedUrl;
 
-fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, String> {
+fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
     // parse url
     let parsed_url = ParsedUrl::new(url.to_string());
 
@@ -25,7 +26,7 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, String> {
                 let redirect_client = HttpClient::new();
                 let redirect_res = match redirect_client.get(&parsed_redirect_url) {
                     Ok(res) => res,
-                    Err(e) => return Err(format!("{:?}", e)),
+                    Err(e) => return Err(Error::Network(format!("{:?}", e))),
                 };
 
                 redirect_res
@@ -33,7 +34,12 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, String> {
                 res
             }
         }
-        Err(e) => return Err(format!("failed to get http response: {:?}", e)),
+        Err(e) => {
+            return Err(Error::Network(format!(
+                "failed to get http response: {:?}",
+                e
+            )))
+        }
     };
 
     Ok(response)

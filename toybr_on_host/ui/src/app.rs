@@ -1,5 +1,6 @@
-use alloc::rc::{Rc, Weak};
+use alloc::rc::Rc;
 use alloc::string::ToString;
+use common::error::Error;
 use core::cell::RefCell;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -12,8 +13,7 @@ use crossterm::{
 use net::http::HttpResponse;
 use renderer::page::page::Page;
 use renderer::ui::UiObject;
-use renderer::utils::*;
-use std::{error::Error, io};
+use std::io;
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -86,7 +86,57 @@ impl UiObject for Tui {
         self.logs.push(Log::new(LogLevel::Error, log));
     }
 
-    fn start(&mut self, handle_url: fn(String) -> Result<HttpResponse, String>) {}
+    fn start(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+    ) -> Result<(), Error> {
+        // set up terminal
+        match enable_raw_mode() {
+            Ok(_) => {}
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        }
+
+        let mut stdout = io::stdout();
+        match execute!(stdout, EnterAlternateScreen, EnableMouseCapture) {
+            Ok(_) => {}
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        }
+        match execute!(stdout, Clear(ClearType::All)) {
+            Ok(_) => {}
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        }
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = match Terminal::new(backend) {
+            Ok(t) => t,
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        };
+
+        // never return unless a user quit the tui app
+        let result = self.run_app(handle_url, &mut terminal);
+
+        // restore terminal
+        match disable_raw_mode() {
+            Ok(_) => {}
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        }
+        match execute!(
+            terminal.backend_mut(),
+            LeaveAlternateScreen,
+            DisableMouseCapture
+        ) {
+            Ok(_) => {}
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        }
+        match terminal.show_cursor() {
+            Ok(_) => {}
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        }
+
+        match result {
+            Ok(_) => Ok(()),
+            Err(e) => Err(Error::Other(format!("{:?}", e))),
+        }
+    }
 }
 
 impl Tui {
@@ -98,51 +148,20 @@ impl Tui {
         self.page.clone()
     }
 
-    pub fn start(
-        &mut self,
-        handle_url: fn(String) -> Result<HttpResponse, String>,
-    ) -> Result<(), Box<dyn Error>> {
-        // set up terminal
-        enable_raw_mode()?;
-        let mut stdout = io::stdout();
-        execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-        execute!(stdout, Clear(ClearType::All))?;
-        let backend = CrosstermBackend::new(stdout);
-        let mut terminal = Terminal::new(backend)?;
-
-        // never return unless a user quit the tui app
-        let res = self.run_app(handle_url, &mut terminal);
-
-        // restore terminal
-        disable_raw_mode()?;
-        execute!(
-            terminal.backend_mut(),
-            LeaveAlternateScreen,
-            DisableMouseCapture
-        )?;
-        terminal.show_cursor()?;
-
-        if let Err(err) = res {
-            println!("{:?}", err)
-        }
-
-        Ok(())
-    }
-
     fn run_app<B: Backend>(
         &mut self,
-        handle_url: fn(String) -> Result<HttpResponse, String>,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
         terminal: &mut Terminal<B>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         loop {
             match terminal.draw(|frame| self.ui(frame)) {
                 Ok(_) => {}
-                Err(e) => return Err(format!("{:?}", e)),
+                Err(e) => return Err(Error::Other(format!("{:?}", e))),
             }
 
             let event = match event::read() {
                 Ok(event) => event,
-                Err(e) => return Err(format!("{:?}", e)),
+                Err(e) => return Err(Error::Other(format!("{:?}", e))),
             };
 
             let current_input_mode = self.input_mode;
@@ -167,24 +186,17 @@ impl Tui {
                                     let page = match self.page() {
                                         Some(page) => page,
                                         None => {
-                                            return Err("associated page is not found".to_string())
+                                            return Err(Error::Other(
+                                                "associated page is not found".to_string(),
+                                            ))
                                         }
                                     };
 
                                     page.borrow_mut().receive_response(response);
-
-                                    /*
-                                    page.set_ui_object(tui.clone());
-
-                                    // for test to output debug messages.
-                                    print_layout_tree(&tui, &page.layout_object_root(), 0);
-
-                                    self.page = Some(page);
-                                    */
                                 }
-                                Err(msg) => {
-                                    self.console_error(msg.clone());
-                                    return Err(msg);
+                                Err(e) => {
+                                    self.console_error(format!("{:?}", e));
+                                    return Err(e);
                                 }
                             }
                         }

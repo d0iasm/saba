@@ -11,10 +11,11 @@ path = "src/main.rs"
 
 [dependencies]
 browser = { path = "./browser"}
+common = { path = "./common"}
 renderer = { path = "./renderer"}
 net = { path = "./net"}
 ui = { path = "./ui"}
 url = { path = "./url"}
 
 [workspace]
-members = ["browser", "renderer", "net", "ui", "url"]
+members = ["browser", "common", "renderer", "net", "ui", "url"]

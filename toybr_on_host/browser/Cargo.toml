@@ -5,6 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+common = { path = "../common"}
 renderer = { path = "../renderer"}
 ui = { path = "../ui"}
 net = { path = "../net"}
