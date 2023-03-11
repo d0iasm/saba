@@ -37,6 +37,13 @@ impl<U: UiObject> Page<U> {
     }
 
     pub fn receive_response(&mut self, response: HttpResponse) {
+        let ui = match self.ui.clone() {
+            Some(ui) => ui,
+            None => return,
+        };
+        ui.borrow_mut()
+            .console_debug("received response".to_string());
+
         self.set_dom_root(response.body());
         self.set_style();
 
@@ -74,7 +81,13 @@ impl<U: UiObject> Page<U> {
 
     fn set_dom_root(&mut self, html: String) {
         let html_tokenizer = HtmlTokenizer::new(html);
-        let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
+
+        let ui = match self.ui.clone() {
+            Some(ui) => ui,
+            None => return,
+        };
+
+        let dom_root = HtmlParser::new(ui, html_tokenizer).construct_tree();
         self.dom_root = Some(dom_root);
     }
 
@@ -84,9 +97,14 @@ impl<U: UiObject> Page<U> {
             None => return,
         };
 
+        let ui = match self.ui.clone() {
+            Some(ui) => ui,
+            None => return,
+        };
+
         let style = get_style_content(dom);
         let css_tokenizer = CssTokenizer::new(style);
-        let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
+        let cssom = CssParser::new(ui, css_tokenizer).parse_stylesheet();
         self.style = Some(cssom);
     }
 

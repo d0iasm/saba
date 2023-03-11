@@ -46,10 +46,13 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
 }
 
 fn main() {
+    // initialize the UI object
     let ui = Tui::new();
+
+    // initialize the main browesr struct
     let mut browser = Browser::new(Rc::new(RefCell::new(ui)));
-    //let page = Rc::downgrade(&browser.page());
     let page = browser.page();
+    // associate the UI object to the page that the browser has
     browser.ui().borrow_mut().set_page(page);
 
     browser.start(handle_url::<Tui>);

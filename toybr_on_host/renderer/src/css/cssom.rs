@@ -5,9 +5,12 @@
 //! https://www.w3.org/TR/css-syntax-3/#parsing
 
 use crate::css::token::*;
+use crate::ui::UiObject;
+use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
+use core::cell::RefCell;
 use core::iter::Peekable;
 
 // e.g.
@@ -150,13 +153,17 @@ pub enum ComponentValue {
 }
 
 #[derive(Debug, Clone)]
-pub struct CssParser {
+pub struct CssParser<U: UiObject> {
+    ui: Rc<RefCell<U>>,
     t: Peekable<CssTokenizer>,
 }
 
-impl CssParser {
-    pub fn new(t: CssTokenizer) -> Self {
-        Self { t: t.peekable() }
+impl<U: UiObject> CssParser<U> {
+    pub fn new(ui: Rc<RefCell<U>>, t: CssTokenizer) -> Self {
+        Self {
+            ui,
+            t: t.peekable(),
+        }
     }
 
     fn consume_ident(&mut self) -> String {
@@ -301,7 +308,11 @@ impl CssParser {
                     }
                 }
                 _ => {
-                    println!("warning: unexpected token {:?}", token);
+                    /*
+                    self.ui
+                        .borrow_mut()
+                        .console_warning(format!("warning: unexpected token {:?}", token));
+                    */
                     self.t.next();
                 }
             }
@@ -327,7 +338,11 @@ impl CssParser {
                     return Some(rule);
                 }
                 _ => {
-                    println!("consume_at_rule anything else: {:?}", token);
+                    /*
+                    self.ui
+                        .borrow_mut()
+                        .console_warning(format!("consume_at_rule anything else: {:?}", token));
+                    */
                     // TODO: set prelude to AtRule
                 }
             }

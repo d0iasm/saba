@@ -32,6 +32,7 @@ enum InputMode {
 
 enum LogLevel {
     Debug,
+    Warning,
     Error,
 }
 
@@ -49,8 +50,9 @@ impl Log {
 impl ToString for Log {
     fn to_string(&self) -> String {
         match self.level {
-            LogLevel::Debug => format!("[DEBUG] {}", self.log),
-            LogLevel::Error => format!("[ERROR] {}", self.log),
+            LogLevel::Debug => format!("[Debug] {}", self.log),
+            LogLevel::Warning => format!("[Warning] {}", self.log),
+            LogLevel::Error => format!("[Error] {}", self.log),
         }
     }
 }
@@ -82,6 +84,10 @@ impl UiObject for Tui {
         self.logs.push(Log::new(LogLevel::Debug, log));
     }
 
+    fn console_warning(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Warning, log));
+    }
+
     fn console_error(&mut self, log: String) {
         self.logs.push(Log::new(LogLevel::Error, log));
     }
@@ -111,6 +117,7 @@ impl UiObject for Tui {
             Err(e) => return Err(Error::Other(format!("{:?}", e))),
         };
 
+        self.console_debug("start to run an app".to_string());
         // never return unless a user quit the tui app
         let result = self.run_app(handle_url, &mut terminal);
 
@@ -183,6 +190,8 @@ impl Tui {
                             self.contents.push(url.clone());
                             match handle_url(url.clone()) {
                                 Ok(response) => {
+                                    self.console_debug(format!("received response {:?}", response));
+
                                     let page = match self.page() {
                                         Some(page) => page,
                                         None => {

@@ -16,6 +16,7 @@ pub struct Browser<U: UiObject> {
 impl<U: UiObject> Browser<U> {
     pub fn new(ui: Rc<RefCell<U>>) -> Self {
         let page = Rc::new(RefCell::new(Page::new()));
+        page.borrow_mut().set_ui_object(ui.clone());
         Self { ui, page }
     }
 

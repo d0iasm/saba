@@ -3,6 +3,7 @@
 
 use crate::html::attribute::Attribute;
 use crate::html::token::{HtmlToken, HtmlTokenizer, State};
+use crate::ui::UiObject;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
@@ -232,7 +233,8 @@ pub enum InsertionMode {
 }
 
 #[derive(Debug, Clone)]
-pub struct HtmlParser {
+pub struct HtmlParser<U: UiObject> {
+    ui: Rc<RefCell<U>>,
     root: Rc<RefCell<Node>>,
     mode: InsertionMode,
     t: HtmlTokenizer,
@@ -242,9 +244,10 @@ pub struct HtmlParser {
     original_insertion_mode: InsertionMode,
 }
 
-impl HtmlParser {
-    pub fn new(t: HtmlTokenizer) -> Self {
+impl<U: UiObject> HtmlParser<U> {
+    pub fn new(ui: Rc<RefCell<U>>, t: HtmlTokenizer) -> Self {
         Self {
+            ui,
             root: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
             mode: InsertionMode::Initial,
             t,
@@ -676,7 +679,11 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
-                                    println!("warning: unknown tag {:?}", tag);
+                                    /*
+                                    self.ui
+                                        .borrow_mut()
+                                        .console_warning(format!("unknown tag {:?}", tag));
+                                    */
                                     token = self.t.next();
                                 }
                             }
@@ -760,7 +767,11 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
-                                    println!("warning: unknown tag {:?}", tag);
+                                    /*
+                                    self.ui
+                                        .borrow_mut()
+                                        .console_warning(format!("unknown tag {:?}", tag));
+                                    */
                                     token = self.t.next();
                                 }
                             }
