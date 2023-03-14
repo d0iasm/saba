@@ -1,6 +1,7 @@
 extern crate alloc;
 
 use crate::common::error::Error;
+use crate::common::log::{Log, LogLevel};
 use crate::common::ui::UiObject;
 use crate::renderer::page::Page;
 use alloc::rc::Rc;
@@ -11,14 +12,18 @@ pub struct Browser<U: UiObject> {
     // TODO: support multiple tabs/pages. This browser currently supports only one page.
     ui: Rc<RefCell<U>>,
     page: Rc<RefCell<Page<U>>>,
+    contents: Vec<String>,
+    logs: Vec<Log>,
 }
 
 impl<U: UiObject> Browser<U> {
-    pub fn new(ui: Rc<RefCell<U>>) -> Self {
-        let page = Rc::new(RefCell::new(Page::new()));
-        page.borrow_mut().set_ui_object(ui.clone());
-
-        Self { ui, page }
+    pub fn new(ui: Rc<RefCell<U>>, page: Rc<RefCell<Page<U>>>) -> Self {
+        Self {
+            ui,
+            page,
+            contents: Vec::new(),
+            logs: Vec::new(),
+        }
     }
 
     pub fn start(&mut self, handle_url: fn(String) -> Result<HttpResponse, Error>) {
@@ -32,11 +37,39 @@ impl<U: UiObject> Browser<U> {
         }
     }
 
+    pub fn println(&mut self, text: String) {
+        self.contents.push(text);
+    }
+
+    pub fn console_debug(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Debug, log));
+    }
+
+    pub fn console_warning(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Warning, log));
+    }
+
+    pub fn console_error(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Error, log));
+    }
+
     pub fn ui(&self) -> Rc<RefCell<U>> {
         self.ui.clone()
     }
 
     pub fn page(&self) -> Rc<RefCell<Page<U>>> {
         self.page.clone()
+    }
+
+    pub fn consume_contents(&mut self) -> Vec<String> {
+        let c = self.contents.clone();
+        self.contents = Vec::new();
+        c
+    }
+
+    pub fn consume_logs(&mut self) -> Vec<Log> {
+        let l = self.logs.clone();
+        self.logs = Vec::new();
+        l
     }
 }

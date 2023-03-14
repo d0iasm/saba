@@ -1,3 +1,4 @@
+use crate::browser::Browser;
 use crate::common::ui::UiObject;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::cssom::*;
@@ -11,13 +12,13 @@ use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::renderer::layout::layout_tree_builder::*;
-use alloc::rc::Rc;
+use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 use net::http::HttpResponse;
 
 /// Represents a page. It only supports a main frame.
 pub struct Page<U: UiObject> {
-    ui: Option<Rc<RefCell<U>>>,
+    browser: Weak<RefCell<Browser<U>>>,
     url: Option<String>,
     dom_root: Option<Rc<RefCell<Node>>>,
     style: Option<StyleSheet>,
@@ -28,7 +29,7 @@ pub struct Page<U: UiObject> {
 impl<U: UiObject> Page<U> {
     pub fn new() -> Self {
         Self {
-            ui: None,
+            browser: Weak::new(),
             url: None,
             dom_root: None,
             style: None,
@@ -38,12 +39,13 @@ impl<U: UiObject> Page<U> {
     }
 
     pub fn receive_response(&mut self, response: HttpResponse) {
-        let ui = match self.ui.clone() {
-            Some(ui) => ui,
+        let browser = match self.browser.upgrade() {
+            Some(browser) => browser,
             None => return,
         };
-        ui.borrow_mut()
-            .console_debug("received response".to_string());
+        browser
+            .borrow_mut()
+            .console_debug("receive_response start".to_string());
 
         self.set_dom_root(response.body());
         self.set_style();
@@ -76,8 +78,8 @@ impl<U: UiObject> Page<U> {
         self.url = Some(url);
     }
 
-    pub fn set_ui_object(&mut self, ui: Rc<RefCell<U>>) {
-        self.ui = Some(ui);
+    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser<U>>>) {
+        self.browser = browser;
     }
 
     fn set_dom_root(&mut self, html: String) {

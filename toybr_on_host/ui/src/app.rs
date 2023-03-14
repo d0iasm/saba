@@ -1,4 +1,4 @@
-use alloc::rc::{Rc, Weak};
+use alloc::rc::Weak;
 use alloc::string::ToString;
 use core::cell::RefCell;
 use crossterm::{
@@ -11,8 +11,12 @@ use crossterm::{
 };
 use net::http::HttpResponse;
 use std::io;
-use toybr_core::common::{error::Error, ui::UiObject};
-use toybr_core::renderer::page::Page;
+use toybr_core::browser::Browser;
+use toybr_core::common::{
+    error::Error,
+    log::{Log, LogLevel},
+    ui::UiObject,
+};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -29,35 +33,8 @@ enum InputMode {
     Editing,
 }
 
-enum LogLevel {
-    Debug,
-    Warning,
-    Error,
-}
-
-struct Log {
-    level: LogLevel,
-    log: String,
-}
-
-impl Log {
-    fn new(level: LogLevel, log: String) -> Self {
-        Self { level, log }
-    }
-}
-
-impl ToString for Log {
-    fn to_string(&self) -> String {
-        match self.level {
-            LogLevel::Debug => format!("[Debug] {}", self.log),
-            LogLevel::Warning => format!("[Warning] {}", self.log),
-            LogLevel::Error => format!("[Error] {}", self.log),
-        }
-    }
-}
-
 pub struct Tui {
-    page: Weak<RefCell<Page<Self>>>,
+    browser: Weak<RefCell<Browser<Self>>>,
     input_url: String,
     input_mode: InputMode,
     contents: Vec<String>,
@@ -67,7 +44,7 @@ pub struct Tui {
 impl UiObject for Tui {
     fn new() -> Self {
         Self {
-            page: Weak::new(),
+            browser: Weak::new(),
             input_url: String::new(),
             input_mode: InputMode::Normal,
             contents: Vec::new(),
@@ -116,7 +93,6 @@ impl UiObject for Tui {
             Err(e) => return Err(Error::Other(format!("{:?}", e))),
         };
 
-        self.console_debug("start to run an app".to_string());
         // never return unless a user quit the tui app
         let result = self.run_app(handle_url, &mut terminal);
 
@@ -146,12 +122,12 @@ impl UiObject for Tui {
 }
 
 impl Tui {
-    pub fn set_page(&mut self, page: Weak<RefCell<Page<Tui>>>) {
-        self.page = page;
+    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser<Tui>>>) {
+        self.browser = browser;
     }
 
-    pub fn page(&self) -> Weak<RefCell<Page<Self>>> {
-        self.page.clone()
+    pub fn browser(&self) -> Weak<RefCell<Browser<Self>>> {
+        self.browser.clone()
     }
 
     fn run_app<B: Backend>(
@@ -186,16 +162,15 @@ impl Tui {
                     InputMode::Editing => match key.code {
                         KeyCode::Enter => {
                             let url: String = self.input_url.drain(..).collect();
-                            self.contents.push(url.clone());
                             match handle_url(url.clone()) {
                                 Ok(response) => {
                                     self.console_debug(format!("received response {:?}", response));
 
-                                    let page = match self.page().upgrade() {
-                                        Some(page) => page,
+                                    let page = match self.browser().upgrade() {
+                                        Some(browser) => browser.borrow().page(),
                                         None => {
                                             return Err(Error::Other(
-                                                "associated page is not found".to_string(),
+                                                "associated browser is not found".to_string(),
                                             ))
                                         }
                                     };
@@ -292,31 +267,45 @@ impl Tui {
             }
         }
 
-        // box for main content
-        let contents: Vec<ListItem> = self
-            .contents
-            .iter()
-            .enumerate()
-            .map(|(i, m)| {
-                let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
-                ListItem::new(content)
-            })
-            .collect();
-        let contents =
-            List::new(contents).block(Block::default().borders(Borders::ALL).title("Content"));
-        frame.render_widget(contents, chunks[2]);
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
 
-        // box for console logs
-        let logs: Vec<ListItem> = self
-            .logs
-            .iter()
-            .enumerate()
-            .map(|(_, log)| {
-                let content = vec![Spans::from(Span::raw(format!("{}", log.to_string())))];
-                ListItem::new(content)
-            })
-            .collect();
-        let logs = List::new(logs).block(Block::default().borders(Borders::ALL).title("Console"));
-        frame.render_widget(logs, chunks[3]);
+        {
+            // box for main content
+            //let contents: Vec<ListItem> = self
+            //.contents
+            let contents: Vec<ListItem> = browser
+                .borrow_mut()
+                .consume_contents()
+                .iter()
+                .enumerate()
+                .map(|(i, m)| {
+                    let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
+                    ListItem::new(content)
+                })
+                .collect();
+            let contents =
+                List::new(contents).block(Block::default().borders(Borders::ALL).title("Content"));
+            frame.render_widget(contents, chunks[2]);
+        }
+
+        {
+            // box for console logs
+            let logs: Vec<ListItem> = browser
+                .borrow_mut()
+                .consume_logs()
+                .iter()
+                .enumerate()
+                .map(|(_, log)| {
+                    let content = vec![Spans::from(Span::raw(format!("{}", log.to_string())))];
+                    ListItem::new(content)
+                })
+                .collect();
+            let logs =
+                List::new(logs).block(Block::default().borders(Borders::ALL).title("Console"));
+            frame.render_widget(logs, chunks[3]);
+        }
     }
 }

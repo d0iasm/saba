@@ -8,6 +8,7 @@ use net::http::HttpResponse;
 use toybr_core::browser::Browser;
 use toybr_core::common::error::Error;
 use toybr_core::common::ui::UiObject;
+use toybr_core::renderer::page::Page;
 use toybr_core::url::ParsedUrl;
 use ui::app::Tui;
 
@@ -52,10 +53,17 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
 fn main() {
     // initialize the UI object
     let ui = Rc::new(RefCell::new(Tui::new()));
+    let page = Rc::new(RefCell::new(Page::new()));
 
     // initialize the main browesr struct
-    let mut browser = Browser::new(ui.clone());
-    ui.borrow_mut().set_page(Rc::downgrade(&browser.page()));
+    let browser = Rc::new(RefCell::new(Browser::new(ui.clone(), page.clone())));
+    ui.borrow_mut().set_browser(Rc::downgrade(&browser));
+    page.borrow_mut().set_browser(Rc::downgrade(&browser));
 
-    browser.start(handle_url::<Tui>);
+    match ui.borrow_mut().start(handle_url::<Tui>) {
+        Ok(_) => {}
+        Err(e) => {
+            println!("browser fails to start {:?}", e);
+        }
+    };
 }
