@@ -5,7 +5,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-toybr_core = { path = "../../toybr_core"}
+common = { path = "../common"}
+renderer = { path = "../renderer"}
 net = { path = "../net"}
 tui = "0.19"
 crossterm = "0.25"

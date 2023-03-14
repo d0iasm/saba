@@ -1,8 +1,8 @@
 [package]
 authors = ["d0iasm"]
-name = "net"
+name = "common"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dns-lookup = "1.0.8"
+net = { path = "../net"}

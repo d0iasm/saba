@@ -10,12 +10,6 @@ test = false
 path = "src/main.rs"
 
 [dependencies]
-browser = { path = "./browser"}
-common = { path = "./common"}
-renderer = { path = "./renderer"}
-net = { path = "./net"}
+toybr_core = { path = "../toybr_core"}
+net = { path = "./net" }
 ui = { path = "./ui"}
-url = { path = "./url"}
-
-[workspace]
-members = ["browser", "common", "renderer", "net", "ui", "url"]

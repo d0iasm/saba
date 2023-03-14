@@ -1,5 +1,7 @@
 use alloc::rc::{Rc, Weak};
 use alloc::string::ToString;
+use common::error::Error;
+use common::ui::UiObject;
 use core::cell::RefCell;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -10,9 +12,8 @@ use crossterm::{
     },
 };
 use net::http::HttpResponse;
+use renderer::page::page::Page;
 use std::io;
-use toybr_core::common::{error::Error, ui::UiObject};
-use toybr_core::renderer::page::Page;
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},

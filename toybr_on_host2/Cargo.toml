@@ -1,0 +1,21 @@
+[package]
+authors = ["d0iasm"]
+name = "toybr"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "toybr"
+test = false
+path = "src/main.rs"
+
+[dependencies]
+browser = { path = "./browser"}
+common = { path = "./common"}
+renderer = { path = "./renderer"}
+net = { path = "./net"}
+ui = { path = "./ui"}
+url = { path = "./url"}
+
+[workspace]
+members = ["browser", "common", "renderer", "net", "ui", "url"]
