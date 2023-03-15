@@ -1,9 +1,11 @@
 //! This is a part of "13.2.6 Tree construction" in the HTML spec.
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
+use crate::browser::Browser;
 use crate::common::ui::UiObject;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
+use crate::utils::*;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
@@ -233,7 +235,8 @@ pub enum InsertionMode {
 }
 
 #[derive(Debug, Clone)]
-pub struct HtmlParser {
+pub struct HtmlParser<U: UiObject> {
+    browser: Weak<RefCell<Browser<U>>>,
     root: Rc<RefCell<Node>>,
     mode: InsertionMode,
     t: HtmlTokenizer,
@@ -243,9 +246,10 @@ pub struct HtmlParser {
     original_insertion_mode: InsertionMode,
 }
 
-impl HtmlParser {
-    pub fn new(t: HtmlTokenizer) -> Self {
+impl<U: UiObject> HtmlParser<U> {
+    pub fn new(browser: Weak<RefCell<Browser<U>>>, t: HtmlTokenizer) -> Self {
         Self {
+            browser,
             root: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
             mode: InsertionMode::Initial,
             t,
@@ -677,11 +681,10 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
-                                    /*
-                                    self.ui
-                                        .borrow_mut()
-                                        .console_warning(format!("unknown tag {:?}", tag));
-                                    */
+                                    console_warning(
+                                        self.browser.clone(),
+                                        format!("unknown tag {:?}", tag),
+                                    );
                                     token = self.t.next();
                                 }
                             }
@@ -765,11 +768,10 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
-                                    /*
-                                    self.ui
-                                        .borrow_mut()
-                                        .console_warning(format!("unknown tag {:?}", tag));
-                                    */
+                                    console_warning(
+                                        self.browser.clone(),
+                                        format!("unknown tag {:?}", tag),
+                                    );
                                     token = self.t.next();
                                 }
                             }

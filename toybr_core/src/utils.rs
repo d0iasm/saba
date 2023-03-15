@@ -1,9 +1,46 @@
+use crate::browser::Browser;
 use crate::common::ui::UiObject;
 use crate::renderer::html::dom::Node;
 use crate::renderer::js::ast::Program;
 use crate::renderer::layout::layout_object::LayoutObject;
-use alloc::rc::Rc;
+use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
+
+pub fn println<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, text: String) {
+    let browser = match browser.upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().println(text);
+}
+
+pub fn console_debug<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {
+    let browser = match browser.upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().console_debug(log);
+}
+
+pub fn console_warning<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {
+    let browser = match browser.upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().console_warning(log);
+}
+
+pub fn console_error<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {
+    let browser = match browser.upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().console_error(log);
+}
 
 /// for debug
 pub fn print_dom<U: UiObject>(ui: &Rc<RefCell<U>>, node: &Option<Rc<RefCell<Node>>>, depth: usize) {

@@ -85,7 +85,7 @@ impl<U: UiObject> Page<U> {
     fn set_dom_root(&mut self, html: String) {
         let html_tokenizer = HtmlTokenizer::new(html);
 
-        let dom_root = HtmlParser::new(html_tokenizer).construct_tree();
+        let dom_root = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
         self.dom_root = Some(dom_root);
     }
 
@@ -97,7 +97,7 @@ impl<U: UiObject> Page<U> {
 
         let style = get_style_content(dom);
         let css_tokenizer = CssTokenizer::new(style);
-        let cssom = CssParser::new(css_tokenizer).parse_stylesheet();
+        let cssom = CssParser::new(self.browser.clone(), css_tokenizer).parse_stylesheet();
         self.style = Some(cssom);
     }
 

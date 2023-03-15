@@ -12,11 +12,7 @@ use crossterm::{
 use net::http::HttpResponse;
 use std::io;
 use toybr_core::browser::Browser;
-use toybr_core::common::{
-    error::Error,
-    log::{Log, LogLevel},
-    ui::UiObject,
-};
+use toybr_core::common::{error::Error, ui::UiObject};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -37,8 +33,6 @@ pub struct Tui {
     browser: Weak<RefCell<Browser<Self>>>,
     input_url: String,
     input_mode: InputMode,
-    contents: Vec<String>,
-    logs: Vec<Log>,
 }
 
 impl UiObject for Tui {
@@ -47,25 +41,43 @@ impl UiObject for Tui {
             browser: Weak::new(),
             input_url: String::new(),
             input_mode: InputMode::Normal,
-            contents: Vec::new(),
-            logs: Vec::new(),
         }
     }
 
     fn println(&mut self, text: String) {
-        self.contents.push(text);
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+
+        browser.borrow_mut().println(text);
     }
 
     fn console_debug(&mut self, log: String) {
-        self.logs.push(Log::new(LogLevel::Debug, log));
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+
+        browser.borrow_mut().console_debug(log);
     }
 
     fn console_warning(&mut self, log: String) {
-        self.logs.push(Log::new(LogLevel::Warning, log));
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+
+        browser.borrow_mut().console_warning(log);
     }
 
     fn console_error(&mut self, log: String) {
-        self.logs.push(Log::new(LogLevel::Error, log));
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+
+        browser.borrow_mut().console_error(log);
     }
 
     fn start(
@@ -274,8 +286,6 @@ impl Tui {
 
         {
             // box for main content
-            //let contents: Vec<ListItem> = self
-            //.contents
             let contents: Vec<ListItem> = browser
                 .borrow_mut()
                 .consume_contents()

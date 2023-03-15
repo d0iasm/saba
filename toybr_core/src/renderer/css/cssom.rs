@@ -4,10 +4,15 @@
 //! 5. Parsing
 //! https://www.w3.org/TR/css-syntax-3/#parsing
 
+use crate::browser::Browser;
+use crate::common::ui::UiObject;
 use crate::renderer::css::token::*;
+use crate::utils::*;
+use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
+use core::cell::RefCell;
 use core::iter::Peekable;
 
 // e.g.
@@ -150,13 +155,17 @@ pub enum ComponentValue {
 }
 
 #[derive(Debug, Clone)]
-pub struct CssParser {
+pub struct CssParser<U: UiObject> {
+    browser: Weak<RefCell<Browser<U>>>,
     t: Peekable<CssTokenizer>,
 }
 
-impl CssParser {
-    pub fn new(t: CssTokenizer) -> Self {
-        Self { t: t.peekable() }
+impl<U: UiObject> CssParser<U> {
+    pub fn new(browser: Weak<RefCell<Browser<U>>>, t: CssTokenizer) -> Self {
+        Self {
+            browser,
+            t: t.peekable(),
+        }
     }
 
     fn consume_ident(&mut self) -> String {
@@ -301,11 +310,10 @@ impl CssParser {
                     }
                 }
                 _ => {
-                    /*
-                    self.ui
-                        .borrow_mut()
-                        .console_warning(format!("warning: unexpected token {:?}", token));
-                    */
+                    console_warning(
+                        self.browser.clone(),
+                        format!("warning: unexpected token {:?}", token),
+                    );
                     self.t.next();
                 }
             }
@@ -331,11 +339,10 @@ impl CssParser {
                     return Some(rule);
                 }
                 _ => {
-                    /*
-                    self.ui
-                        .borrow_mut()
-                        .console_warning(format!("consume_at_rule anything else: {:?}", token));
-                    */
+                    console_warning(
+                        self.browser.clone(),
+                        format!("consume_at_rule anything else: {:?}", token),
+                    );
                     // TODO: set prelude to AtRule
                 }
             }
