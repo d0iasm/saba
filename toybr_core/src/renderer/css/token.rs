@@ -212,7 +212,15 @@ impl Iterator for CssTokenizer {
                     continue;
                 }
                 _ => {
-                    unimplemented!("char {} is not supported yet", c);
+                    /*
+                    console_error(
+                        self.browser.clone(),
+                        format!("char {} is not supported yet", c),
+                    );
+                    self.pos += 1;
+                    continue;
+                    */
+                    panic!("char {} is not supported yet", c);
                 }
             };
 

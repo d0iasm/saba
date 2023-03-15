@@ -3,6 +3,7 @@
 
 use crate::renderer::css::cssom::*;
 use crate::renderer::html::dom::*;
+use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::*;
 use alloc::rc::Rc;
 use core::cell::RefCell;

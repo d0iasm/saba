@@ -1,3 +1,5 @@
+//! This is a helper function to construct HTML string from DOM tree.
+
 use crate::renderer::html::dom::{Node, NodeKind};
 use alloc::rc::Rc;
 use core::cell::RefCell;

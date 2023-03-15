@@ -5,262 +5,10 @@ use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::CssToken;
 use crate::renderer::html::dom::*;
 use crate::renderer::layout::color::*;
+use crate::renderer::layout::computed_style::*;
 use alloc::rc::Rc;
 use alloc::vec::Vec;
 use core::cell::RefCell;
-
-/// https://w3c.github.io/csswg-drafts/css-text/#white-space-property
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum WhiteSpace {
-    Normal,
-    Pre,
-}
-
-#[derive(Debug, Clone)]
-pub struct ComputedStyle {
-    background_color: Option<Color>,
-    color: Option<Color>,
-    display: DisplayType,
-    height: Option<f64>,
-    width: Option<f64>,
-    margin: Option<BoxInfo>,
-    padding: Option<BoxInfo>,
-    font_size: Option<FontSize>,
-    white_space: WhiteSpace,
-}
-
-impl ComputedStyle {
-    pub fn new(node: &Rc<RefCell<Node>>) -> Self {
-        Self {
-            background_color: None,
-            color: None,
-            display: Self::default_display_type(node),
-            width: None,
-            height: None,
-            margin: None,
-            padding: None,
-            font_size: Self::default_font_size(node),
-            white_space: Self::default_white_space(node),
-        }
-    }
-
-    fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
-        match &node.borrow().kind() {
-            NodeKind::Document => DisplayType::Block,
-            NodeKind::Element(element) => match element.kind() {
-                ElementKind::Html
-                | ElementKind::Body
-                | ElementKind::Div
-                | ElementKind::Ul
-                | ElementKind::Li
-                | ElementKind::H1
-                | ElementKind::P => DisplayType::Block,
-                ElementKind::Script | ElementKind::Head | ElementKind::Style => {
-                    DisplayType::DisplayNone
-                }
-                _ => DisplayType::Inline,
-            },
-            NodeKind::Text(_) => DisplayType::Inline,
-        }
-    }
-
-    fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
-        match &node.borrow().kind() {
-            NodeKind::Element(element) => match element.kind() {
-                ElementKind::H1 => Some(FontSize::XXLarge),
-                ElementKind::H2 => Some(FontSize::XLarge),
-                _ => None,
-            },
-            _ => None,
-        }
-    }
-
-    fn default_white_space(node: &Rc<RefCell<Node>>) -> WhiteSpace {
-        match &node.borrow().kind() {
-            NodeKind::Element(element) => match element.kind() {
-                ElementKind::P => WhiteSpace::Normal,
-                ElementKind::Pre => WhiteSpace::Pre,
-                _ => WhiteSpace::Normal,
-            },
-            _ => WhiteSpace::Normal,
-        }
-    }
-
-    pub fn inherit(&mut self, parent_style: &ComputedStyle) {
-        if self.color.is_none() {
-            self.color = Some(parent_style.color().clone());
-        }
-        if self.background_color.is_none() {
-            self.background_color = Some(parent_style.background_color().clone());
-        }
-        if self.height.is_none() {
-            self.height = Some(parent_style.height().clone());
-        }
-        if self.width.is_none() {
-            self.width = Some(parent_style.width().clone());
-        }
-        if self.margin.is_none() {
-            self.margin = Some(parent_style.margin().clone());
-        }
-        if self.padding.is_none() {
-            self.padding = Some(parent_style.padding().clone());
-        }
-        if self.font_size.is_none() {
-            self.font_size = Some(parent_style.font_size().clone());
-        }
-
-        // TODO: check if it's ok to inherit parent white space always
-        self.white_space = parent_style.white_space();
-    }
-
-    pub fn background_color(&self) -> Color {
-        if let Some(ref bc) = self.background_color {
-            bc.clone()
-        } else {
-            Color::from_name("white")
-        }
-    }
-
-    pub fn color(&self) -> Color {
-        if let Some(ref c) = self.color {
-            c.clone()
-        } else {
-            Color::from_name("black")
-        }
-    }
-
-    pub fn height(&self) -> f64 {
-        if let Some(h) = self.height {
-            h
-        } else {
-            0f64
-        }
-    }
-
-    pub fn display(&self) -> DisplayType {
-        self.display
-    }
-
-    pub fn width(&self) -> f64 {
-        if let Some(w) = self.width {
-            w
-        } else {
-            // 1200 is a default value defined at src/gui/browser_window/window.ui
-            1200.0f64
-        }
-    }
-
-    pub fn margin(&self) -> BoxInfo {
-        if let Some(ref m) = self.margin {
-            m.clone()
-        } else {
-            BoxInfo::new(0.0, 0.0, 0.0, 0.0)
-        }
-    }
-
-    pub fn padding(&self) -> BoxInfo {
-        if let Some(ref p) = self.padding {
-            p.clone()
-        } else {
-            BoxInfo::new(0.0, 0.0, 0.0, 0.0)
-        }
-    }
-
-    pub fn font_size(&self) -> FontSize {
-        if let Some(ref s) = self.font_size {
-            s.clone()
-        } else {
-            FontSize::Medium
-        }
-    }
-
-    pub fn white_space(&self) -> WhiteSpace {
-        self.white_space
-    }
-
-    pub fn margin_top(&self) -> f64 {
-        self.margin().top
-    }
-
-    pub fn margin_left(&self) -> f64 {
-        self.margin().left
-    }
-
-    pub fn margin_right(&self) -> f64 {
-        self.margin().right
-    }
-
-    pub fn margin_bottom(&self) -> f64 {
-        self.margin().bottom
-    }
-
-    pub fn padding_top(&self) -> f64 {
-        self.padding().top
-    }
-
-    pub fn padding_left(&self) -> f64 {
-        self.padding().left
-    }
-
-    pub fn padding_right(&self) -> f64 {
-        self.padding().right
-    }
-
-    pub fn padding_bottom(&self) -> f64 {
-        self.padding().bottom
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum DisplayType {
-    /// https://www.w3.org/TR/css-display-3/#valdef-display-block
-    Block,
-    /// https://www.w3.org/TR/css-display-3/#valdef-display-inline
-    Inline,
-    /// https://www.w3.org/TR/css-display-3/#valdef-display-none
-    DisplayNone,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct BoxInfo {
-    top: f64,
-    right: f64,
-    left: f64,
-    bottom: f64,
-}
-
-impl BoxInfo {
-    fn new(top: f64, right: f64, left: f64, bottom: f64) -> Self {
-        Self {
-            top,
-            right,
-            left,
-            bottom,
-        }
-    }
-}
-
-/// https://www.w3.org/TR/css-fonts-4/#absolute-size-mapping
-/// https://docs.gtk.org/Pango/pango_markup.html
-/// align with pango markup syntax
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum FontSize {
-    Medium,
-    XLarge,
-    XXLarge,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct LayoutPosition {
-    x: f64,
-    y: f64,
-}
-
-impl LayoutPosition {
-    pub fn new(x: f64, y: f64) -> Self {
-        Self { x, y }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct LayoutObject {
@@ -308,72 +56,70 @@ impl LayoutObject {
             match declaration.property.as_str() {
                 "background-color" => {
                     if let ComponentValue::Keyword(value) = &declaration.value {
-                        self.style.background_color = Some(Color::from_name(value));
+                        self.style.set_background_color(Color::from_name(value));
                     }
 
                     if let ComponentValue::InputToken(value) = &declaration.value {
                         if let CssToken::HashToken(color_code) = value {
-                            self.style.background_color = Some(Color::from_code(color_code));
+                            self.style
+                                .set_background_color(Color::from_code(color_code));
                         }
                     }
                 }
                 "color" => {
                     if let ComponentValue::Keyword(value) = &declaration.value {
-                        self.style.color = Some(Color::from_name(value));
+                        self.style.set_color(Color::from_name(value));
                     }
 
                     if let ComponentValue::InputToken(value) = &declaration.value {
                         if let CssToken::HashToken(color_code) = value {
-                            self.style.color = Some(Color::from_code(color_code));
+                            self.style.set_color(Color::from_code(color_code));
                         }
                     }
                 }
                 "height" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.style.height = Some(value);
+                        self.style.set_height(value);
                     }
                 }
                 "width" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.style.width = Some(value);
+                        self.style.set_width(value);
                     }
                 }
                 "margin" => {
                     // TODO: support string (e.g. "auto")
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.style.margin = Some(BoxInfo::new(value, value, value, value));
+                        self.style
+                            .set_margin(BoxInfo::new(value, value, value, value));
                     }
                 }
                 "margin-top" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.style.margin = match &self.style.margin {
-                            Some(m) => Some(BoxInfo::new(value, m.right, m.bottom, m.left)),
-                            None => Some(BoxInfo::new(value, 0.0, 0.0, 0.0)),
-                        };
+                        let m = self.style.margin();
+                        self.style
+                            .set_margin(BoxInfo::new(value, m.right(), m.bottom(), m.left()));
                     }
                 }
                 "margin-right" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.style.margin = match &self.style.margin {
-                            Some(m) => Some(BoxInfo::new(m.top, value, m.bottom, m.left)),
-                            None => Some(BoxInfo::new(0.0, value, 0.0, 0.0)),
-                        };
+                        let m = self.style.margin();
+                        self.style
+                            .set_margin(BoxInfo::new(m.top(), value, m.bottom(), m.left()));
                     }
                 }
                 "margin-bottom" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.style.margin = match &self.style.margin {
-                            Some(m) => Some(BoxInfo::new(m.top, m.right, value, m.left)),
-                            None => Some(BoxInfo::new(0.0, 0.0, value, 0.0)),
-                        };
+                        let m = self.style.margin();
+                        self.style
+                            .set_margin(BoxInfo::new(m.top(), m.right(), value, m.left()));
                     }
                 }
                 "margin-left" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.style.margin = match &self.style.margin {
-                            Some(m) => Some(BoxInfo::new(m.top, m.right, m.bottom, value)),
-                            None => Some(BoxInfo::new(0.0, 0.0, 0.0, value)),
-                        };
+                        let m = self.style.margin();
+                        self.style
+                            .set_margin(BoxInfo::new(m.top(), m.right(), m.bottom(), value));
                     }
                 }
                 // TODO: support padding
@@ -386,17 +132,19 @@ impl LayoutObject {
     }
 
     pub fn layout(&mut self, parent_style: &ComputedStyle, parent_position: &LayoutPosition) {
-        match parent_style.display {
+        match parent_style.display() {
             DisplayType::Inline => {
                 match self.style.display() {
                     DisplayType::Block => {
                         // TODO: set position property
-                        self.position.x = self.style.margin().left;
-                        self.position.y = self.style.margin().top + parent_style.height();
+                        self.position.set_x(self.style.margin().left());
+                        self.position
+                            .set_y(self.style.margin().top() + parent_style.height());
                     }
                     DisplayType::Inline => {
-                        self.position.x = parent_position.x + parent_style.width();
-                        self.position.y = parent_position.y;
+                        self.position
+                            .set_x(parent_position.x() + parent_style.width());
+                        self.position.set_y(parent_position.y());
                     }
                     DisplayType::DisplayNone => {}
                 }
@@ -404,16 +152,18 @@ impl LayoutObject {
             DisplayType::Block => {
                 match self.style.display() {
                     DisplayType::Block => {
-                        self.position.x = self.style.margin().left;
-                        self.position.y = parent_position.y
-                            + parent_style.height()
-                            + parent_style.margin().bottom
-                            + self.style.margin().top;
+                        self.position.set_x(self.style.margin().left());
+                        self.position.set_y(
+                            parent_position.y()
+                                + parent_style.height()
+                                + parent_style.margin().bottom()
+                                + self.style.margin().top(),
+                        );
                     }
                     DisplayType::Inline => {
                         // TODO: set position property
-                        self.position.x = 0.0;
-                        self.position.y = parent_style.height();
+                        self.position.set_x(0.0);
+                        self.position.set_y(parent_style.height());
                     }
                     DisplayType::DisplayNone => {}
                 }
