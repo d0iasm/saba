@@ -153,9 +153,12 @@ impl<U: UiObject> LayoutObject<U> {
                     }
                 }
                 // TODO: support padding
-                _ => println!(
-                    "warning: css property {} is not supported yet",
-                    declaration.property,
+                _ => console_warning(
+                    self.browser.clone(),
+                    format!(
+                        "warning: css property {} is not supported yet",
+                        declaration.property,
+                    ),
                 ),
             }
         }

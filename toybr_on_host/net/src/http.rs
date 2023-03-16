@@ -43,8 +43,6 @@ impl HttpClient {
 
         request.push('\n');
 
-        println!("request: {:?}", request);
-
         stream.write(request.as_bytes())?;
 
         let mut buf = String::new();
