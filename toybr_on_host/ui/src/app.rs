@@ -173,13 +173,28 @@ impl Tui {
                     },
                     InputMode::Editing => match key.code {
                         KeyCode::Enter => {
+                            // do nothing when a user puts an enter button but URL is empty
+                            if self.input_url.len() == 0 {
+                                continue;
+                            }
+
                             let url: String = self.input_url.drain(..).collect();
                             match handle_url(url.clone()) {
                                 Ok(response) => {
                                     self.console_debug(format!("received response {:?}", response));
 
                                     let page = match self.browser().upgrade() {
-                                        Some(browser) => browser.borrow().page(),
+                                        Some(browser) => {
+                                            // clean up Browser struct
+                                            {
+                                                browser.borrow_mut().clear_contents();
+                                            }
+                                            {
+                                                browser.borrow_mut().clear_logs();
+                                            }
+
+                                            browser.borrow().page()
+                                        }
                                         None => {
                                             return Err(Error::Other(
                                                 "associated browser is not found".to_string(),
@@ -288,7 +303,7 @@ impl Tui {
             // box for main content
             let contents: Vec<ListItem> = browser
                 .borrow_mut()
-                .consume_contents()
+                .contents()
                 .iter()
                 .enumerate()
                 .map(|(_, msg)| {
@@ -305,7 +320,7 @@ impl Tui {
             // box for console logs
             let logs: Vec<ListItem> = browser
                 .borrow_mut()
-                .consume_logs()
+                .logs()
                 .iter()
                 .enumerate()
                 .map(|(_, log)| {

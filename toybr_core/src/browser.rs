@@ -61,15 +61,19 @@ impl<U: UiObject> Browser<U> {
         self.page.clone()
     }
 
-    pub fn consume_contents(&mut self) -> Vec<String> {
-        let c = self.contents.clone();
-        self.contents = Vec::new();
-        c
+    pub fn contents(&mut self) -> Vec<String> {
+        self.contents.clone()
     }
 
-    pub fn consume_logs(&mut self) -> Vec<Log> {
-        let l = self.logs.clone();
+    pub fn clear_contents(&mut self) {
+        self.contents = Vec::new();
+    }
+
+    pub fn logs(&mut self) -> Vec<Log> {
+        self.logs.clone()
+    }
+
+    pub fn clear_logs(&mut self) {
         self.logs = Vec::new();
-        l
     }
 }
