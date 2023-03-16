@@ -291,8 +291,8 @@ impl Tui {
                 .consume_contents()
                 .iter()
                 .enumerate()
-                .map(|(i, m)| {
-                    let content = vec![Spans::from(Span::raw(format!("{}: {}", i, m)))];
+                .map(|(_, msg)| {
+                    let content = vec![Spans::from(Span::raw(format!("{}", msg)))];
                     ListItem::new(content)
                 })
                 .collect();

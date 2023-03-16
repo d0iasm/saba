@@ -155,10 +155,7 @@ impl<U: UiObject> LayoutObject<U> {
                 // TODO: support padding
                 _ => console_warning(
                     self.browser.clone(),
-                    format!(
-                        "warning: css property {} is not supported yet",
-                        declaration.property,
-                    ),
+                    format!("css property {} is not supported yet", declaration.property,),
                 ),
             }
         }
@@ -241,12 +238,13 @@ impl<U: UiObject> LayoutObject<U> {
         }
     }
 
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2377
     pub fn paint(&self) {
         match self.kind() {
             NodeKind::Document => {}
             NodeKind::Element(_e) => {}
             NodeKind::Text(text) => {
-                println(self.browser.clone(), format!("{:?}", text));
+                println(self.browser.clone(), format!("{}", text));
             }
         }
     }

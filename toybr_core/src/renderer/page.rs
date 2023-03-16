@@ -61,7 +61,7 @@ impl<U: UiObject> Page<U> {
             let dom = match self.dom_root.clone() {
                 Some(dom) => dom,
                 None => {
-                    self.set_layout_object_root();
+                    self.set_layout_view();
                     return;
                 }
             };
@@ -76,7 +76,9 @@ impl<U: UiObject> Page<U> {
             self.execute_js();
         }
 
-        self.set_layout_object_root();
+        self.set_layout_view();
+
+        self.paint_tree();
     }
 
     pub fn set_url(&mut self, url: String) {
@@ -106,7 +108,7 @@ impl<U: UiObject> Page<U> {
         self.style = Some(cssom);
     }
 
-    fn set_layout_object_root(&mut self) {
+    fn set_layout_view(&mut self) {
         let dom = match self.dom_root.clone() {
             Some(dom) => dom,
             None => return,
@@ -154,10 +156,18 @@ impl<U: UiObject> Page<U> {
 
     /*
     pub fn layout_view(&self) -> Option<LayoutView<U>> {
-        self.layout_view.clone()
+        match self.layout_view() {
+            Some(l) => Some(l.clone()),
+            None => None,
+        }
+        //self.layout_view.clone()
     }
     */
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=907
-    fn paint_tree(&self) {}
+    fn paint_tree(&self) {
+        if let Some(layout_view) = &self.layout_view {
+            layout_view.paint();
+        }
+    }
 }

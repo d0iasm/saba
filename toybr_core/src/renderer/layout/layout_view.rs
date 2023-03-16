@@ -145,7 +145,6 @@ fn build_layout_tree<U: UiObject>(
 /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=64
 #[derive(Debug, Clone)]
 pub struct LayoutView<U: UiObject> {
-    browser: Weak<RefCell<Browser<U>>>,
     root: Option<Rc<RefCell<LayoutObject<U>>>>,
 }
 
@@ -156,7 +155,6 @@ impl<U: UiObject> LayoutView<U> {
         cssom: &StyleSheet,
     ) -> Self {
         let mut tree = Self {
-            browser: browser.clone(),
             root: build_layout_tree(browser, &Some(root), &None, cssom),
         };
 
@@ -195,5 +193,25 @@ impl<U: UiObject> LayoutView<U> {
 
     pub fn root(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
         self.root.clone()
+    }
+
+    fn paint_node(&self, node: &Option<Rc<RefCell<LayoutObject<U>>>>) {
+        match node {
+            Some(n) => {
+                n.borrow().paint();
+
+                let first_child = n.borrow().first_child();
+                self.paint_node(&first_child);
+
+                let next_sibling = n.borrow().next_sibling();
+                self.paint_node(&next_sibling);
+            }
+            None => return,
+        }
+    }
+
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=155
+    pub fn paint(&self) {
+        self.paint_node(&self.root);
     }
 }
