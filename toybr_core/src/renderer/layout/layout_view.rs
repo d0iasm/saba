@@ -141,6 +141,8 @@ fn build_layout_tree<U: UiObject>(
     return layout_object;
 }
 
+/// LayoutView is the root of the layout tree.
+/// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=64
 #[derive(Debug, Clone)]
 pub struct LayoutView<U: UiObject> {
     browser: Weak<RefCell<Browser<U>>>,

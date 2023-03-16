@@ -15,19 +15,19 @@ use crate::renderer::html::token::*;
 use crate::renderer::js::ast::JsParser;
 use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
-use crate::renderer::layout::layout_object::LayoutObject;
-use crate::renderer::layout::layout_tree_builder::*;
+use crate::renderer::layout::layout_view::LayoutView;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 use net::http::HttpResponse;
 
 /// Represents a page. It only supports a main frame.
+#[derive(Debug, Clone)]
 pub struct Page<U: UiObject> {
     browser: Weak<RefCell<Browser<U>>>,
     url: Option<String>,
     dom_root: Option<Rc<RefCell<Node>>>,
     style: Option<StyleSheet>,
-    layout_object_root: Option<Rc<RefCell<LayoutObject<U>>>>,
+    layout_view: Option<LayoutView<U>>,
     modified: bool,
 }
 
@@ -38,7 +38,7 @@ impl<U: UiObject> Page<U> {
             url: None,
             dom_root: None,
             style: None,
-            layout_object_root: None,
+            layout_view: None,
             modified: false,
         }
     }
@@ -118,7 +118,7 @@ impl<U: UiObject> Page<U> {
         };
 
         let layout_view = LayoutView::new(self.browser.clone(), dom, &style);
-        self.layout_object_root = layout_view.root();
+        self.layout_view = Some(layout_view);
     }
 
     fn execute_js(&mut self) {
@@ -152,7 +152,12 @@ impl<U: UiObject> Page<U> {
         self.style.clone()
     }
 
-    pub fn layout_object_root(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
-        self.layout_object_root.clone()
+    /*
+    pub fn layout_view(&self) -> Option<LayoutView<U>> {
+        self.layout_view.clone()
     }
+    */
+
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=907
+    fn paint_tree(&self) {}
 }

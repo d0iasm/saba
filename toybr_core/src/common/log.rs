@@ -1,14 +1,14 @@
 use alloc::string::String;
 use alloc::string::ToString;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum LogLevel {
     Debug,
     Warning,
     Error,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Log {
     level: LogLevel,
     log: String,
