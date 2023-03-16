@@ -231,7 +231,12 @@ impl<U: UiObject> CssParser<U> {
                 Selector::UnknownSelector
             }
             _ => {
-                panic!("warning: unexpected token {:?}", token);
+                console_warning(
+                    self.browser.clone(),
+                    format!("unexpected token {:?}", token),
+                );
+                self.t.next();
+                Selector::UnknownSelector
             }
         }
     }
@@ -312,7 +317,7 @@ impl<U: UiObject> CssParser<U> {
                 _ => {
                     console_warning(
                         self.browser.clone(),
-                        format!("warning: unexpected token {:?}", token),
+                        format!("unexpected token {:?}", token),
                     );
                     self.t.next();
                 }

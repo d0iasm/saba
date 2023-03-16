@@ -1,4 +1,5 @@
 /// Helper struct and methods to handle color name, color code and RGB value.
+use crate::common::error::Error;
 use alloc::string::String;
 use alloc::string::ToString;
 
@@ -10,7 +11,7 @@ pub struct Color {
 }
 
 impl Color {
-    pub fn from_name(name: &str) -> Self {
+    pub fn from_name(name: &str) -> Result<Self, Error> {
         let code = match name {
             "black" => "#000000".to_string(),
             "silver" => "#c0c0c0".to_string(),
@@ -31,8 +32,10 @@ impl Color {
             "orange" => "#ffa500".to_string(),
             "lightgray" => "#d3d3d3".to_string(),
             _ => {
-                println!("warning: color name {:?} is not supported yet", name);
-                "#ffffff".to_string()
+                return Err(Error::UnexpectedInput(format!(
+                    "color name {:?} is not supported yet",
+                    name
+                )));
             }
         };
 
@@ -56,22 +59,27 @@ impl Color {
             "orange" => (1.0, 0.647, 0.0),        // #ffa500
             "lightgray" => (0.827, 0.827, 0.827), // #d3d3d3
             _ => {
-                println!("warning: color name {:?} is not supported yet", name);
-                (1.0, 1.0, 1.0)
+                return Err(Error::UnexpectedInput(format!(
+                    "color name {:?} is not supported yet",
+                    name
+                )));
             }
         };
 
-        Self {
+        Ok(Self {
             name: Some(name.to_string()),
             code,
             rgb,
-        }
+        })
     }
 
-    pub fn from_code(code: &str) -> Self {
+    pub fn from_code(code: &str) -> Result<Self, Error> {
         if code.chars().nth(0) != Some('#') || code.len() != 7 {
             // TODO: support color code with 4 chars such as "#fff".
-            panic!("invalid color code {}", code);
+            return Err(Error::UnexpectedInput(format!(
+                "invalid color code {}",
+                code
+            )));
         }
 
         let name = match code {
@@ -94,8 +102,10 @@ impl Color {
             "#ffa500" => "orange".to_string(),
             "#d3d3d3" => "lightgray".to_string(),
             _ => {
-                println!("warning: color code {:?} is not supported yet", code);
-                "white".to_string()
+                return Err(Error::UnexpectedInput(format!(
+                    "color code {:?} is not supported yet",
+                    code
+                )));
             }
         };
 
@@ -106,19 +116,35 @@ impl Color {
         let b =
             (u64::from_str_radix(&code[5..7], 16).expect("failed to parse int") as f64) / 255f64;
 
-        Self {
+        Ok(Self {
             name: Some(name),
             code: code.to_string(),
             rgb: (r, g, b),
-        }
+        })
     }
 
-    pub fn _from_rgb() -> Self {
+    pub fn _from_rgb() -> Result<Self, Error> {
         // TODO: implement
+        Ok(Self {
+            name: Some("white".to_string()),
+            code: "#ffffff".to_string(),
+            rgb: (0.0, 0.0, 0.0),
+        })
+    }
+
+    pub fn white() -> Self {
         Self {
             name: Some("white".to_string()),
             code: "#ffffff".to_string(),
             rgb: (0.0, 0.0, 0.0),
+        }
+    }
+
+    pub fn black() -> Self {
+        Self {
+            name: Some("black".to_string()),
+            code: "#000000".to_string(),
+            rgb: (1.0, 1.0, 1.0),
         }
     }
 

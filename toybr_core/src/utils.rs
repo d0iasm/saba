@@ -60,7 +60,7 @@ pub fn print_dom<U: UiObject>(ui: &Rc<RefCell<U>>, node: &Option<Rc<RefCell<Node
 /// for debug
 pub fn print_layout_tree<U: UiObject>(
     ui: &Rc<RefCell<U>>,
-    node: &Option<Rc<RefCell<LayoutObject>>>,
+    node: &Option<Rc<RefCell<LayoutObject<U>>>>,
     depth: usize,
 ) {
     match node {

@@ -2,5 +2,6 @@
 #[derive(Debug)]
 pub enum Error {
     Network(String),
+    UnexpectedInput(String),
     Other(String),
 }

@@ -1,3 +1,8 @@
+//! This is corresponding to a page.
+//!
+//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/
+//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h
+
 use crate::browser::Browser;
 use crate::common::ui::UiObject;
 use crate::renderer::css::cssom::StyleSheet;
@@ -22,7 +27,7 @@ pub struct Page<U: UiObject> {
     url: Option<String>,
     dom_root: Option<Rc<RefCell<Node>>>,
     style: Option<StyleSheet>,
-    layout_object_root: Option<Rc<RefCell<LayoutObject>>>,
+    layout_object_root: Option<Rc<RefCell<LayoutObject<U>>>>,
     modified: bool,
 }
 
@@ -112,8 +117,8 @@ impl<U: UiObject> Page<U> {
             None => return,
         };
 
-        let layout_tree = LayoutTree::new(dom, &style);
-        self.layout_object_root = layout_tree.root;
+        let layout_view = LayoutView::new(self.browser.clone(), dom, &style);
+        self.layout_object_root = layout_view.root();
     }
 
     fn execute_js(&mut self) {
@@ -147,7 +152,7 @@ impl<U: UiObject> Page<U> {
         self.style.clone()
     }
 
-    pub fn layout_object_root(&self) -> Option<Rc<RefCell<LayoutObject>>> {
+    pub fn layout_object_root(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
         self.layout_object_root.clone()
     }
 }

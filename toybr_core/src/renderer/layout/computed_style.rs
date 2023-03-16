@@ -117,7 +117,7 @@ impl ComputedStyle {
         if let Some(ref bc) = self.background_color {
             bc.clone()
         } else {
-            Color::from_name("white")
+            Color::from_name("white").unwrap()
         }
     }
 
@@ -129,7 +129,7 @@ impl ComputedStyle {
         if let Some(ref c) = self.color {
             c.clone()
         } else {
-            Color::from_name("black")
+            Color::from_name("black").unwrap()
         }
     }
 

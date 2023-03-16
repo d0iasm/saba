@@ -1,30 +1,35 @@
 //! https://www.w3.org/TR/css-box-3/
 //! https://www.w3.org/TR/css-layout-api-1/
 
+use crate::browser::Browser;
+use crate::common::ui::UiObject;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::CssToken;
 use crate::renderer::html::dom::*;
 use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
-use alloc::rc::Rc;
+use crate::utils::*;
+use alloc::rc::{Rc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
 #[derive(Debug, Clone)]
-pub struct LayoutObject {
+pub struct LayoutObject<U: UiObject> {
+    browser: Weak<RefCell<Browser<U>>>,
     // Similar structure with Node in renderer/dom.rs.
     node: Rc<RefCell<Node>>,
-    pub first_child: Option<Rc<RefCell<LayoutObject>>>,
-    pub next_sibling: Option<Rc<RefCell<LayoutObject>>>,
+    pub first_child: Option<Rc<RefCell<LayoutObject<U>>>>,
+    pub next_sibling: Option<Rc<RefCell<LayoutObject<U>>>>,
     // CSS information.
     pub style: ComputedStyle,
     // Layout information.
     pub position: LayoutPosition,
 }
 
-impl LayoutObject {
-    pub fn new(node: Rc<RefCell<Node>>) -> Self {
+impl<U: UiObject> LayoutObject<U> {
+    pub fn new(browser: Weak<RefCell<Browser<U>>>, node: Rc<RefCell<Node>>) -> Self {
         Self {
+            browser,
             node: node.clone(),
             first_child: None,
             next_sibling: None,
@@ -32,8 +37,6 @@ impl LayoutObject {
             position: LayoutPosition::new(0.0, 0.0),
         }
     }
-
-    pub fn paint(&self) {}
 
     pub fn node(&self) -> Rc<RefCell<Node>> {
         self.node.clone()
@@ -43,11 +46,11 @@ impl LayoutObject {
         self.node.borrow().kind().clone()
     }
 
-    pub fn first_child(&self) -> Option<Rc<RefCell<LayoutObject>>> {
+    pub fn first_child(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
         self.first_child.as_ref().map(|n| n.clone())
     }
 
-    pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject>>> {
+    pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
         self.next_sibling.as_ref().map(|n| n.clone())
     }
 
@@ -56,24 +59,51 @@ impl LayoutObject {
             match declaration.property.as_str() {
                 "background-color" => {
                     if let ComponentValue::Keyword(value) = &declaration.value {
-                        self.style.set_background_color(Color::from_name(value));
+                        let color = match Color::from_name(value) {
+                            Ok(color) => color,
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
+                                Color::white()
+                            }
+                        };
+                        self.style.set_background_color(color);
                     }
 
                     if let ComponentValue::InputToken(value) = &declaration.value {
                         if let CssToken::HashToken(color_code) = value {
-                            self.style
-                                .set_background_color(Color::from_code(color_code));
+                            let color = match Color::from_code(color_code) {
+                                Ok(color) => color,
+                                Err(e) => {
+                                    console_error(self.browser.clone(), format!("{:?}", e));
+                                    Color::white()
+                                }
+                            };
+                            self.style.set_background_color(color);
                         }
                     }
                 }
                 "color" => {
                     if let ComponentValue::Keyword(value) = &declaration.value {
-                        self.style.set_color(Color::from_name(value));
+                        let color = match Color::from_name(value) {
+                            Ok(color) => color,
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
+                                Color::black()
+                            }
+                        };
+                        self.style.set_color(color);
                     }
 
                     if let ComponentValue::InputToken(value) = &declaration.value {
                         if let CssToken::HashToken(color_code) = value {
-                            self.style.set_color(Color::from_code(color_code));
+                            let color = match Color::from_code(color_code) {
+                                Ok(color) => color,
+                                Err(e) => {
+                                    console_error(self.browser.clone(), format!("{:?}", e));
+                                    Color::black()
+                                }
+                            };
+                            self.style.set_color(color);
                         }
                     }
                 }
@@ -131,7 +161,12 @@ impl LayoutObject {
         }
     }
 
-    pub fn layout(&mut self, parent_style: &ComputedStyle, parent_position: &LayoutPosition) {
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2398
+    pub fn update_layout(
+        &mut self,
+        parent_style: &ComputedStyle,
+        parent_position: &LayoutPosition,
+    ) {
         match parent_style.display() {
             DisplayType::Inline => {
                 match self.style.display() {
@@ -200,6 +235,16 @@ impl LayoutObject {
                 Selector::UnknownSelector => false,
             },
             _ => false,
+        }
+    }
+
+    pub fn paint(&self) {
+        match self.kind() {
+            NodeKind::Document => {}
+            NodeKind::Element(_e) => {}
+            NodeKind::Text(text) => {
+                println(self.browser.clone(), format!("{:?}", text));
+            }
         }
     }
 }
