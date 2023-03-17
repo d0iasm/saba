@@ -18,7 +18,7 @@ use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
     Frame, Terminal,
 };
 use unicode_width::UnicodeWidthStr;
@@ -299,38 +299,24 @@ impl Tui {
             None => return,
         };
 
-        {
-            // box for main content
-            let contents: Vec<ListItem> = browser
-                .borrow_mut()
-                .contents()
-                .iter()
-                .enumerate()
-                .map(|(_, msg)| {
-                    let content = vec![Spans::from(Span::raw(format!("{}", msg)))];
-                    ListItem::new(content)
-                })
-                .collect();
-            let contents =
-                List::new(contents).block(Block::default().borders(Borders::ALL).title("Content"));
-            frame.render_widget(contents, chunks[2]);
-        }
+        // support only text now
+        let text = browser.borrow().contents().join("\n");
+        let contents = Paragraph::new(text)
+            .block(Block::default().title("Content").borders(Borders::ALL))
+            .wrap(Wrap { trim: true });
+        frame.render_widget(contents, chunks[2]);
 
-        {
-            // box for console logs
-            let logs: Vec<ListItem> = browser
-                .borrow_mut()
-                .logs()
-                .iter()
-                .enumerate()
-                .map(|(_, log)| {
-                    let content = vec![Spans::from(Span::raw(format!("{}", log.to_string())))];
-                    ListItem::new(content)
-                })
-                .collect();
-            let logs =
-                List::new(logs).block(Block::default().borders(Borders::ALL).title("Console"));
-            frame.render_widget(logs, chunks[3]);
-        }
+        let logs: Vec<ListItem> = browser
+            .borrow()
+            .logs()
+            .iter()
+            .enumerate()
+            .map(|(_, log)| {
+                let content = vec![Spans::from(Span::raw(format!("{}", log.to_string())))];
+                ListItem::new(content)
+            })
+            .collect();
+        let logs = List::new(logs).block(Block::default().borders(Borders::ALL).title("Console"));
+        frame.render_widget(logs, chunks[3]);
     }
 }

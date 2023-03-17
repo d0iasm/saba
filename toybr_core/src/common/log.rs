@@ -23,9 +23,9 @@ impl Log {
 impl ToString for Log {
     fn to_string(&self) -> String {
         match self.level {
-            LogLevel::Debug => format!("[Debug] {}", self.log),
-            LogLevel::Warning => format!("[Warning] {}", self.log),
-            LogLevel::Error => format!("[Error] {}", self.log),
+            LogLevel::Debug => format!("Debug: {}", self.log),
+            LogLevel::Warning => format!("Warning: {}", self.log),
+            LogLevel::Error => format!("Error: {}", self.log),
         }
     }
 }

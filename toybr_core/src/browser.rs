@@ -61,7 +61,7 @@ impl<U: UiObject> Browser<U> {
         self.page.clone()
     }
 
-    pub fn contents(&mut self) -> Vec<String> {
+    pub fn contents(&self) -> Vec<String> {
         self.contents.clone()
     }
 
@@ -69,7 +69,7 @@ impl<U: UiObject> Browser<U> {
         self.contents = Vec::new();
     }
 
-    pub fn logs(&mut self) -> Vec<Log> {
+    pub fn logs(&self) -> Vec<Log> {
         self.logs.clone()
     }
 
