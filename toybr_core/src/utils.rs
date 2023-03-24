@@ -6,6 +6,7 @@ use crate::renderer::layout::layout_object::LayoutObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
+/*
 pub fn println<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, text: String) {
     let browser = match browser.upgrade() {
         Some(browser) => browser,
@@ -13,6 +14,18 @@ pub fn println<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, text: String) {
     };
 
     browser.borrow_mut().println(text);
+}
+*/
+
+pub fn println<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
+    let style = layout_object.style();
+    let position = layout_object.position();
+    let browser = match layout_object.browser().upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().println(text, style, position);
 }
 
 pub fn console_debug<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {

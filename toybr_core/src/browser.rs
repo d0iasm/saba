@@ -1,18 +1,19 @@
-extern crate alloc;
-
+use crate::common::display_item::DisplayItem;
 use crate::common::error::Error;
 use crate::common::log::{Log, LogLevel};
 use crate::common::ui::UiObject;
+use crate::renderer::layout::computed_style::{ComputedStyle, LayoutPosition};
 use crate::renderer::page::Page;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 use net::http::HttpResponse;
 
+#[derive(Debug, Clone)]
 pub struct Browser<U: UiObject> {
     // TODO: support multiple tabs/pages. This browser currently supports only one page.
     ui: Rc<RefCell<U>>,
     page: Rc<RefCell<Page<U>>>,
-    contents: Vec<String>,
+    display_items: Vec<DisplayItem>,
     logs: Vec<Log>,
 }
 
@@ -21,7 +22,7 @@ impl<U: UiObject> Browser<U> {
         Self {
             ui,
             page,
-            contents: Vec::new(),
+            display_items: Vec::new(),
             logs: Vec::new(),
         }
     }
@@ -37,8 +38,12 @@ impl<U: UiObject> Browser<U> {
         }
     }
 
-    pub fn println(&mut self, text: String) {
-        self.contents.push(text);
+    pub fn println(&mut self, text: String, style: ComputedStyle, position: LayoutPosition) {
+        self.display_items.push(DisplayItem::Text {
+            text,
+            style,
+            position,
+        });
     }
 
     pub fn console_debug(&mut self, log: String) {
@@ -61,12 +66,12 @@ impl<U: UiObject> Browser<U> {
         self.page.clone()
     }
 
-    pub fn contents(&self) -> Vec<String> {
-        self.contents.clone()
+    pub fn display_items(&self) -> Vec<DisplayItem> {
+        self.display_items.clone()
     }
 
-    pub fn clear_contents(&mut self) {
-        self.contents = Vec::new();
+    pub fn clear_display_items(&mut self) {
+        self.display_items = Vec::new();
     }
 
     pub fn logs(&self) -> Vec<Log> {

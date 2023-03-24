@@ -12,7 +12,7 @@ use crossterm::{
 use net::http::HttpResponse;
 use std::io;
 use toybr_core::browser::Browser;
-use toybr_core::common::{error::Error, ui::UiObject};
+use toybr_core::common::{display_item::DisplayItem, error::Error, ui::UiObject};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -44,13 +44,16 @@ impl UiObject for Tui {
         }
     }
 
-    fn println(&mut self, text: String) {
+    // TODO: remove this?
+    fn println(&mut self, _text: String) {
+        /*
         let browser = match self.browser().upgrade() {
             Some(browser) => browser,
             None => return,
         };
 
         browser.borrow_mut().println(text);
+        */
     }
 
     fn console_debug(&mut self, log: String) {
@@ -187,7 +190,7 @@ impl Tui {
                                         Some(browser) => {
                                             // clean up Browser struct
                                             {
-                                                browser.borrow_mut().clear_contents();
+                                                browser.borrow_mut().clear_display_items();
                                             }
                                             {
                                                 browser.borrow_mut().clear_logs();
@@ -300,8 +303,32 @@ impl Tui {
         };
 
         // support only text now
-        let text = browser.borrow().contents().join("\n");
-        let contents = Paragraph::new(text)
+        let display_items = browser.borrow().display_items();
+
+        let mut spans: Vec<Spans> = Vec::new();
+        for item in display_items {
+            match item {
+                DisplayItem::Rect {
+                    style: _,
+                    position: _,
+                } => {}
+                DisplayItem::Link {
+                    text: _,
+                    destination: _,
+                } => {}
+                DisplayItem::Text {
+                    text,
+                    style: _,
+                    position: _,
+                } => {
+                    self.console_debug(text.clone());
+                    // TODO: split with "\n" to insert a new line?
+                    spans.push(Spans::from(Span::raw(text)));
+                }
+            }
+        }
+
+        let contents = Paragraph::new(spans)
             .block(Block::default().title("Content").borders(Borders::ALL))
             .wrap(Wrap { trim: true });
         frame.render_widget(contents, chunks[2]);

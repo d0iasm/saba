@@ -156,11 +156,7 @@ impl<U: UiObject> Page<U> {
 
     /*
     pub fn layout_view(&self) -> Option<LayoutView<U>> {
-        match self.layout_view() {
-            Some(l) => Some(l.clone()),
-            None => None,
-        }
-        //self.layout_view.clone()
+        self.layout_view.clone()
     }
     */
 

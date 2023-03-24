@@ -38,6 +38,10 @@ impl<U: UiObject> LayoutObject<U> {
         }
     }
 
+    pub fn browser(&self) -> Weak<RefCell<Browser<U>>> {
+        self.browser.clone()
+    }
+
     pub fn node(&self) -> Rc<RefCell<Node>> {
         self.node.clone()
     }
@@ -52,6 +56,14 @@ impl<U: UiObject> LayoutObject<U> {
 
     pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
         self.next_sibling.as_ref().map(|n| n.clone())
+    }
+
+    pub fn style(&self) -> ComputedStyle {
+        self.style.clone()
+    }
+
+    pub fn position(&self) -> LayoutPosition {
+        self.position.clone()
     }
 
     pub fn set_style(&mut self, declarations: Vec<Declaration>) {
@@ -244,7 +256,7 @@ impl<U: UiObject> LayoutObject<U> {
             NodeKind::Document => {}
             NodeKind::Element(_e) => {}
             NodeKind::Text(text) => {
-                println(self.browser.clone(), format!("{}", text));
+                println(self, format!("{}", text));
             }
         }
     }
