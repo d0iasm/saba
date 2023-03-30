@@ -15,15 +15,21 @@ use core::cell::RefCell;
 use core::fmt::{Display, Formatter};
 use core::str::FromStr;
 
+// Type aliases
+// Could be more generic like 
+// pub type StrongLink<T> = Rc<RefCell<T>>;
+pub type StrongNodeLink = Rc<RefCell<Node>>;
+pub type WeakNodeLink = Weak<RefCell<Node>>;
+
 #[derive(Debug, Clone)]
 /// https://dom.spec.whatwg.org/#interface-node
 pub struct Node {
     kind: NodeKind,
-    parent: Option<Weak<RefCell<Node>>>,
-    first_child: Option<Rc<RefCell<Node>>>,
-    last_child: Option<Weak<RefCell<Node>>>,
-    previous_sibling: Option<Weak<RefCell<Node>>>,
-    next_sibling: Option<Rc<RefCell<Node>>>,
+    parent: Option<WeakNodeLink>,
+    first_child: Option<StrongNodeLink>,
+    last_child: Option<WeakNodeLink>,
+    previous_sibling: Option<WeakNodeLink>,
+    next_sibling: Option<StrongNodeLink>,
 }
 
 ///dom.spec.whatwg.org/#interface-node
@@ -50,25 +56,25 @@ impl Node {
         }
     }
 
-    pub fn update_first_child(&mut self, first_child: Option<Rc<RefCell<Node>>>) {
+    pub fn update_first_child(&mut self, first_child: Option<StrongNodeLink>) {
         self.first_child = first_child;
     }
 
-    pub fn first_child(&self) -> Option<Rc<RefCell<Node>>> {
+    pub fn first_child(&self) -> Option<StrongNodeLink> {
         self.first_child.as_ref().map(|n| n.clone())
     }
 
     #[allow(dead_code)]
-    pub fn last_child(&self) -> Option<Weak<RefCell<Node>>> {
+    pub fn last_child(&self) -> Option<WeakNodeLink> {
         self.last_child.as_ref().map(|n| n.clone())
     }
 
     #[allow(dead_code)]
-    pub fn previous_sibling(&self) -> Option<Weak<RefCell<Node>>> {
+    pub fn previous_sibling(&self) -> Option<WeakNodeLink> {
         self.previous_sibling.as_ref().map(|n| n.clone())
     }
 
-    pub fn next_sibling(&self) -> Option<Rc<RefCell<Node>>> {
+    pub fn next_sibling(&self) -> Option<StrongNodeLink> {
         self.next_sibling.as_ref().map(|n| n.clone())
     }
 }
@@ -237,11 +243,11 @@ pub enum InsertionMode {
 #[derive(Debug, Clone)]
 pub struct HtmlParser<U: UiObject> {
     browser: Weak<RefCell<Browser<U>>>,
-    root: Rc<RefCell<Node>>,
+    root: StrongNodeLink,
     mode: InsertionMode,
     t: HtmlTokenizer,
     /// https://html.spec.whatwg.org/multipage/parsing.html#the-stack-of-open-elements
-    stack_of_open_elements: Vec<Rc<RefCell<Node>>>,
+    stack_of_open_elements: Vec<StrongNodeLink>,
     /// https://html.spec.whatwg.org/multipage/parsing.html#original-insertion-mode
     original_insertion_mode: InsertionMode,
 }
@@ -393,7 +399,7 @@ impl<U: UiObject> HtmlParser<U> {
         false
     }
 
-    pub fn construct_tree(&mut self) -> Rc<RefCell<Node>> {
+    pub fn construct_tree(&mut self) -> StrongNodeLink {
         let mut token = self.t.next();
 
         while token.is_some() {
@@ -890,9 +896,9 @@ impl<U: UiObject> HtmlParser<U> {
 }
 
 pub fn get_element_by_id(
-    node: Option<Rc<RefCell<Node>>>,
+    node: Option<StrongNodeLink>,
     id_name: &String,
-) -> Option<Rc<RefCell<Node>>> {
+) -> Option<StrongNodeLink> {
     match node {
         Some(n) => {
             match n.borrow().kind() {
@@ -922,9 +928,9 @@ pub fn get_element_by_id(
 }
 
 fn get_target_element_node(
-    node: Option<Rc<RefCell<Node>>>,
+    node: Option<StrongNodeLink>,
     element_kind: ElementKind,
-) -> Option<Rc<RefCell<Node>>> {
+) -> Option<StrongNodeLink> {
     match node {
         Some(n) => {
             if n.borrow().kind
@@ -946,7 +952,7 @@ fn get_target_element_node(
     }
 }
 
-pub fn get_style_content(root: Rc<RefCell<Node>>) -> String {
+pub fn get_style_content(root: StrongNodeLink) -> String {
     let style_node = match get_target_element_node(Some(root), ElementKind::Style) {
         Some(node) => node,
         None => return "".to_string(),
@@ -962,7 +968,7 @@ pub fn get_style_content(root: Rc<RefCell<Node>>) -> String {
     content
 }
 
-pub fn get_js_content(root: Rc<RefCell<Node>>) -> String {
+pub fn get_js_content(root: StrongNodeLink) -> String {
     let js_node = match get_target_element_node(Some(root), ElementKind::Script) {
         Some(node) => node,
         None => return "".to_string(),
