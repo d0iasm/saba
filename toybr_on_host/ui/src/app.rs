@@ -321,9 +321,9 @@ impl Tui {
                     style: _,
                     position: _,
                 } => {
-                    self.console_debug(text.clone());
-                    // TODO: split with "\n" to insert a new line?
-                    spans.push(Spans::from(Span::raw(text)));
+                    for line in text.split("\n") {
+                        spans.push(Spans::from(Span::raw(String::from(line))));
+                    }
                 }
             }
         }
