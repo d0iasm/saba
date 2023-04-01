@@ -8,7 +8,7 @@ use core::cell::RefCell;
 
 pub fn add_text_display_item<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
     let style = layout_object.style();
-    let position = layout_object.position();
+    let point = layout_object.point();
     let browser = match layout_object.browser().upgrade() {
         Some(browser) => browser,
         None => return,
@@ -17,7 +17,7 @@ pub fn add_text_display_item<U: UiObject>(layout_object: &LayoutObject<U>, text:
     browser.borrow_mut().push_display_item(DisplayItem::Text {
         text,
         style,
-        position,
+        layout_point: point,
     });
 }
 
@@ -27,7 +27,7 @@ pub fn add_link_display_item<U: UiObject>(
     link_text: String,
 ) {
     let style = layout_object.style();
-    let position = layout_object.position();
+    let point = layout_object.point();
     let browser = match layout_object.browser().upgrade() {
         Some(browser) => browser,
         None => return,
@@ -37,7 +37,7 @@ pub fn add_link_display_item<U: UiObject>(
         text: link_text,
         destination: href,
         style,
-        position,
+        layout_point: point,
     });
 }
 

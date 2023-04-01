@@ -1,23 +1,24 @@
 //! This is used from UI component.
 
-use crate::renderer::layout::computed_style::{ComputedStyle, LayoutPosition};
+use crate::renderer::layout::computed_style::ComputedStyle;
+use crate::renderer::layout::layout_point::LayoutPoint;
 
 #[derive(Debug, Clone)]
 pub enum DisplayItem {
     Rect {
         style: ComputedStyle,
-        position: LayoutPosition,
+        layout_point: LayoutPoint,
     },
     Link {
         text: String,
         destination: String,
         style: ComputedStyle,
-        position: LayoutPosition,
+        layout_point: LayoutPoint,
     },
     Text {
         text: String,
         style: ComputedStyle,
-        position: LayoutPosition,
+        layout_point: LayoutPoint,
     },
 }
 
@@ -26,7 +27,7 @@ impl DisplayItem {
         match self {
             DisplayItem::Rect {
                 style: _,
-                position: _,
+                layout_point: _,
             } => true,
             _ => false,
         }
@@ -38,7 +39,7 @@ impl DisplayItem {
                 text: _,
                 destination: _,
                 style: _,
-                position: _,
+                layout_point: _,
             } => true,
             _ => false,
         }
@@ -49,7 +50,7 @@ impl DisplayItem {
             DisplayItem::Text {
                 text: _,
                 style: _,
-                position: _,
+                layout_point: _,
             } => true,
             _ => false,
         }

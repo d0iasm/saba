@@ -10,6 +10,7 @@ use crate::renderer::css::token::CssToken;
 use crate::renderer::html::dom::*;
 use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
+use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::utils::*;
 use alloc::rc::{Rc, Weak};
 use alloc::vec::Vec;
@@ -47,7 +48,7 @@ pub struct LayoutObject<U: UiObject> {
     // CSS information.
     pub style: ComputedStyle,
     // Layout information.
-    pub position: LayoutPosition,
+    pub point: LayoutPoint,
 }
 
 impl<U: UiObject> LayoutObject<U> {
@@ -59,7 +60,7 @@ impl<U: UiObject> LayoutObject<U> {
             first_child: None,
             next_sibling: None,
             style: ComputedStyle::new(&node),
-            position: LayoutPosition::new(0.0, 0.0),
+            point: LayoutPoint::new(0.0, 0.0),
         }
     }
 
@@ -91,8 +92,8 @@ impl<U: UiObject> LayoutObject<U> {
         self.style.clone()
     }
 
-    pub fn position(&self) -> LayoutPosition {
-        self.position.clone()
+    pub fn point(&self) -> LayoutPoint {
+        self.point.clone()
     }
 
     pub fn set_style(&mut self, declarations: Vec<Declaration>) {
@@ -203,24 +204,19 @@ impl<U: UiObject> LayoutObject<U> {
     }
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2398
-    pub fn update_layout(
-        &mut self,
-        parent_style: &ComputedStyle,
-        parent_position: &LayoutPosition,
-    ) {
+    pub fn update_layout(&mut self, parent_style: &ComputedStyle, parent_point: &LayoutPoint) {
         match parent_style.display() {
             DisplayType::Inline => {
                 match self.style.display() {
                     DisplayType::Block => {
-                        // TODO: set position property
-                        self.position.set_x(self.style.margin().left());
-                        self.position
+                        // TODO: set point property
+                        self.point.set_x(self.style.margin().left());
+                        self.point
                             .set_y(self.style.margin().top() + parent_style.height());
                     }
                     DisplayType::Inline => {
-                        self.position
-                            .set_x(parent_position.x() + parent_style.width());
-                        self.position.set_y(parent_position.y());
+                        self.point.set_x(parent_point.x() + parent_style.width());
+                        self.point.set_y(parent_point.y());
                     }
                     DisplayType::DisplayNone => {}
                 }
@@ -228,18 +224,18 @@ impl<U: UiObject> LayoutObject<U> {
             DisplayType::Block => {
                 match self.style.display() {
                     DisplayType::Block => {
-                        self.position.set_x(self.style.margin().left());
-                        self.position.set_y(
-                            parent_position.y()
+                        self.point.set_x(self.style.margin().left());
+                        self.point.set_y(
+                            parent_point.y()
                                 + parent_style.height()
                                 + parent_style.margin().bottom()
                                 + self.style.margin().top(),
                         );
                     }
                     DisplayType::Inline => {
-                        // TODO: set position property
-                        self.position.set_x(0.0);
-                        self.position.set_y(parent_style.height());
+                        // TODO: set point property
+                        self.point.set_x(0.0);
+                        self.point.set_y(parent_style.height());
                     }
                     DisplayType::DisplayNone => {}
                 }
@@ -283,7 +279,12 @@ impl<U: UiObject> LayoutObject<U> {
     pub fn paint(&mut self) {
         match self.kind() {
             LayoutObjectKind::Block => match self.node_kind() {
-                NodeKind::Element(_e) => {}
+                NodeKind::Element(e) => {
+                    console_debug(
+                        self.browser.clone(),
+                        format!("block {} {:?}", e.kind(), self.point),
+                    );
+                }
                 _ => {}
             },
             LayoutObjectKind::Inline => {

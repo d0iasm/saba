@@ -9,6 +9,7 @@ use crate::renderer::html::dom::{ElementKind, Node, NodeKind};
 use crate::renderer::html::dom_api::get_target_element_node;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::LayoutObject;
+use crate::renderer::layout::layout_point::LayoutPoint;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
@@ -164,28 +165,28 @@ impl<U: UiObject> LayoutView<U> {
         &self,
         node: &Option<Rc<RefCell<LayoutObject<U>>>>,
         parent_style: &ComputedStyle,
-        parent_position: &LayoutPosition,
+        parent_point: &LayoutPoint,
     ) {
         match node {
             Some(n) => {
-                n.borrow_mut().update_layout(parent_style, parent_position);
+                n.borrow_mut().update_layout(parent_style, parent_point);
 
                 let first_child = n.borrow().first_child();
-                self.layout_node(&first_child, &n.borrow().style, &n.borrow().position);
+                self.layout_node(&first_child, &n.borrow().style, &n.borrow().point);
 
                 let next_sibling = n.borrow().next_sibling();
-                self.layout_node(&next_sibling, &n.borrow().style, &n.borrow().position);
+                self.layout_node(&next_sibling, &n.borrow().style, &n.borrow().point);
             }
             None => return,
         }
     }
 
-    /// Calculate the layout position.
+    /// Calculate the layout point.
     fn update_layout(&mut self) {
         let fake_node = Rc::new(RefCell::new(Node::new(NodeKind::Document)));
         let fake_style = ComputedStyle::new(&fake_node);
-        let fake_position = LayoutPosition::new(0.0, 0.0);
-        self.layout_node(&self.root, &fake_style, &fake_position);
+        let fake_point = LayoutPoint::new(0.0, 0.0);
+        self.layout_node(&self.root, &fake_style, &fake_point);
     }
 
     pub fn root(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
