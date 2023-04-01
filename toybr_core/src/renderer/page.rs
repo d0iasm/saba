@@ -10,6 +10,7 @@ use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
 use crate::renderer::html::dom::Node;
 use crate::renderer::html::dom::*;
+use crate::renderer::html::dom_api::{get_js_content, get_style_content};
 use crate::renderer::html::html_builder::dom_to_html;
 use crate::renderer::html::token::*;
 use crate::renderer::js::ast::JsParser;

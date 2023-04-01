@@ -43,7 +43,7 @@ impl Node {
         self.kind.clone()
     }
 
-    fn element_kind(&self) -> Option<ElementKind> {
+    pub fn element_kind(&self) -> Option<ElementKind> {
         match self.kind {
             NodeKind::Document | NodeKind::Text(_) => None,
             NodeKind::Element(ref e) => Some(e.kind()),
@@ -125,6 +125,43 @@ impl Element {
     pub fn attributes(&self) -> Vec<Attribute> {
         self.attributes.clone()
     }
+
+    /// return true if this element is a block element
+    pub fn is_block_element(&self) -> bool {
+        match self.kind {
+            // https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements#elements
+            ElementKind::H1
+            | ElementKind::H2
+            | ElementKind::P
+            | ElementKind::Pre
+            | ElementKind::Ul
+            | ElementKind::Li
+            | ElementKind::Div => true,
+            // https://developer.mozilla.org/en-US/docs/Web/HTML/Inline_elements#list_of_inline_elements
+            _ => false,
+        }
+    }
+
+    /*
+    /// https://html.spec.whatwg.org/multipage/dom.html#flow-content-2
+    /// return true if this element should exist inside a body element
+    pub fn is_flow_content(&self) -> bool {
+        match self.kind {
+            // https://html.spec.whatwg.org/multipage/scripting.html#the-script-element
+            // ElementKind::Script should be a flow content
+            ElementKind::Body
+            | ElementKind::H1
+            | ElementKind::H2
+            | ElementKind::P
+            | ElementKind::Pre
+            | ElementKind::Ul
+            | ElementKind::Li
+            | ElementKind::Div
+            | ElementKind::A => true,
+            _ => false,
+        }
+    }
+    */
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -887,93 +924,4 @@ impl<U: UiObject> HtmlParser<U> {
 
         self.root.clone()
     }
-}
-
-pub fn get_element_by_id(
-    node: Option<Rc<RefCell<Node>>>,
-    id_name: &String,
-) -> Option<Rc<RefCell<Node>>> {
-    match node {
-        Some(n) => {
-            match n.borrow().kind() {
-                NodeKind::Element(e) => {
-                    for attr in &e.attributes() {
-                        if attr.name() == "id" && attr.value() == *id_name {
-                            return Some(n.clone());
-                        }
-                    }
-                }
-                _ => {}
-            }
-
-            let result1 = get_element_by_id(n.borrow().first_child(), id_name);
-            let result2 = get_element_by_id(n.borrow().next_sibling(), id_name);
-            if result1.is_none() && result2.is_none() {
-                return None;
-            }
-            if result1.is_none() {
-                return result2;
-            }
-
-            return result1;
-        }
-        None => return None,
-    }
-}
-
-fn get_target_element_node(
-    node: Option<Rc<RefCell<Node>>>,
-    element_kind: ElementKind,
-) -> Option<Rc<RefCell<Node>>> {
-    match node {
-        Some(n) => {
-            if n.borrow().kind
-                == NodeKind::Element(Element::new(&element_kind.to_string(), Vec::new()))
-            {
-                return Some(n.clone());
-            }
-            let result1 = get_target_element_node(n.borrow().first_child(), element_kind);
-            let result2 = get_target_element_node(n.borrow().next_sibling(), element_kind);
-            if result1.is_none() && result2.is_none() {
-                return None;
-            }
-            if result1.is_none() {
-                return result2;
-            }
-            return result1;
-        }
-        None => return None,
-    }
-}
-
-pub fn get_style_content(root: Rc<RefCell<Node>>) -> String {
-    let style_node = match get_target_element_node(Some(root), ElementKind::Style) {
-        Some(node) => node,
-        None => return "".to_string(),
-    };
-    let text_node = match style_node.borrow().first_child() {
-        Some(node) => node,
-        None => return "".to_string(),
-    };
-    let content = match &text_node.borrow().kind {
-        NodeKind::Text(ref s) => s.clone(),
-        _ => "".to_string(),
-    };
-    content
-}
-
-pub fn get_js_content(root: Rc<RefCell<Node>>) -> String {
-    let js_node = match get_target_element_node(Some(root), ElementKind::Script) {
-        Some(node) => node,
-        None => return "".to_string(),
-    };
-    let text_node = match js_node.borrow().first_child() {
-        Some(node) => node,
-        None => return "".to_string(),
-    };
-    let content = match &text_node.borrow().kind {
-        NodeKind::Text(ref s) => s.clone(),
-        _ => "".to_string(),
-    };
-    content
 }

@@ -1,5 +1,7 @@
 //! https://www.w3.org/TR/css-box-3/
 //! https://www.w3.org/TR/css-layout-api-1/
+//! https://www.w3.org/TR/css3-linebox/
+//! https://www.w3.org/TR/css-position-3/
 
 use crate::browser::Browser;
 use crate::common::ui::UiObject;
@@ -13,9 +15,31 @@ use alloc::rc::{Rc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum LayoutObjectKind {
+    Block,
+    Inline,
+    Text,
+}
+
+fn layout_object_kind_by_node(node: &Rc<RefCell<Node>>) -> LayoutObjectKind {
+    match node.borrow().kind() {
+        NodeKind::Document => panic!("should not create a layout object for a Document node"),
+        NodeKind::Element(e) => {
+            if e.is_block_element() {
+                LayoutObjectKind::Block
+            } else {
+                LayoutObjectKind::Inline
+            }
+        }
+        NodeKind::Text(_) => LayoutObjectKind::Text,
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LayoutObject<U: UiObject> {
     browser: Weak<RefCell<Browser<U>>>,
+    kind: LayoutObjectKind,
     // Similar structure with Node in renderer/dom.rs.
     node: Rc<RefCell<Node>>,
     pub first_child: Option<Rc<RefCell<LayoutObject<U>>>>,
@@ -30,6 +54,7 @@ impl<U: UiObject> LayoutObject<U> {
     pub fn new(browser: Weak<RefCell<Browser<U>>>, node: Rc<RefCell<Node>>) -> Self {
         Self {
             browser,
+            kind: layout_object_kind_by_node(&node),
             node: node.clone(),
             first_child: None,
             next_sibling: None,
@@ -46,7 +71,11 @@ impl<U: UiObject> LayoutObject<U> {
         self.node.clone()
     }
 
-    pub fn kind(&self) -> NodeKind {
+    pub fn kind(&self) -> LayoutObjectKind {
+        self.kind.clone()
+    }
+
+    pub fn node_kind(&self) -> NodeKind {
         self.node.borrow().kind().clone()
     }
 
@@ -220,7 +249,7 @@ impl<U: UiObject> LayoutObject<U> {
     }
 
     pub fn is_node_selected(&self, selector: &Selector) -> bool {
-        match &self.kind() {
+        match &self.node_kind() {
             NodeKind::Element(e) => match selector {
                 Selector::TypeSelector(type_name) => {
                     if e.kind().to_string() == *type_name {
@@ -252,14 +281,14 @@ impl<U: UiObject> LayoutObject<U> {
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2377
     pub fn paint(&mut self) {
-        match self.kind() {
+        match self.node_kind() {
             NodeKind::Document => {}
             NodeKind::Element(e) => match e.kind() {
                 ElementKind::A => {
                     let text_node = self.first_child();
                     let mut link_text = String::new();
                     if let Some(text_node) = text_node {
-                        match text_node.borrow().kind() {
+                        match text_node.borrow().node_kind() {
                             NodeKind::Text(text) => link_text = text,
                             _ => return,
                         }

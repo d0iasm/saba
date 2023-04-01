@@ -5,9 +5,10 @@
 use crate::browser::Browser;
 use crate::common::ui::UiObject;
 use crate::renderer::css::cssom::*;
-use crate::renderer::html::dom::*;
+use crate::renderer::html::dom::{ElementKind, Node, NodeKind};
+use crate::renderer::html::dom_api::get_target_element_node;
 use crate::renderer::layout::computed_style::*;
-use crate::renderer::layout::layout_object::*;
+use crate::renderer::layout::layout_object::LayoutObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
@@ -60,82 +61,74 @@ fn build_layout_tree<U: UiObject>(
         return None;
     }
 
-    match node {
-        Some(n) => {
-            let original_first_child = n.borrow().first_child();
-            let original_next_sibling = n.borrow().next_sibling();
-            let mut first_child = build_layout_tree(
-                browser.clone(),
-                &original_first_child,
-                &layout_object,
-                cssom,
-            );
-            let mut next_sibling =
-                build_layout_tree(browser.clone(), &original_next_sibling, &None, cssom);
+    if let Some(n) = node {
+        let original_first_child = n.borrow().first_child();
+        let original_next_sibling = n.borrow().next_sibling();
+        let mut first_child = build_layout_tree(
+            browser.clone(),
+            &original_first_child,
+            &layout_object,
+            cssom,
+        );
+        let mut next_sibling =
+            build_layout_tree(browser.clone(), &original_next_sibling, &None, cssom);
 
-            // if the original first child node is "display:none" and the original first child
-            // node has a next sibiling node, treat the next sibling node as a new first child
-            // node.
-            if first_child.is_none() && original_first_child.is_some() {
-                let mut original_dom_node = original_first_child
-                    .expect("first child should exist")
-                    .borrow()
-                    .next_sibling();
+        // if the original first child node is "display:none" and the original first child
+        // node has a next sibiling node, treat the next sibling node as a new first child
+        // node.
+        if first_child.is_none() && original_first_child.is_some() {
+            let mut original_dom_node = original_first_child
+                .expect("first child should exist")
+                .borrow()
+                .next_sibling();
 
-                loop {
-                    first_child = build_layout_tree(
-                        browser.clone(),
-                        &original_dom_node,
-                        &layout_object,
-                        cssom,
-                    );
+            loop {
+                first_child =
+                    build_layout_tree(browser.clone(), &original_dom_node, &layout_object, cssom);
 
-                    // check the next sibling node
-                    if first_child.is_none() && original_dom_node.is_some() {
-                        original_dom_node = original_dom_node
-                            .expect("next sibling should exist")
-                            .borrow()
-                            .next_sibling();
-                        continue;
-                    }
-
-                    break;
+                // check the next sibling node
+                if first_child.is_none() && original_dom_node.is_some() {
+                    original_dom_node = original_dom_node
+                        .expect("next sibling should exist")
+                        .borrow()
+                        .next_sibling();
+                    continue;
                 }
+
+                break;
             }
-
-            // if the original next sibling node is "display:none" and the original next
-            // sibling node has a next sibling node, treat the next sibling node as a new next
-            // sibling node.
-            if next_sibling.is_none() && n.borrow().next_sibling().is_some() {
-                let mut original_dom_node = original_next_sibling
-                    .expect("first child should exist")
-                    .borrow()
-                    .next_sibling();
-
-                loop {
-                    next_sibling =
-                        build_layout_tree(browser.clone(), &original_dom_node, &None, cssom);
-
-                    if next_sibling.is_none() && original_dom_node.is_some() {
-                        original_dom_node = original_dom_node
-                            .expect("next sibling should exist")
-                            .borrow()
-                            .next_sibling();
-                        continue;
-                    }
-
-                    break;
-                }
-            }
-
-            let obj = match layout_object {
-                Some(ref obj) => obj,
-                None => panic!("render object should exist here"),
-            };
-            obj.borrow_mut().first_child = first_child;
-            obj.borrow_mut().next_sibling = next_sibling;
         }
-        None => {}
+
+        // if the original next sibling node is "display:none" and the original next
+        // sibling node has a next sibling node, treat the next sibling node as a new next
+        // sibling node.
+        if next_sibling.is_none() && n.borrow().next_sibling().is_some() {
+            let mut original_dom_node = original_next_sibling
+                .expect("first child should exist")
+                .borrow()
+                .next_sibling();
+
+            loop {
+                next_sibling = build_layout_tree(browser.clone(), &original_dom_node, &None, cssom);
+
+                if next_sibling.is_none() && original_dom_node.is_some() {
+                    original_dom_node = original_dom_node
+                        .expect("next sibling should exist")
+                        .borrow()
+                        .next_sibling();
+                    continue;
+                }
+
+                break;
+            }
+        }
+
+        let obj = match layout_object {
+            Some(ref obj) => obj,
+            None => panic!("render object should exist here"),
+        };
+        obj.borrow_mut().first_child = first_child;
+        obj.borrow_mut().next_sibling = next_sibling;
     }
 
     return layout_object;
@@ -154,8 +147,12 @@ impl<U: UiObject> LayoutView<U> {
         root: Rc<RefCell<Node>>,
         cssom: &StyleSheet,
     ) -> Self {
+        // https://html.spec.whatwg.org/multipage/dom.html#flow-content-2
+        // a layout object should be created for a flow content
+        let body_root = get_target_element_node(Some(root), ElementKind::Body);
+
         let mut tree = Self {
-            root: build_layout_tree(browser, &Some(root), &None, cssom),
+            root: build_layout_tree(browser, &body_root, &None, cssom),
         };
 
         tree.update_layout();
