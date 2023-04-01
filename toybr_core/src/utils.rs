@@ -6,18 +6,7 @@ use crate::renderer::layout::layout_object::LayoutObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
-/*
-pub fn println<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, text: String) {
-    let browser = match browser.upgrade() {
-        Some(browser) => browser,
-        None => return,
-    };
-
-    browser.borrow_mut().println(text);
-}
-*/
-
-pub fn println<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
+pub fn add_text_display_item<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
     let style = layout_object.style();
     let position = layout_object.position();
     let browser = match layout_object.browser().upgrade() {
@@ -25,7 +14,11 @@ pub fn println<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
         None => return,
     };
 
-    browser.borrow_mut().println(text, style, position);
+    browser.borrow_mut().push_display_item(DisplayItem::Text {
+        text,
+        style,
+        position,
+    });
 }
 
 pub fn add_link_display_item<U: UiObject>(

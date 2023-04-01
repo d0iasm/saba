@@ -61,18 +61,6 @@ impl UiObject for Tui {
         }
     }
 
-    // TODO: remove this?
-    fn println(&mut self, _text: String) {
-        /*
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-
-        browser.borrow_mut().println(text);
-        */
-    }
-
     fn console_debug(&mut self, log: String) {
         let browser = match self.browser().upgrade() {
             Some(browser) => browser,
@@ -435,10 +423,11 @@ impl Tui {
         let mut spans: Vec<Spans> = Vec::new();
         for item in display_items {
             match item {
-                DisplayItem::Rect {
-                    style: _,
-                    position: _,
-                } => {}
+                DisplayItem::Rect { style: _, position } => {
+                    browser
+                        .borrow_mut()
+                        .console_debug(format!("rect position {:?}", position));
+                }
                 DisplayItem::Link {
                     text,
                     destination,

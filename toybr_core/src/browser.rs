@@ -2,7 +2,6 @@ use crate::common::display_item::DisplayItem;
 use crate::common::error::Error;
 use crate::common::log::{Log, LogLevel};
 use crate::common::ui::UiObject;
-use crate::renderer::layout::computed_style::{ComputedStyle, LayoutPosition};
 use crate::renderer::page::Page;
 use alloc::rc::Rc;
 use core::cell::RefCell;
@@ -40,14 +39,6 @@ impl<U: UiObject> Browser<U> {
 
     pub fn push_display_item(&mut self, item: DisplayItem) {
         self.display_items.push(item);
-    }
-
-    pub fn println(&mut self, text: String, style: ComputedStyle, position: LayoutPosition) {
-        self.display_items.push(DisplayItem::Text {
-            text,
-            style,
-            position,
-        });
     }
 
     pub fn console_debug(&mut self, log: String) {

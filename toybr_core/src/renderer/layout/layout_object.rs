@@ -272,7 +272,6 @@ impl<U: UiObject> LayoutObject<U> {
                         }
                     }
 
-                    //println(self, format!("<a> {} {}", &href, &link_text));
                     add_link_display_item(self, href, link_text);
 
                     self.first_child = None;
@@ -280,7 +279,7 @@ impl<U: UiObject> LayoutObject<U> {
                 _ => {}
             },
             NodeKind::Text(text) => {
-                println(self, format!("{}", text));
+                add_text_display_item(self, text);
             }
         }
     }
