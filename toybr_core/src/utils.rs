@@ -6,18 +6,19 @@ use crate::renderer::layout::layout_object::LayoutObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
-pub fn add_text_display_item<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
+pub fn add_rect_display_item<U: UiObject>(layout_object: &LayoutObject<U>) {
     let style = layout_object.style();
     let point = layout_object.point();
+    let size = layout_object.size();
     let browser = match layout_object.browser().upgrade() {
         Some(browser) => browser,
         None => return,
     };
 
-    browser.borrow_mut().push_display_item(DisplayItem::Text {
-        text,
+    browser.borrow_mut().push_display_item(DisplayItem::Rect {
         style,
         layout_point: point,
+        layout_size: size,
     });
 }
 
@@ -36,6 +37,21 @@ pub fn add_link_display_item<U: UiObject>(
     browser.borrow_mut().push_display_item(DisplayItem::Link {
         text: link_text,
         destination: href,
+        style,
+        layout_point: point,
+    });
+}
+
+pub fn add_text_display_item<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
+    let style = layout_object.style();
+    let point = layout_object.point();
+    let browser = match layout_object.browser().upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().push_display_item(DisplayItem::Text {
+        text,
         style,
         layout_point: point,
     });

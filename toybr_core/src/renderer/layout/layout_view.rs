@@ -149,8 +149,8 @@ impl<U: UiObject> LayoutView<U> {
         root: Rc<RefCell<Node>>,
         cssom: &StyleSheet,
     ) -> Self {
+        // A layout object should be created for a flow content.
         // https://html.spec.whatwg.org/multipage/dom.html#flow-content-2
-        // a layout object should be created for a flow content
         let body_root = get_target_element_node(Some(root), ElementKind::Body);
 
         let mut tree = Self {

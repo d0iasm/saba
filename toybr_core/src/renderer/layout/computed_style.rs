@@ -40,6 +40,7 @@ impl ComputedStyle {
         }
     }
 
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
     pub fn inherit(&mut self, parent_style: &ComputedStyle) {
         if self.color.is_none() {
             self.color = Some(parent_style.color().clone());
@@ -246,7 +247,7 @@ pub enum FontSize {
 
 fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
     match &node.borrow().kind() {
-        NodeKind::Document => DisplayType::Inline,
+        NodeKind::Document => DisplayType::Block,
         NodeKind::Element(e) => {
             if e.is_block_element() {
                 DisplayType::Block

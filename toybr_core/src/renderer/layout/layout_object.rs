@@ -11,6 +11,7 @@ use crate::renderer::html::dom::*;
 use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_point::LayoutPoint;
+use crate::renderer::layout::layout_size::LayoutSize;
 use crate::utils::*;
 use alloc::rc::{Rc, Weak};
 use alloc::vec::Vec;
@@ -27,7 +28,8 @@ fn layout_object_kind_by_node(node: &Rc<RefCell<Node>>) -> LayoutObjectKind {
     match node.borrow().kind() {
         NodeKind::Document => panic!("should not create a layout object for a Document node"),
         NodeKind::Element(e) => {
-            if e.is_block_element() {
+            // Handle a <body> as a block element for simplicity.
+            if e.is_block_element() || e.kind() == ElementKind::Body {
                 LayoutObjectKind::Block
             } else {
                 LayoutObjectKind::Inline
@@ -50,6 +52,8 @@ pub struct LayoutObject<U: UiObject> {
     // Layout information.
     // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_box.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=2401
     point: LayoutPoint,
+    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_box.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=2404
+    size: LayoutSize,
 }
 
 impl<U: UiObject> LayoutObject<U> {
@@ -62,6 +66,7 @@ impl<U: UiObject> LayoutObject<U> {
             next_sibling: None,
             style: ComputedStyle::new(&node),
             point: LayoutPoint::new(0.0, 0.0),
+            size: LayoutSize::new(0.0, 0.0),
         }
     }
 
@@ -97,6 +102,11 @@ impl<U: UiObject> LayoutObject<U> {
         self.point.clone()
     }
 
+    pub fn size(&self) -> LayoutSize {
+        self.size.clone()
+    }
+
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
     pub fn inherit_style(&mut self, parent_style: &ComputedStyle) {
         self.style.inherit(parent_style);
     }
@@ -156,11 +166,13 @@ impl<U: UiObject> LayoutObject<U> {
                 }
                 "height" => {
                     if let ComponentValue::Number(value) = declaration.value {
+                        self.size.set_height(value);
                         self.style.set_height(value);
                     }
                 }
                 "width" => {
                     if let ComponentValue::Number(value) = declaration.value {
+                        self.size.set_width(value);
                         self.style.set_width(value);
                     }
                 }
@@ -200,14 +212,10 @@ impl<U: UiObject> LayoutObject<U> {
                     }
                 }
                 // TODO: support padding
-                _ => {
-                    /*
-                        console_warning(
-                        self.browser.clone(),
-                        format!("css property {} is not supported yet", declaration.property,),
-                    ),
-                        */
-                }
+                _ => console_warning(
+                    self.browser.clone(),
+                    format!("css property {} is not supported yet", declaration.property),
+                ),
             }
         }
     }
@@ -286,24 +294,19 @@ impl<U: UiObject> LayoutObject<U> {
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2377
     pub fn paint(&mut self) {
+        if self.style.display() == DisplayType::DisplayNone {
+            return;
+        }
+
         match self.kind() {
             LayoutObjectKind::Block => match self.node_kind() {
-                NodeKind::Element(e) => {
-                    console_debug(
-                        self.browser.clone(),
-                        format!("block {} {:?}", e.kind(), self.point),
-                    );
-                }
+                NodeKind::Element(_e) => add_rect_display_item(self),
                 _ => {}
             },
             LayoutObjectKind::Inline => {
                 match self.node_kind() {
                     NodeKind::Element(e) => match e.kind() {
                         ElementKind::A => {
-                            console_debug(
-                                self.browser.clone(),
-                                format!("block {} {:?}", e.kind(), self.point),
-                            );
                             // <a> element should have a text node as a first child
                             let text_node = self.first_child();
                             let mut link_text = String::new();

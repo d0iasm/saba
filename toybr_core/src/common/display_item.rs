@@ -2,12 +2,14 @@
 
 use crate::renderer::layout::computed_style::ComputedStyle;
 use crate::renderer::layout::layout_point::LayoutPoint;
+use crate::renderer::layout::layout_size::LayoutSize;
 
 #[derive(Debug, Clone)]
 pub enum DisplayItem {
     Rect {
         style: ComputedStyle,
         layout_point: LayoutPoint,
+        layout_size: LayoutSize,
     },
     Link {
         text: String,
@@ -28,6 +30,7 @@ impl DisplayItem {
             DisplayItem::Rect {
                 style: _,
                 layout_point: _,
+                layout_size: _,
             } => true,
             _ => false,
         }

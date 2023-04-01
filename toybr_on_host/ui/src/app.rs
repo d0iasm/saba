@@ -47,8 +47,10 @@ pub struct Tui {
     browser: Weak<RefCell<Browser<Self>>>,
     input_url: String,
     input_mode: InputMode,
-    // a user can focus only a link now
+    // A user can focus only a link now.
     focus: Option<Link>,
+    // The position that starts rendering a next display item.
+    position: (f64, f64),
 }
 
 impl UiObject for Tui {
@@ -58,6 +60,7 @@ impl UiObject for Tui {
             input_url: String::new(),
             input_mode: InputMode::Normal,
             focus: None,
+            position: (0.0, 0.0),
         }
     }
 
@@ -426,10 +429,13 @@ impl Tui {
                 DisplayItem::Rect {
                     style: _,
                     layout_point,
+                    layout_size,
                 } => {
-                    browser
-                        .borrow_mut()
-                        .console_debug(format!("rect layout_point {:?}", layout_point));
+                    self.position = (layout_point.x(), layout_point.y());
+                    browser.borrow_mut().console_debug(format!(
+                        "rect position {:?} layout_point {:?} {:?}",
+                        self.position, layout_point, layout_size
+                    ));
                 }
                 DisplayItem::Link {
                     text,
