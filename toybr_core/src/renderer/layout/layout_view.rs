@@ -23,14 +23,15 @@ fn create_layout_object<U: UiObject>(
         Some(n) => {
             let layout_object =
                 Rc::new(RefCell::new(LayoutObject::new(browser.clone(), n.clone())));
+
+            // Inherit a parent CSS style.
             if let Some(parent) = parent_obj {
                 layout_object
                     .borrow_mut()
-                    .style()
-                    .inherit(&parent.borrow().style());
+                    .inherit_style(&parent.borrow().style());
             }
 
-            // apply CSS rules to LayoutObject.
+            // Apply CSS rules to LayoutObject.
             for rule in &cssom.rules {
                 if layout_object.borrow().is_node_selected(&rule.selector) {
                     layout_object

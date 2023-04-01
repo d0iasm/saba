@@ -97,6 +97,10 @@ impl<U: UiObject> LayoutObject<U> {
         self.point.clone()
     }
 
+    pub fn inherit_style(&mut self, parent_style: &ComputedStyle) {
+        self.style.inherit(parent_style);
+    }
+
     pub fn calculate_style(&mut self, declarations: Vec<Declaration>) {
         for declaration in declarations {
             match declaration.property.as_str() {
