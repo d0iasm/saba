@@ -164,7 +164,7 @@ impl Tui {
                     text,
                     destination,
                     style: _,
-                    position: _,
+                    layout_point: _,
                 } => match &self.focus {
                     Some(current_focus_item) => {
                         if current_focus_item.text == text
@@ -203,7 +203,7 @@ impl Tui {
                     text,
                     destination,
                     style: _,
-                    position: _,
+                    layout_point: _,
                 } => match &self.focus {
                     Some(current_focus_item) => {
                         if focus_item_found {
@@ -423,16 +423,19 @@ impl Tui {
         let mut spans: Vec<Spans> = Vec::new();
         for item in display_items {
             match item {
-                DisplayItem::Rect { style: _, position } => {
+                DisplayItem::Rect {
+                    style: _,
+                    layout_point,
+                } => {
                     browser
                         .borrow_mut()
-                        .console_debug(format!("rect position {:?}", position));
+                        .console_debug(format!("rect layout_point {:?}", layout_point));
                 }
                 DisplayItem::Link {
                     text,
                     destination,
                     style: _,
-                    position: _,
+                    layout_point: _,
                 } => {
                     if let Some(focus_item) = &self.focus {
                         if focus_item.text == text && focus_item.destination == destination {
@@ -453,7 +456,7 @@ impl Tui {
                 DisplayItem::Text {
                     text,
                     style,
-                    position: _,
+                    layout_point: _,
                 } => {
                     for line in text.split("\n") {
                         if style.font_size() != FontSize::Medium {
