@@ -230,7 +230,7 @@ impl<U: UiObject> LayoutObject<U> {
                 }
                 Selector::ClassSelector(class_name) => {
                     for attr in &e.attributes() {
-                        if attr.name == "class" && attr.value == *class_name {
+                        if attr.name() == "class" && attr.value() == *class_name {
                             return true;
                         }
                     }
@@ -238,7 +238,7 @@ impl<U: UiObject> LayoutObject<U> {
                 }
                 Selector::IdSelector(id_name) => {
                     for attr in &e.attributes() {
-                        if attr.name == "id" && attr.value == *id_name {
+                        if attr.name() == "id" && attr.value() == *id_name {
                             return true;
                         }
                     }
@@ -251,10 +251,34 @@ impl<U: UiObject> LayoutObject<U> {
     }
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2377
-    pub fn paint(&self) {
+    pub fn paint(&mut self) {
         match self.kind() {
             NodeKind::Document => {}
-            NodeKind::Element(_e) => {}
+            NodeKind::Element(e) => match e.kind() {
+                ElementKind::A => {
+                    let text_node = self.first_child();
+                    let mut link_text = String::new();
+                    if let Some(text_node) = text_node {
+                        match text_node.borrow().kind() {
+                            NodeKind::Text(text) => link_text = text,
+                            _ => return,
+                        }
+                    }
+
+                    let mut href = String::new();
+                    for attr in e.attributes() {
+                        if attr.name() == "href" {
+                            href = attr.value()
+                        }
+                    }
+
+                    //println(self, format!("<a> {} {}", &href, &link_text));
+                    add_link_display_item(self, href, link_text);
+
+                    self.first_child = None;
+                }
+                _ => {}
+            },
             NodeKind::Text(text) => {
                 println(self, format!("{}", text));
             }

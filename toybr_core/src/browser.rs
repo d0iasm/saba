@@ -38,6 +38,10 @@ impl<U: UiObject> Browser<U> {
         }
     }
 
+    pub fn push_display_item(&mut self, item: DisplayItem) {
+        self.display_items.push(item);
+    }
+
     pub fn println(&mut self, text: String, style: ComputedStyle, position: LayoutPosition) {
         self.display_items.push(DisplayItem::Text {
             text,

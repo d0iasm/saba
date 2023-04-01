@@ -3,8 +3,8 @@ use alloc::string::String;
 /// used in html/token.rs and html/dom.rs
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Attribute {
-    pub name: String,
-    pub value: String,
+    name: String,
+    value: String,
 }
 
 impl Attribute {
@@ -21,5 +21,13 @@ impl Attribute {
         } else {
             self.value.push(c);
         }
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn value(&self) -> String {
+        self.value.clone()
     }
 }

@@ -198,7 +198,7 @@ impl<U: UiObject> LayoutView<U> {
     fn paint_node(&self, node: &Option<Rc<RefCell<LayoutObject<U>>>>) {
         match node {
             Some(n) => {
-                n.borrow().paint();
+                n.borrow_mut().paint();
 
                 let first_child = n.borrow().first_child();
                 self.paint_node(&first_child);

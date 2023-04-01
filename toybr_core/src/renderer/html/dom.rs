@@ -898,7 +898,7 @@ pub fn get_element_by_id(
             match n.borrow().kind() {
                 NodeKind::Element(e) => {
                     for attr in &e.attributes() {
-                        if attr.name == "id" && attr.value == *id_name {
+                        if attr.name() == "id" && attr.value() == *id_name {
                             return Some(n.clone());
                         }
                     }

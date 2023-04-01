@@ -1,5 +1,5 @@
 use crate::browser::Browser;
-use crate::common::ui::UiObject;
+use crate::common::{display_item::DisplayItem, ui::UiObject};
 use crate::renderer::html::dom::Node;
 use crate::renderer::js::ast::Program;
 use crate::renderer::layout::layout_object::LayoutObject;
@@ -26,6 +26,26 @@ pub fn println<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
     };
 
     browser.borrow_mut().println(text, style, position);
+}
+
+pub fn add_link_display_item<U: UiObject>(
+    layout_object: &LayoutObject<U>,
+    href: String,
+    link_text: String,
+) {
+    let style = layout_object.style();
+    let position = layout_object.position();
+    let browser = match layout_object.browser().upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().push_display_item(DisplayItem::Link {
+        text: link_text,
+        destination: href,
+        style,
+        position,
+    });
 }
 
 pub fn console_debug<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {

@@ -21,9 +21,9 @@ fn dom_to_html_internal(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
                     html.push_str(&e.kind().to_string());
                     for attr in e.attributes() {
                         html.push_str(" ");
-                        html.push_str(&attr.name);
+                        html.push_str(&attr.name());
                         html.push_str("=");
-                        html.push_str(&attr.value);
+                        html.push_str(&attr.value());
                     }
                     html.push_str(">");
                 }

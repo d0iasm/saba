@@ -11,6 +11,8 @@ pub enum DisplayItem {
     Link {
         text: String,
         destination: String,
+        style: ComputedStyle,
+        position: LayoutPosition,
     },
     Text {
         text: String,
@@ -35,6 +37,8 @@ impl DisplayItem {
             DisplayItem::Link {
                 text: _,
                 destination: _,
+                style: _,
+                position: _,
             } => true,
             _ => false,
         }

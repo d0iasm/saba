@@ -23,16 +23,31 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum InputMode {
     Normal,
     Editing,
 }
 
+#[derive(Clone, Debug)]
+struct Link {
+    text: String,
+    destination: String,
+}
+
+impl Link {
+    fn new(text: String, destination: String) -> Self {
+        Self { text, destination }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Tui {
     browser: Weak<RefCell<Browser<Self>>>,
     input_url: String,
     input_mode: InputMode,
+    // a user can focus only a link now
+    focus: Option<Link>,
 }
 
 impl UiObject for Tui {
@@ -41,6 +56,7 @@ impl UiObject for Tui {
             browser: Weak::new(),
             input_url: String::new(),
             input_mode: InputMode::Normal,
+            focus: None,
         }
     }
 
@@ -145,6 +161,83 @@ impl Tui {
         self.browser.clone()
     }
 
+    fn move_focus_to_up(&mut self) {
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+        let display_items = browser.borrow().display_items();
+
+        let mut previous_link_item: Option<Link> = None;
+        for item in display_items {
+            match item {
+                DisplayItem::Link {
+                    text,
+                    destination,
+                    style: _,
+                    position: _,
+                } => match &self.focus {
+                    Some(current_focus_item) => {
+                        if current_focus_item.text == text
+                            && current_focus_item.destination == destination
+                        {
+                            if let Some(prev_link_item) = previous_link_item {
+                                self.focus = Some(prev_link_item);
+                                return;
+                            } else {
+                                self.focus = None;
+                                return;
+                            }
+                        }
+                        previous_link_item = Some(current_focus_item.clone());
+                    }
+                    None => {
+                        return;
+                    }
+                },
+                _ => {}
+            }
+        }
+    }
+
+    fn move_focus_to_down(&mut self) {
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+        let display_items = browser.borrow().display_items();
+
+        let mut focus_item_found = false;
+        for item in display_items {
+            match item {
+                DisplayItem::Link {
+                    text,
+                    destination,
+                    style: _,
+                    position: _,
+                } => match &self.focus {
+                    Some(current_focus_item) => {
+                        if focus_item_found {
+                            self.focus = Some(Link::new(text, destination));
+                            return;
+                        }
+
+                        if current_focus_item.text == text
+                            && current_focus_item.destination == destination
+                        {
+                            focus_item_found = true;
+                        }
+                    }
+                    None => {
+                        self.focus = Some(Link::new(text, destination));
+                        return;
+                    }
+                },
+                _ => {}
+            }
+        }
+    }
+
     fn run_app<B: Backend>(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
@@ -166,6 +259,12 @@ impl Tui {
             if let Event::Key(key) = event {
                 match current_input_mode {
                     InputMode::Normal => match key.code {
+                        KeyCode::Up => {
+                            self.move_focus_to_up();
+                        }
+                        KeyCode::Down => {
+                            self.move_focus_to_down();
+                        }
                         KeyCode::Char('e') => {
                             self.input_mode = InputMode::Editing;
                         }
@@ -232,7 +331,6 @@ impl Tui {
     fn ui<B: Backend>(&mut self, frame: &mut Frame<B>) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            //.margin(2)
             .constraints(
                 [
                     Constraint::Percentage(5),
@@ -302,7 +400,6 @@ impl Tui {
             None => return,
         };
 
-        // support only text now
         let display_items = browser.borrow().display_items();
 
         let mut spans: Vec<Spans> = Vec::new();
@@ -313,9 +410,27 @@ impl Tui {
                     position: _,
                 } => {}
                 DisplayItem::Link {
-                    text: _,
-                    destination: _,
-                } => {}
+                    text,
+                    destination,
+                    style: _,
+                    position: _,
+                } => {
+                    if let Some(focus_item) = &self.focus {
+                        if focus_item.text == text && focus_item.destination == destination {
+                            spans.push(Spans::from(Span::styled(
+                                text,
+                                Style::default()
+                                    .fg(Color::Blue)
+                                    .add_modifier(Modifier::UNDERLINED),
+                            )));
+                            continue;
+                        }
+                    }
+                    spans.push(Spans::from(Span::styled(
+                        text,
+                        Style::default().fg(Color::Blue),
+                    )));
+                }
                 DisplayItem::Text {
                     text,
                     style: _,
