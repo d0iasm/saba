@@ -13,6 +13,7 @@ use net::http::HttpResponse;
 use std::io;
 use toybr_core::browser::Browser;
 use toybr_core::common::{display_item::DisplayItem, error::Error, ui::UiObject};
+use toybr_core::renderer::layout::computed_style::FontSize;
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -462,11 +463,18 @@ impl Tui {
                 }
                 DisplayItem::Text {
                     text,
-                    style: _,
+                    style,
                     position: _,
                 } => {
                     for line in text.split("\n") {
-                        spans.push(Spans::from(Span::raw(String::from(line))));
+                        if style.font_size() != FontSize::Medium {
+                            spans.push(Spans::from(Span::styled(
+                                String::from(line),
+                                Style::default().add_modifier(Modifier::BOLD),
+                            )));
+                        } else {
+                            spans.push(Spans::from(Span::raw(String::from(line))));
+                        }
                     }
                 }
             }
