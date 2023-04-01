@@ -238,6 +238,42 @@ impl Tui {
         }
     }
 
+    fn start_navigation(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+        destination: String,
+    ) -> Result<(), Error> {
+        match handle_url(destination) {
+            Ok(response) => {
+                self.console_debug(format!("received response {:?}", response));
+
+                let page = match self.browser().upgrade() {
+                    Some(browser) => {
+                        // clean up Browser struct
+                        {
+                            browser.borrow_mut().clear_display_items();
+                        }
+                        {
+                            browser.borrow_mut().clear_logs();
+                        }
+
+                        browser.borrow().page()
+                    }
+                    None => {
+                        return Err(Error::Other("associated browser is not found".to_string()))
+                    }
+                };
+
+                page.borrow_mut().receive_response(response);
+            }
+            Err(e) => {
+                self.console_error(format!("{:?}", e));
+                return Err(e);
+            }
+        }
+        Ok(())
+    }
+
     fn run_app<B: Backend>(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
@@ -265,6 +301,16 @@ impl Tui {
                         KeyCode::Down => {
                             self.move_focus_to_down();
                         }
+                        KeyCode::Enter => {
+                            // do nothing when there is no focused item;
+                            if self.focus.is_none() {
+                                continue;
+                            }
+
+                            if let Some(focus_item) = &self.focus {
+                                self.start_navigation(handle_url, focus_item.destination.clone())?;
+                            }
+                        }
                         KeyCode::Char('e') => {
                             self.input_mode = InputMode::Editing;
                         }
@@ -281,36 +327,7 @@ impl Tui {
                             }
 
                             let url: String = self.input_url.drain(..).collect();
-                            match handle_url(url.clone()) {
-                                Ok(response) => {
-                                    self.console_debug(format!("received response {:?}", response));
-
-                                    let page = match self.browser().upgrade() {
-                                        Some(browser) => {
-                                            // clean up Browser struct
-                                            {
-                                                browser.borrow_mut().clear_display_items();
-                                            }
-                                            {
-                                                browser.borrow_mut().clear_logs();
-                                            }
-
-                                            browser.borrow().page()
-                                        }
-                                        None => {
-                                            return Err(Error::Other(
-                                                "associated browser is not found".to_string(),
-                                            ))
-                                        }
-                                    };
-
-                                    page.borrow_mut().receive_response(response);
-                                }
-                                Err(e) => {
-                                    self.console_error(format!("{:?}", e));
-                                    return Err(e);
-                                }
-                            }
+                            self.start_navigation(handle_url, url.clone())?;
                         }
                         KeyCode::Char(c) => {
                             self.input_url.push(c);
@@ -346,10 +363,22 @@ impl Tui {
             InputMode::Normal => (
                 vec![
                     Span::raw("Press "),
+                    Span::styled(
+                        "↑ (up arrow)",
+                        Style::default().add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw(" to move up a focused link, "),
+                    Span::styled(
+                        "↓ (down arrow)",
+                        Style::default().add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw(" to move down a focused link, "),
                     Span::styled("q", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" to exit, "),
                     Span::styled("e", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(" to start editing."),
+                    Span::raw(" to start editing, "),
+                    Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" to navigation to a focused link."),
                 ],
                 Style::default().add_modifier(Modifier::RAPID_BLINK),
             ),
@@ -359,7 +388,7 @@ impl Tui {
                     Span::styled("Esc", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" to stop editing, "),
                     Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(" to record the message"),
+                    Span::raw(" to navigation."),
                 ],
                 Style::default(),
             ),
