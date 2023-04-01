@@ -48,6 +48,7 @@ pub struct LayoutObject<U: UiObject> {
     // CSS information.
     style: ComputedStyle,
     // Layout information.
+    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_box.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=2401
     point: LayoutPoint,
 }
 
@@ -86,10 +87,6 @@ impl<U: UiObject> LayoutObject<U> {
 
     pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
         self.next_sibling.as_ref().map(|n| n.clone())
-    }
-
-    pub fn set_style(&mut self, style: ComputedStyle) {
-        self.style = style;
     }
 
     pub fn style(&self) -> ComputedStyle {
@@ -199,10 +196,14 @@ impl<U: UiObject> LayoutObject<U> {
                     }
                 }
                 // TODO: support padding
-                _ => console_warning(
-                    self.browser.clone(),
-                    format!("css property {} is not supported yet", declaration.property,),
-                ),
+                _ => {
+                    /*
+                        console_warning(
+                        self.browser.clone(),
+                        format!("css property {} is not supported yet", declaration.property,),
+                    ),
+                        */
+                }
             }
         }
     }
@@ -295,6 +296,10 @@ impl<U: UiObject> LayoutObject<U> {
                 match self.node_kind() {
                     NodeKind::Element(e) => match e.kind() {
                         ElementKind::A => {
+                            console_debug(
+                                self.browser.clone(),
+                                format!("block {} {:?}", e.kind(), self.point),
+                            );
                             // <a> element should have a text node as a first child
                             let text_node = self.first_child();
                             let mut link_text = String::new();
