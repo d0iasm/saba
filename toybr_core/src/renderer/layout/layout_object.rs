@@ -46,9 +46,9 @@ pub struct LayoutObject<U: UiObject> {
     pub first_child: Option<Rc<RefCell<LayoutObject<U>>>>,
     pub next_sibling: Option<Rc<RefCell<LayoutObject<U>>>>,
     // CSS information.
-    pub style: ComputedStyle,
+    style: ComputedStyle,
     // Layout information.
-    pub point: LayoutPoint,
+    point: LayoutPoint,
 }
 
 impl<U: UiObject> LayoutObject<U> {
@@ -88,6 +88,10 @@ impl<U: UiObject> LayoutObject<U> {
         self.next_sibling.as_ref().map(|n| n.clone())
     }
 
+    pub fn set_style(&mut self, style: ComputedStyle) {
+        self.style = style;
+    }
+
     pub fn style(&self) -> ComputedStyle {
         self.style.clone()
     }
@@ -96,7 +100,7 @@ impl<U: UiObject> LayoutObject<U> {
         self.point.clone()
     }
 
-    pub fn set_style(&mut self, declarations: Vec<Declaration>) {
+    pub fn calculate_style(&mut self, declarations: Vec<Declaration>) {
         for declaration in declarations {
             match declaration.property.as_str() {
                 "background-color" => {

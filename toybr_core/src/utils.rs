@@ -96,7 +96,7 @@ pub fn print_layout_tree<U: UiObject>(
             ui.borrow_mut().console_debug(format!(
                 "{:?} {:?}",
                 n.borrow().kind(),
-                n.borrow().style
+                n.borrow().style()
             ));
             print_layout_tree(ui, &n.borrow().first_child(), depth + 1);
             print_layout_tree(ui, &n.borrow().next_sibling(), depth);

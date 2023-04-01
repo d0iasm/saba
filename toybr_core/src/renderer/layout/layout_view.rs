@@ -26,8 +26,8 @@ fn create_layout_object<U: UiObject>(
             if let Some(parent) = parent_obj {
                 layout_object
                     .borrow_mut()
-                    .style
-                    .inherit(&parent.borrow().style);
+                    .style()
+                    .inherit(&parent.borrow().style());
             }
 
             // apply CSS rules to LayoutObject.
@@ -35,11 +35,11 @@ fn create_layout_object<U: UiObject>(
                 if layout_object.borrow().is_node_selected(&rule.selector) {
                     layout_object
                         .borrow_mut()
-                        .set_style(rule.declarations.clone());
+                        .calculate_style(rule.declarations.clone());
                 }
             }
 
-            if layout_object.borrow().style.display() == DisplayType::DisplayNone {
+            if layout_object.borrow().style().display() == DisplayType::DisplayNone {
                 return None;
             }
 
@@ -172,10 +172,10 @@ impl<U: UiObject> LayoutView<U> {
                 n.borrow_mut().update_layout(parent_style, parent_point);
 
                 let first_child = n.borrow().first_child();
-                self.layout_node(&first_child, &n.borrow().style, &n.borrow().point);
+                self.layout_node(&first_child, &n.borrow().style(), &n.borrow().point());
 
                 let next_sibling = n.borrow().next_sibling();
-                self.layout_node(&next_sibling, &n.borrow().style, &n.borrow().point);
+                self.layout_node(&next_sibling, &n.borrow().style(), &n.borrow().point());
             }
             None => return,
         }
