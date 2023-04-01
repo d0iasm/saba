@@ -1,6 +1,6 @@
 //! https://developer.mozilla.org/en-US/docs/Web/CSS/computed_value
 
-use crate::renderer::html::dom::*;
+use crate::renderer::html::dom::{ElementKind, Node, NodeKind};
 use crate::renderer::layout::color::*;
 use alloc::rc::Rc;
 use core::cell::RefCell;
@@ -30,55 +30,13 @@ impl ComputedStyle {
         Self {
             background_color: None,
             color: None,
-            display: Self::default_display_type(node),
+            display: default_display_type(node),
             width: None,
             height: None,
             margin: None,
             padding: None,
-            font_size: Self::default_font_size(node),
-            white_space: Self::default_white_space(node),
-        }
-    }
-
-    fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
-        match &node.borrow().kind() {
-            NodeKind::Document => DisplayType::Block,
-            NodeKind::Element(element) => match element.kind() {
-                ElementKind::Html
-                | ElementKind::Body
-                | ElementKind::Div
-                | ElementKind::Ul
-                | ElementKind::Li
-                | ElementKind::H1
-                | ElementKind::P => DisplayType::Block,
-                ElementKind::Script | ElementKind::Head | ElementKind::Style => {
-                    DisplayType::DisplayNone
-                }
-                _ => DisplayType::Inline,
-            },
-            NodeKind::Text(_) => DisplayType::Inline,
-        }
-    }
-
-    fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
-        match &node.borrow().kind() {
-            NodeKind::Element(element) => match element.kind() {
-                ElementKind::H1 => Some(FontSize::XXLarge),
-                ElementKind::H2 => Some(FontSize::XLarge),
-                _ => None,
-            },
-            _ => None,
-        }
-    }
-
-    fn default_white_space(node: &Rc<RefCell<Node>>) -> WhiteSpace {
-        match &node.borrow().kind() {
-            NodeKind::Element(element) => match element.kind() {
-                ElementKind::P => WhiteSpace::Normal,
-                ElementKind::Pre => WhiteSpace::Pre,
-                _ => WhiteSpace::Normal,
-            },
-            _ => WhiteSpace::Normal,
+            font_size: default_font_size(node),
+            white_space: default_white_space(node),
         }
     }
 
@@ -311,5 +269,41 @@ impl LayoutPosition {
 
     pub fn set_y(&mut self, y: f64) {
         self.y = y;
+    }
+}
+
+fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
+    match &node.borrow().kind() {
+        NodeKind::Document => DisplayType::Inline,
+        NodeKind::Element(e) => {
+            if e.is_block_element() {
+                DisplayType::Block
+            } else {
+                DisplayType::Inline
+            }
+        }
+        NodeKind::Text(_) => DisplayType::Inline,
+    }
+}
+
+fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
+    match &node.borrow().kind() {
+        NodeKind::Element(element) => match element.kind() {
+            ElementKind::H1 => Some(FontSize::XXLarge),
+            ElementKind::H2 => Some(FontSize::XLarge),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn default_white_space(node: &Rc<RefCell<Node>>) -> WhiteSpace {
+    match &node.borrow().kind() {
+        NodeKind::Element(element) => match element.kind() {
+            ElementKind::P => WhiteSpace::Normal,
+            ElementKind::Pre => WhiteSpace::Pre,
+            _ => WhiteSpace::Normal,
+        },
+        _ => WhiteSpace::Normal,
     }
 }

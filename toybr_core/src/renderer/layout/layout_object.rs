@@ -40,7 +40,7 @@ fn layout_object_kind_by_node(node: &Rc<RefCell<Node>>) -> LayoutObjectKind {
 pub struct LayoutObject<U: UiObject> {
     browser: Weak<RefCell<Browser<U>>>,
     kind: LayoutObjectKind,
-    // Similar structure with Node in renderer/dom.rs.
+    // Similar structure with a DOM node.
     node: Rc<RefCell<Node>>,
     pub first_child: Option<Rc<RefCell<LayoutObject<U>>>>,
     pub next_sibling: Option<Rc<RefCell<LayoutObject<U>>>>,
@@ -281,35 +281,46 @@ impl<U: UiObject> LayoutObject<U> {
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2377
     pub fn paint(&mut self) {
-        match self.node_kind() {
-            NodeKind::Document => {}
-            NodeKind::Element(e) => match e.kind() {
-                ElementKind::A => {
-                    let text_node = self.first_child();
-                    let mut link_text = String::new();
-                    if let Some(text_node) = text_node {
-                        match text_node.borrow().node_kind() {
-                            NodeKind::Text(text) => link_text = text,
-                            _ => return,
-                        }
-                    }
-
-                    let mut href = String::new();
-                    for attr in e.attributes() {
-                        if attr.name() == "href" {
-                            href = attr.value()
-                        }
-                    }
-
-                    add_link_display_item(self, href, link_text);
-
-                    self.first_child = None;
-                }
+        match self.kind() {
+            LayoutObjectKind::Block => match self.node_kind() {
+                NodeKind::Element(_e) => {}
                 _ => {}
             },
-            NodeKind::Text(text) => {
-                add_text_display_item(self, text);
+            LayoutObjectKind::Inline => {
+                match self.node_kind() {
+                    NodeKind::Element(e) => match e.kind() {
+                        ElementKind::A => {
+                            // <a> element should have a text node as a first child
+                            let text_node = self.first_child();
+                            let mut link_text = String::new();
+                            if let Some(text_node) = text_node {
+                                match text_node.borrow().node_kind() {
+                                    NodeKind::Text(text) => link_text = text,
+                                    _ => return,
+                                }
+                            }
+
+                            let mut href = String::new();
+                            for attr in e.attributes() {
+                                if attr.name() == "href" {
+                                    href = attr.value()
+                                }
+                            }
+
+                            add_link_display_item(self, href, link_text);
+
+                            // remove the first child from the tree to avoid operating it twice
+                            self.first_child = None;
+                        }
+                        _ => {}
+                    },
+                    _ => {}
+                }
             }
+            LayoutObjectKind::Text => match self.node_kind() {
+                NodeKind::Text(t) => add_text_display_item(self, t),
+                _ => {}
+            },
         }
     }
 }
