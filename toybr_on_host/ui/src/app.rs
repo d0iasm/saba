@@ -5,7 +5,7 @@ use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{
-        disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        disable_raw_mode, enable_raw_mode, size, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
     },
 };
@@ -113,6 +113,12 @@ impl UiObject for Tui {
         let backend = CrosstermBackend::new(stdout);
         let mut terminal = match Terminal::new(backend) {
             Ok(t) => t,
+            Err(e) => return Err(Error::Other(format!("{:?}", e))),
+        };
+        match size() {
+            Ok((cols, rows)) => {
+                self.console_debug(format!("cols rows {:?} {:?}", cols, rows));
+            }
             Err(e) => return Err(Error::Other(format!("{:?}", e))),
         };
 
@@ -420,10 +426,16 @@ impl Tui {
             Some(browser) => browser,
             None => return,
         };
-
         let display_items = browser.borrow().display_items();
 
-        let mut spans: Vec<Spans> = Vec::new();
+        let content_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Length(1); display_items.len() + 1])
+            .split(chunks[2]);
+        let content = Block::default().title("Content").borders(Borders::ALL);
+        frame.render_widget(content, chunks[2]);
+
+        let mut i = 0;
         for item in display_items {
             match item {
                 DisplayItem::Rect {
@@ -436,6 +448,9 @@ impl Tui {
                         "rect position {:?} layout_point {:?} {:?}",
                         self.position, layout_point, layout_size
                     ));
+                    let block = Block::default().style(Style::default().bg(Color::Green));
+                    frame.render_widget(block, content_area[i]);
+                    i = i + 1;
                 }
                 DisplayItem::Link {
                     text,
@@ -445,19 +460,26 @@ impl Tui {
                 } => {
                     if let Some(focus_item) = &self.focus {
                         if focus_item.text == text && focus_item.destination == destination {
-                            spans.push(Spans::from(Span::styled(
+                            let spans = Spans::from(Span::styled(
                                 text,
                                 Style::default()
                                     .fg(Color::Blue)
                                     .add_modifier(Modifier::UNDERLINED),
-                            )));
+                            ));
+                            frame.render_widget(
+                                Paragraph::new(spans).wrap(Wrap { trim: true }),
+                                content_area[i],
+                            );
+                            i = i + 1;
                             continue;
                         }
                     }
-                    spans.push(Spans::from(Span::styled(
-                        text,
-                        Style::default().fg(Color::Blue),
-                    )));
+                    let spans = Spans::from(Span::styled(text, Style::default().fg(Color::Blue)));
+                    frame.render_widget(
+                        Paragraph::new(spans).wrap(Wrap { trim: true }),
+                        content_area[i],
+                    );
+                    i = i + 1;
                 }
                 DisplayItem::Text {
                     text,
@@ -465,23 +487,31 @@ impl Tui {
                     layout_point: _,
                 } => {
                     for line in text.split("\n") {
-                        if style.font_size() != FontSize::Medium {
-                            spans.push(Spans::from(Span::styled(
+                        let spans = if style.font_size() != FontSize::Medium {
+                            Spans::from(Span::styled(
                                 String::from(line),
                                 Style::default().add_modifier(Modifier::BOLD),
-                            )));
+                            ))
                         } else {
-                            spans.push(Spans::from(Span::raw(String::from(line))));
-                        }
+                            Spans::from(Span::raw(String::from(line)))
+                        };
+
+                        frame.render_widget(
+                            Paragraph::new(spans).wrap(Wrap { trim: true }),
+                            content_area[i],
+                        );
+                        i = i + 1;
                     }
                 }
             }
         }
 
+        /*
         let contents = Paragraph::new(spans)
             .block(Block::default().title("Content").borders(Borders::ALL))
             .wrap(Wrap { trim: true });
         frame.render_widget(contents, chunks[2]);
+        */
 
         let logs: Vec<ListItem> = browser
             .borrow()
