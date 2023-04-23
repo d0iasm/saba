@@ -50,7 +50,7 @@ pub struct Tui {
     // A user can focus only a link now.
     focus: Option<Link>,
     // The position that starts rendering a next display item.
-    position: (f64, f64),
+    //position: (f64, f64),
 }
 
 impl UiObject for Tui {
@@ -60,7 +60,7 @@ impl UiObject for Tui {
             input_url: String::new(),
             input_mode: InputMode::Normal,
             focus: None,
-            position: (0.0, 0.0),
+            //position: (0.0, 0.0),
         }
     }
 

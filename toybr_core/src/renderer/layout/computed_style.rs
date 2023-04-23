@@ -5,13 +5,6 @@ use crate::renderer::layout::color::*;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 
-/// https://w3c.github.io/csswg-drafts/css-text/#white-space-property
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum WhiteSpace {
-    Normal,
-    Pre,
-}
-
 #[derive(Debug, Clone)]
 pub struct ComputedStyle {
     background_color: Option<Color>,
@@ -23,6 +16,7 @@ pub struct ComputedStyle {
     padding: Option<BoxInfo>,
     font_size: Option<FontSize>,
     white_space: WhiteSpace,
+    text_decoration: TextDecoration,
 }
 
 impl ComputedStyle {
@@ -37,6 +31,7 @@ impl ComputedStyle {
             padding: None,
             font_size: default_font_size(node),
             white_space: default_white_space(node),
+            text_decoration: default_text_decoration(node),
         }
     }
 
@@ -66,6 +61,8 @@ impl ComputedStyle {
 
         // TODO: check if it's ok to inherit parent white space always
         self.white_space = parent_style.white_space();
+
+        self.text_decoration = parent_style.text_decoration();
     }
 
     pub fn set_background_color(&mut self, color: Color) {
@@ -157,6 +154,10 @@ impl ComputedStyle {
         self.white_space
     }
 
+    pub fn text_decoration(&self) -> TextDecoration {
+        self.text_decoration
+    }
+
     pub fn margin_top(&self) -> f64 {
         self.margin().top
     }
@@ -245,6 +246,20 @@ pub enum FontSize {
     XXLarge,
 }
 
+/// https://w3c.github.io/csswg-drafts/css-text-decor/#text-decoration-property
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum TextDecoration {
+    None,
+    Underline,
+}
+
+/// https://w3c.github.io/csswg-drafts/css-text/#white-space-property
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum WhiteSpace {
+    Normal,
+    Pre,
+}
+
 fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
     match &node.borrow().kind() {
         NodeKind::Document => DisplayType::Block,
@@ -267,6 +282,16 @@ fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
             _ => None,
         },
         _ => None,
+    }
+}
+
+fn default_text_decoration(node: &Rc<RefCell<Node>>) -> TextDecoration {
+    match &node.borrow().kind() {
+        NodeKind::Element(element) => match element.kind() {
+            ElementKind::A => TextDecoration::Underline,
+            _ => TextDecoration::None,
+        },
+        _ => TextDecoration::None,
     }
 }
 
