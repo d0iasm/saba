@@ -428,21 +428,28 @@ impl Tui {
         };
         let display_items = browser.borrow().display_items();
 
+        /*
         let content_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![Constraint::Length(1); display_items.len() + 1])
             .split(chunks[2]);
         let content = Block::default().title("Content").borders(Borders::ALL);
         frame.render_widget(content, chunks[2]);
+        */
 
-        let mut i = 0;
+        let mut spans: Vec<Spans> = Vec::new();
+
+        //let mut i = 0;
         for item in display_items {
             match item {
                 DisplayItem::Rect {
                     style: _,
-                    layout_point,
-                    layout_size,
+                    layout_point: _,
+                    layout_size: _,
                 } => {
+                    // Do not support positioning in Browser w/ Tui
+
+                    /*
                     self.position = (layout_point.x(), layout_point.y());
                     browser.borrow_mut().console_debug(format!(
                         "rect position {:?} layout_point {:?} {:?}",
@@ -451,6 +458,7 @@ impl Tui {
                     let block = Block::default().style(Style::default().bg(Color::Green));
                     frame.render_widget(block, content_area[i]);
                     i = i + 1;
+                    */
                 }
                 DisplayItem::Link {
                     text,
@@ -460,26 +468,19 @@ impl Tui {
                 } => {
                     if let Some(focus_item) = &self.focus {
                         if focus_item.text == text && focus_item.destination == destination {
-                            let spans = Spans::from(Span::styled(
+                            spans.push(Spans::from(Span::styled(
                                 text,
                                 Style::default()
                                     .fg(Color::Blue)
                                     .add_modifier(Modifier::UNDERLINED),
-                            ));
-                            frame.render_widget(
-                                Paragraph::new(spans).wrap(Wrap { trim: true }),
-                                content_area[i],
-                            );
-                            i = i + 1;
+                            )));
                             continue;
                         }
                     }
-                    let spans = Spans::from(Span::styled(text, Style::default().fg(Color::Blue)));
-                    frame.render_widget(
-                        Paragraph::new(spans).wrap(Wrap { trim: true }),
-                        content_area[i],
-                    );
-                    i = i + 1;
+                    spans.push(Spans::from(Span::styled(
+                        text,
+                        Style::default().fg(Color::Blue),
+                    )));
                 }
                 DisplayItem::Text {
                     text,
@@ -487,31 +488,23 @@ impl Tui {
                     layout_point: _,
                 } => {
                     for line in text.split("\n") {
-                        let spans = if style.font_size() != FontSize::Medium {
+                        spans.push(if style.font_size() != FontSize::Medium {
                             Spans::from(Span::styled(
                                 String::from(line),
                                 Style::default().add_modifier(Modifier::BOLD),
                             ))
                         } else {
                             Spans::from(Span::raw(String::from(line)))
-                        };
-
-                        frame.render_widget(
-                            Paragraph::new(spans).wrap(Wrap { trim: true }),
-                            content_area[i],
-                        );
-                        i = i + 1;
+                        });
                     }
                 }
             }
         }
 
-        /*
         let contents = Paragraph::new(spans)
             .block(Block::default().title("Content").borders(Borders::ALL))
             .wrap(Wrap { trim: true });
         frame.render_widget(contents, chunks[2]);
-        */
 
         let logs: Vec<ListItem> = browser
             .borrow()

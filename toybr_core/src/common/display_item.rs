@@ -11,6 +11,7 @@ pub enum DisplayItem {
         layout_point: LayoutPoint,
         layout_size: LayoutSize,
     },
+    // TODO: remove Link and merge it into Text by adding `text-decoration: underline;`.
     Link {
         text: String,
         destination: String,
