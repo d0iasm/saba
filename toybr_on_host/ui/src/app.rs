@@ -12,7 +12,12 @@ use crossterm::{
 use net::http::HttpResponse;
 use std::io;
 use toybr_core::browser::Browser;
-use toybr_core::common::{display_item::DisplayItem, error::Error, ui::UiObject};
+use toybr_core::common::{
+    display_item::DisplayItem,
+    error::Error,
+    event::{Event as BrowserEvent, KeyboardEvent, MouseEvent},
+    ui::UiObject,
+};
 use toybr_core::renderer::layout::computed_style::FontSize;
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -243,8 +248,6 @@ impl Tui {
     ) -> Result<(), Error> {
         match handle_url(destination) {
             Ok(response) => {
-                self.console_debug(format!("received response {:?}", response));
-
                 let page = match self.browser().upgrade() {
                     Some(browser) => {
                         // clean up Browser struct
@@ -272,6 +275,30 @@ impl Tui {
         Ok(())
     }
 
+    fn push_key_event(&mut self, key_code: KeyCode) {
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+
+        // https://docs.rs/crossterm/latest/crossterm/event/enum.KeyCode.html
+        let key = match key_code {
+            KeyCode::Char(c) => c.to_string(),
+            _ => {
+                // TODO: propagate backspace key to browser?
+                self.console_debug(format!("{:?} is pressed", key_code));
+                return;
+            }
+        };
+
+        browser
+            .borrow_mut()
+            .push_event(BrowserEvent::Keyboard(KeyboardEvent::new(
+                "keydown".to_string(),
+                key,
+            )));
+    }
+
     fn run_app<B: Backend>(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
@@ -288,57 +315,67 @@ impl Tui {
                 Err(e) => return Err(Error::Other(format!("{:?}", e))),
             };
 
-            let current_input_mode = self.input_mode;
+            match event {
+                Event::Key(key) => {
+                    self.push_key_event(key.code);
 
-            if let Event::Key(key) = event {
-                match current_input_mode {
-                    InputMode::Normal => match key.code {
-                        KeyCode::Up => {
-                            self.move_focus_to_up();
-                        }
-                        KeyCode::Down => {
-                            self.move_focus_to_down();
-                        }
-                        KeyCode::Enter => {
-                            // do nothing when there is no focused item;
-                            if self.focus.is_none() {
-                                continue;
+                    match self.input_mode {
+                        InputMode::Normal => match key.code {
+                            KeyCode::Up => {
+                                self.move_focus_to_up();
                             }
+                            KeyCode::Down => {
+                                self.move_focus_to_down();
+                            }
+                            KeyCode::Enter => {
+                                // do nothing when there is no focused item;
+                                if self.focus.is_none() {
+                                    continue;
+                                }
 
-                            if let Some(focus_item) = &self.focus {
-                                self.start_navigation(handle_url, focus_item.destination.clone())?;
+                                if let Some(focus_item) = &self.focus {
+                                    self.start_navigation(
+                                        handle_url,
+                                        focus_item.destination.clone(),
+                                    )?;
+                                }
                             }
-                        }
-                        KeyCode::Char('e') => {
-                            self.input_mode = InputMode::Editing;
-                        }
-                        KeyCode::Char('q') => {
-                            return Ok(());
-                        }
-                        _ => {}
-                    },
-                    InputMode::Editing => match key.code {
-                        KeyCode::Enter => {
-                            // do nothing when a user puts an enter button but URL is empty
-                            if self.input_url.len() == 0 {
-                                continue;
+                            KeyCode::Char('e') => {
+                                self.input_mode = InputMode::Editing;
                             }
+                            KeyCode::Char('q') => {
+                                return Ok(());
+                            }
+                            _ => {}
+                        },
+                        InputMode::Editing => match key.code {
+                            KeyCode::Enter => {
+                                // do nothing when a user puts an enter button but URL is empty
+                                if self.input_url.len() == 0 {
+                                    continue;
+                                }
 
-                            let url: String = self.input_url.drain(..).collect();
-                            self.start_navigation(handle_url, url.clone())?;
-                        }
-                        KeyCode::Char(c) => {
-                            self.input_url.push(c);
-                        }
-                        KeyCode::Backspace => {
-                            self.input_url.pop();
-                        }
-                        KeyCode::Esc => {
-                            self.input_mode = InputMode::Normal;
-                        }
-                        _ => {}
-                    },
+                                let url: String = self.input_url.drain(..).collect();
+                                self.start_navigation(handle_url, url.clone())?;
+                            }
+                            KeyCode::Char(c) => {
+                                self.input_url.push(c);
+                            }
+                            KeyCode::Backspace => {
+                                self.input_url.pop();
+                            }
+                            KeyCode::Esc => {
+                                self.input_mode = InputMode::Normal;
+                            }
+                            _ => {}
+                        },
+                    }
                 }
+                Event::Mouse(_) => {
+                    // Do not support mouse event in Tui browser.
+                    //self.console_debug(format!("{:?}", event));
+                }
+                _ => {}
             }
         }
     }

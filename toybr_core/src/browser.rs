@@ -1,5 +1,6 @@
 use crate::common::display_item::DisplayItem;
 use crate::common::error::Error;
+use crate::common::event::Event;
 use crate::common::log::{Log, LogLevel};
 use crate::common::ui::UiObject;
 use crate::renderer::page::Page;
@@ -12,6 +13,7 @@ pub struct Browser<U: UiObject> {
     // TODO: support multiple tabs/pages. This browser currently supports only one page.
     ui: Rc<RefCell<U>>,
     page: Rc<RefCell<Page<U>>>,
+    events: Vec<Event>,
     display_items: Vec<DisplayItem>,
     logs: Vec<Log>,
 }
@@ -21,6 +23,7 @@ impl<U: UiObject> Browser<U> {
         Self {
             ui,
             page,
+            events: Vec::new(),
             display_items: Vec::new(),
             logs: Vec::new(),
         }
@@ -35,6 +38,10 @@ impl<U: UiObject> Browser<U> {
                     .console_error(format!("browser is terminated by {:?}", e));
             }
         }
+    }
+
+    pub fn push_event(&mut self, event: Event) {
+        self.events.push(event);
     }
 
     pub fn push_display_item(&mut self, item: DisplayItem) {
