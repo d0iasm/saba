@@ -18,7 +18,11 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
-    let response = match client.get(parsed_url.host, parsed_url.port, parsed_url.path) {
+    let response = match client.get(
+        parsed_url.host(),
+        parsed_url.port().parse().expect("port number can be u16"),
+        parsed_url.path(),
+    ) {
         Ok(res) => {
             // redirect to Location
             if res.status_code() == 302 {
@@ -26,9 +30,12 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
 
                 let redirect_client = HttpClient::new();
                 let redirect_res = match redirect_client.get(
-                    parsed_redirect_url.host,
-                    parsed_redirect_url.port,
-                    parsed_redirect_url.path,
+                    parsed_redirect_url.host(),
+                    parsed_redirect_url
+                        .port()
+                        .parse()
+                        .expect("port number can be u16"),
+                    parsed_redirect_url.path(),
                 ) {
                     Ok(res) => res,
                     Err(e) => return Err(Error::Network(format!("{:?}", e))),

@@ -54,6 +54,18 @@ impl ParsedUrl {
             path: path.to_string(),
         }
     }
+
+    pub fn host(&self) -> String {
+        self.host.clone()
+    }
+
+    pub fn port(&self) -> String {
+        self.port.clone()
+    }
+
+    pub fn path(&self) -> String {
+        self.path.clone()
+    }
 }
 
 #[cfg(test)]
