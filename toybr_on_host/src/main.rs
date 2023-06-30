@@ -9,33 +9,33 @@ use toybr_core::browser::Browser;
 use toybr_core::common::error::Error;
 use toybr_core::common::ui::UiObject;
 use toybr_core::renderer::page::Page;
-use toybr_core::url::ParsedUrl;
+use toybr_core::url::HtmlUrl;
 use ui::app::Tui;
 
 fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
     // parse url
-    let parsed_url = ParsedUrl::new(url.to_string());
+    let html_url = HtmlUrl::new(url.to_string());
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
     let response = match client.get(
-        parsed_url.host(),
-        parsed_url.port().parse().expect("port number can be u16"),
-        parsed_url.path(),
+        html_url.host(),
+        html_url.port().parse().expect("port number can be u16"),
+        html_url.path(),
     ) {
         Ok(res) => {
             // redirect to Location
             if res.status_code() == 302 {
-                let parsed_redirect_url = ParsedUrl::new(res.header("Location"));
+                let redirect_html_url = HtmlUrl::new(res.header("Location"));
 
                 let redirect_client = HttpClient::new();
                 let redirect_res = match redirect_client.get(
-                    parsed_redirect_url.host(),
-                    parsed_redirect_url
+                    redirect_html_url.host(),
+                    redirect_html_url
                         .port()
                         .parse()
                         .expect("port number can be u16"),
-                    parsed_redirect_url.path(),
+                    redirect_html_url.path(),
                 ) {
                     Ok(res) => res,
                     Err(e) => return Err(Error::Network(format!("{:?}", e))),

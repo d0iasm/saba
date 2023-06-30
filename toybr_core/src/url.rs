@@ -1,19 +1,20 @@
 //! RFC 1738 - Uniform Resource Locators (URL): https://datatracker.ietf.org/doc/html/rfc1738
-//! RFC 3986 - Uniform Resource Identifier (URI): https://datatracker.ietf.org/doc/html/rfc3986
+//! This module only supports HTTP URL scheme defined at RFC 1738 section 3.3.
+//! https://datatracker.ietf.org/doc/html/rfc1738#section-3.3
 
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ParsedUrl {
+pub struct HtmlUrl {
     scheme: String,
     host: String,
     port: String,
     path: String,
 }
 
-impl ParsedUrl {
+impl HtmlUrl {
     pub fn new(url: String) -> Self {
         // HTTP format
         // http://<host>:<port>/<path>?<searchpart>
@@ -75,74 +76,74 @@ mod tests {
     #[test]
     fn test_url1() {
         let url = "http://example.com".to_string();
-        let expected = ParsedUrl {
+        let expected = HtmlUrl {
             scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "80".to_string(),
             path: "".to_string(),
         };
-        assert_eq!(expected, ParsedUrl::new(url));
+        assert_eq!(expected, HtmlUrl::new(url));
     }
 
     #[test]
     fn test_url2() {
         let url = "http://example.com:8888".to_string();
-        let expected = ParsedUrl {
+        let expected = HtmlUrl {
             scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "".to_string(),
         };
-        assert_eq!(expected, ParsedUrl::new(url));
+        assert_eq!(expected, HtmlUrl::new(url));
     }
 
     #[test]
     fn test_url3() {
         let url = "http://example.com:8888/index.html".to_string();
-        let expected = ParsedUrl {
+        let expected = HtmlUrl {
             scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "index.html".to_string(),
         };
-        assert_eq!(expected, ParsedUrl::new(url));
+        assert_eq!(expected, HtmlUrl::new(url));
     }
 
     #[test]
     fn test_url4() {
         let url = "example.com:8888/index.html".to_string();
-        let expected = ParsedUrl {
+        let expected = HtmlUrl {
             scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "index.html".to_string(),
         };
-        assert_eq!(expected, ParsedUrl::new(url));
+        assert_eq!(expected, HtmlUrl::new(url));
     }
 
     #[test]
     fn test_localhost() {
         let url = "localhost:8000".to_string();
-        let expected = ParsedUrl {
+        let expected = HtmlUrl {
             scheme: "http".to_string(),
             host: "localhost".to_string(),
             port: "8000".to_string(),
             path: "".to_string(),
         };
-        assert_eq!(expected, ParsedUrl::new(url));
+        assert_eq!(expected, HtmlUrl::new(url));
     }
 
     /*
     #[test]
     fn test_unsupported_url() {
         let url = "https://example.com:8888/index.html".to_string();
-        let expected = ParsedUrl {
+        let expected = HtmlUrl {
             scheme: "https".to_string(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "index.html".to_string(),
         };
-        assert_eq!(expected, ParsedUrl::new(url));
+        assert_eq!(expected, HtmlUrl::new(url));
     }
     */
 }
