@@ -6,53 +6,56 @@ use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 
+/// The HTTP URL scheme is used to designate Internet resources accessible using HTTP (HyperText Transfer Protocol).
+/// http://<host>:<port>/<path>?<searchpart>
+/// https://datatracker.ietf.org/doc/html/rfc1738#section-3.3
 #[derive(Debug, Clone, PartialEq)]
 pub struct HtmlUrl {
-    scheme: String,
     host: String,
     port: String,
     path: String,
+    searchpart: String,
 }
 
 impl HtmlUrl {
     pub fn new(url: String) -> Self {
-        // HTTP format
-        // http://<host>:<port>/<path>?<searchpart>
-        //
-        // https://datatracker.ietf.org/doc/html/rfc1738#section-3.3
-        //
-        // possible format:
-        // https://url.spec.whatwg.org/#urls
-
         let url_parts: Vec<&str> = url.trim_start_matches("http://").splitn(2, "/").collect();
 
         let path;
+        let searchpart;
         if url_parts.len() < 2 {
-            path = "".to_string()
+            // There is no path and searchpart in URL.
+            path = "".to_string();
+            searchpart = "".to_string();
         } else {
-            path = url_parts[1].to_string();
+            let path_and_searchpart: Vec<&str> = url_parts[1].splitn(2, "?").collect();
+            path = path_and_searchpart[0].to_string();
+            if path_and_searchpart.len() < 2 {
+                searchpart = "".to_string();
+            } else {
+                searchpart = path_and_searchpart[1].to_string();
+            }
         }
 
         let host_and_port = url_parts[0];
         let host;
         let port;
         if let Some(index) = host_and_port.find(':') {
-            host = &host_and_port[..index];
-            port = &host_and_port[index + 1..];
+            host = host_and_port[..index].to_string();
+            port = host_and_port[index + 1..].to_string();
         } else {
-            host = host_and_port;
+            host = host_and_port.to_string();
             // 80 is the default port number of HTTP scheme.
             // Default port numbers are defined by Internet Assigned Numbers Authority (IANA).
             // https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
-            port = "80";
+            port = "80".to_string();
         }
 
         Self {
-            // TODO: currently, support only HTTP scheme.
-            scheme: "http".to_string(),
-            host: host.to_string(),
-            port: port.to_string(),
-            path: path.to_string(),
+            host,
+            port,
+            path,
+            searchpart,
         }
     }
 

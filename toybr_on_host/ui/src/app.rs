@@ -385,8 +385,8 @@ impl Tui {
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Percentage(5),
-                    Constraint::Percentage(5),
+                    Constraint::Percentage(4),
+                    Constraint::Percentage(6),
                     Constraint::Percentage(50),
                     Constraint::Percentage(40),
                 ]
@@ -437,7 +437,7 @@ impl Tui {
         {
             let input = Paragraph::new(self.input_url.as_ref())
                 .style(match self.input_mode {
-                    InputMode::Normal => Style::default(),
+                    InputMode::Normal => Style::default().fg(Color::White),
                     InputMode::Editing => Style::default().fg(Color::Yellow),
                 })
                 .block(Block::default().borders(Borders::ALL).title("URL"));
