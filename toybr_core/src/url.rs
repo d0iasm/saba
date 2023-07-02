@@ -11,6 +11,7 @@ use alloc::vec::Vec;
 /// https://datatracker.ietf.org/doc/html/rfc1738#section-3.3
 #[derive(Debug, Clone, PartialEq)]
 pub struct HtmlUrl {
+    url: String,
     host: String,
     port: String,
     path: String,
@@ -19,43 +20,97 @@ pub struct HtmlUrl {
 
 impl HtmlUrl {
     pub fn new(url: String) -> Self {
-        let url_parts: Vec<&str> = url.trim_start_matches("http://").splitn(2, "/").collect();
+        Self {
+            url,
+            host: "".to_string(),
+            port: "".to_string(),
+            path: "".to_string(),
+            searchpart: "".to_string(),
+        }
+    }
 
-        let path;
-        let searchpart;
-        if url_parts.len() < 2 {
-            // There is no path and searchpart in URL.
-            path = "".to_string();
-            searchpart = "".to_string();
-        } else {
-            let path_and_searchpart: Vec<&str> = url_parts[1].splitn(2, "?").collect();
-            path = path_and_searchpart[0].to_string();
-            if path_and_searchpart.len() < 2 {
-                searchpart = "".to_string();
-            } else {
-                searchpart = path_and_searchpart[1].to_string();
-            }
+    pub fn parse(&mut self) -> Result<Self, String> {
+        if !self.is_http() {
+            return Err("Only HTTP scheme is supported.".to_string());
         }
 
-        let host_and_port = url_parts[0];
-        let host;
-        let port;
-        if let Some(index) = host_and_port.find(':') {
-            host = host_and_port[..index].to_string();
-            port = host_and_port[index + 1..].to_string();
+        self.host = self.extract_host();
+        self.port = self.extract_port();
+        self.path = self.extract_path();
+        self.searchpart = self.extract_searchpart();
+
+        Ok(self.clone())
+    }
+
+    fn is_http(&mut self) -> bool {
+        if self.url.contains("http://") {
+            return true;
+        }
+        false
+    }
+
+    fn extract_host(&self) -> String {
+        let url_parts: Vec<&str> = self
+            .url
+            .trim_start_matches("http://")
+            .splitn(2, "/")
+            .collect();
+
+        if let Some(index) = url_parts[0].find(':') {
+            url_parts[0][..index].to_string()
         } else {
-            host = host_and_port.to_string();
+            url_parts[0].to_string()
+        }
+    }
+
+    fn extract_port(&self) -> String {
+        let url_parts: Vec<&str> = self
+            .url
+            .trim_start_matches("http://")
+            .splitn(2, "/")
+            .collect();
+
+        if let Some(index) = url_parts[0].find(':') {
+            url_parts[0][index + 1..].to_string()
+        } else {
             // 80 is the default port number of HTTP scheme.
             // Default port numbers are defined by Internet Assigned Numbers Authority (IANA).
             // https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
-            port = "80".to_string();
+            "80".to_string()
+        }
+    }
+
+    fn extract_path(&self) -> String {
+        let url_parts: Vec<&str> = self
+            .url
+            .trim_start_matches("http://")
+            .splitn(2, "/")
+            .collect();
+
+        if url_parts.len() < 2 {
+            return "".to_string();
         }
 
-        Self {
-            host,
-            port,
-            path,
-            searchpart,
+        let path_and_searchpart: Vec<&str> = url_parts[1].splitn(2, "?").collect();
+        path_and_searchpart[0].to_string()
+    }
+
+    fn extract_searchpart(&self) -> String {
+        let url_parts: Vec<&str> = self
+            .url
+            .trim_start_matches("http://")
+            .splitn(2, "/")
+            .collect();
+
+        if url_parts.len() < 2 {
+            return "".to_string();
+        }
+
+        let path_and_searchpart: Vec<&str> = url_parts[1].splitn(2, "?").collect();
+        if path_and_searchpart.len() < 2 {
+            "".to_string()
+        } else {
+            path_and_searchpart[1].to_string()
         }
     }
 
@@ -83,86 +138,92 @@ mod tests {
     #[test]
     fn test_url1() {
         let url = "http://example.com".to_string();
-        let expected = HtmlUrl {
+        let expected = Ok(HtmlUrl {
+            url: url.clone(),
             host: "example.com".to_string(),
             port: "80".to_string(),
             path: "".to_string(),
             searchpart: "".to_string(),
-        };
-        assert_eq!(expected, HtmlUrl::new(url));
+        });
+        assert_eq!(expected, HtmlUrl::new(url).parse());
     }
 
     #[test]
     fn test_url2() {
         let url = "http://example.com:8888".to_string();
-        let expected = HtmlUrl {
+        let expected = Ok(HtmlUrl {
+            url: url.clone(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "".to_string(),
             searchpart: "".to_string(),
-        };
-        assert_eq!(expected, HtmlUrl::new(url));
+        });
+        assert_eq!(expected, HtmlUrl::new(url).parse());
     }
 
     #[test]
     fn test_url3() {
         let url = "http://example.com:8888/index.html".to_string();
-        let expected = HtmlUrl {
+        let expected = Ok(HtmlUrl {
+            url: url.clone(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "index.html".to_string(),
             searchpart: "".to_string(),
-        };
-        assert_eq!(expected, HtmlUrl::new(url));
+        });
+        assert_eq!(expected, HtmlUrl::new(url).parse());
     }
 
     #[test]
     fn test_url4() {
-        let url = "example.com:8888/index.html".to_string();
-        let expected = HtmlUrl {
+        let url = "http://example.com/index.html".to_string();
+        let expected = Ok(HtmlUrl {
+            url: url.clone(),
             host: "example.com".to_string(),
-            port: "8888".to_string(),
+            port: "80".to_string(),
             path: "index.html".to_string(),
             searchpart: "".to_string(),
-        };
-        assert_eq!(expected, HtmlUrl::new(url));
+        });
+        assert_eq!(expected, HtmlUrl::new(url).parse());
     }
 
     #[test]
     fn test_url5() {
         let url = "http://example.com:8888/index.html?a=123&b=456".to_string();
-        let expected = HtmlUrl {
+        let expected = Ok(HtmlUrl {
+            url: url.clone(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "index.html".to_string(),
             searchpart: "a=123&b=456".to_string(),
-        };
-        assert_eq!(expected, HtmlUrl::new(url));
+        });
+        assert_eq!(expected, HtmlUrl::new(url).parse());
     }
 
     #[test]
     fn test_localhost() {
-        let url = "localhost:8000".to_string();
-        let expected = HtmlUrl {
+        let url = "http://localhost:8000".to_string();
+        let expected = Ok(HtmlUrl {
+            url: url.clone(),
             host: "localhost".to_string(),
             port: "8000".to_string(),
             path: "".to_string(),
             searchpart: "".to_string(),
-        };
-        assert_eq!(expected, HtmlUrl::new(url));
+        });
+        assert_eq!(expected, HtmlUrl::new(url).parse());
     }
 
-    /*
     #[test]
-    fn test_unsupported_url() {
-        let url = "https://example.com:8888/index.html".to_string();
-        let expected = HtmlUrl {
-            scheme: "https".to_string(),
-            host: "example.com".to_string(),
-            port: "8888".to_string(),
-            path: "index.html".to_string(),
-        };
-        assert_eq!(expected, HtmlUrl::new(url));
+    fn test_no_scheme() {
+        let url = "example.com".to_string();
+        let expected = Err("Only HTTP scheme is supported.".to_string());
+        assert_eq!(expected, HtmlUrl::new(url).parse());
     }
-    */
+
+    #[test]
+    fn test_unsupported_scheme() {
+        let url = "https://example.com:8888/index.html".to_string();
+        let expected = Err("Only HTTP scheme is supported.".to_string());
+        assert_eq!(expected, HtmlUrl::new(url).parse());
+    }
 }
