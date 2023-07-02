@@ -70,6 +70,10 @@ impl HtmlUrl {
     pub fn path(&self) -> String {
         self.path.clone()
     }
+
+    pub fn searchpart(&self) -> String {
+        self.searchpart.clone()
+    }
 }
 
 #[cfg(test)]
@@ -80,10 +84,10 @@ mod tests {
     fn test_url1() {
         let url = "http://example.com".to_string();
         let expected = HtmlUrl {
-            scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "80".to_string(),
             path: "".to_string(),
+            searchpart: "".to_string(),
         };
         assert_eq!(expected, HtmlUrl::new(url));
     }
@@ -92,10 +96,10 @@ mod tests {
     fn test_url2() {
         let url = "http://example.com:8888".to_string();
         let expected = HtmlUrl {
-            scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "".to_string(),
+            searchpart: "".to_string(),
         };
         assert_eq!(expected, HtmlUrl::new(url));
     }
@@ -104,10 +108,10 @@ mod tests {
     fn test_url3() {
         let url = "http://example.com:8888/index.html".to_string();
         let expected = HtmlUrl {
-            scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "index.html".to_string(),
+            searchpart: "".to_string(),
         };
         assert_eq!(expected, HtmlUrl::new(url));
     }
@@ -116,10 +120,22 @@ mod tests {
     fn test_url4() {
         let url = "example.com:8888/index.html".to_string();
         let expected = HtmlUrl {
-            scheme: "http".to_string(),
             host: "example.com".to_string(),
             port: "8888".to_string(),
             path: "index.html".to_string(),
+            searchpart: "".to_string(),
+        };
+        assert_eq!(expected, HtmlUrl::new(url));
+    }
+
+    #[test]
+    fn test_url5() {
+        let url = "http://example.com:8888/index.html?a=123&b=456".to_string();
+        let expected = HtmlUrl {
+            host: "example.com".to_string(),
+            port: "8888".to_string(),
+            path: "index.html".to_string(),
+            searchpart: "a=123&b=456".to_string(),
         };
         assert_eq!(expected, HtmlUrl::new(url));
     }
@@ -128,10 +144,10 @@ mod tests {
     fn test_localhost() {
         let url = "localhost:8000".to_string();
         let expected = HtmlUrl {
-            scheme: "http".to_string(),
             host: "localhost".to_string(),
             port: "8000".to_string(),
             path: "".to_string(),
+            searchpart: "".to_string(),
         };
         assert_eq!(expected, HtmlUrl::new(url));
     }
