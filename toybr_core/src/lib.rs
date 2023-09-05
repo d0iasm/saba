@@ -1,7 +1,11 @@
 extern crate alloc;
 
 pub mod browser;
-pub mod common;
+pub mod display_item;
+pub mod error;
+pub mod event;
+pub mod log;
 pub mod renderer;
+pub mod ui;
 pub mod url;
 pub mod utils;

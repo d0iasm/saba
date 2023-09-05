@@ -2,9 +2,9 @@
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
 use crate::browser::Browser;
-use crate::common::ui::UiObject;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
+use crate::ui::UiObject;
 use crate::utils::*;
 use alloc::format;
 use alloc::rc::{Rc, Weak};

@@ -3,13 +3,13 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h
 
 use crate::browser::Browser;
-use crate::common::ui::UiObject;
 use crate::renderer::css::cssom::*;
 use crate::renderer::html::dom::{ElementKind, Node, NodeKind};
 use crate::renderer::html::dom_api::get_target_element_node;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::renderer::layout::layout_point::LayoutPoint;
+use crate::ui::UiObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 

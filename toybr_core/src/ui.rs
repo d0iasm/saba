@@ -1,5 +1,5 @@
 //! UI interface that should be implemented in another module.
-use crate::common::error::Error;
+use crate::error::Error;
 use net::http::HttpResponse;
 
 pub trait UiObject {

@@ -1,9 +1,9 @@
-use crate::common::display_item::DisplayItem;
-use crate::common::error::Error;
-use crate::common::event::Event;
-use crate::common::log::{Log, LogLevel};
-use crate::common::ui::UiObject;
+use crate::display_item::DisplayItem;
+use crate::error::Error;
+use crate::event::Event;
+use crate::log::{Log, LogLevel};
 use crate::renderer::page::Page;
+use crate::ui::UiObject;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 use net::http::HttpResponse;

@@ -7,8 +7,8 @@
 //! https://www.w3.org/TR/css-syntax-3/#parsing
 
 use crate::browser::Browser;
-use crate::common::ui::UiObject;
 use crate::renderer::css::token::*;
+use crate::ui::UiObject;
 use crate::utils::*;
 use alloc::rc::Weak;
 use alloc::string::String;

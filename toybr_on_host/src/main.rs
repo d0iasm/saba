@@ -6,9 +6,9 @@ use core::cell::RefCell;
 use net::http::HttpClient;
 use net::http::HttpResponse;
 use toybr_core::browser::Browser;
-use toybr_core::common::error::Error;
-use toybr_core::common::ui::UiObject;
+use toybr_core::error::Error;
 use toybr_core::renderer::page::Page;
+use toybr_core::ui::UiObject;
 use toybr_core::url::HtmlUrl;
 use ui::app::Tui;
 

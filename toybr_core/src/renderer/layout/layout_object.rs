@@ -4,7 +4,6 @@
 //! https://www.w3.org/TR/css-position-3/
 
 use crate::browser::Browser;
-use crate::common::ui::UiObject;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::CssToken;
 use crate::renderer::html::dom::*;
@@ -12,6 +11,7 @@ use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
+use crate::ui::UiObject;
 use crate::utils::*;
 use alloc::rc::{Rc, Weak};
 use alloc::vec::Vec;

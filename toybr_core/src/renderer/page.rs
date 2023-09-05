@@ -4,7 +4,6 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h
 
 use crate::browser::Browser;
-use crate::common::ui::UiObject;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
@@ -17,6 +16,7 @@ use crate::renderer::js::ast::JsParser;
 use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::layout_view::LayoutView;
+use crate::ui::UiObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 use net::http::HttpResponse;

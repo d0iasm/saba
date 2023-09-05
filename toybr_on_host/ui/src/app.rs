@@ -12,13 +12,13 @@ use crossterm::{
 use net::http::HttpResponse;
 use std::io;
 use toybr_core::browser::Browser;
-use toybr_core::common::{
+use toybr_core::renderer::layout::computed_style::FontSize;
+use toybr_core::{
     display_item::DisplayItem,
     error::Error,
     event::{Event as BrowserEvent, KeyboardEvent, MouseEvent},
     ui::UiObject,
 };
-use toybr_core::renderer::layout::computed_style::FontSize;
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},

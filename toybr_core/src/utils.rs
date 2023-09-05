@@ -1,8 +1,8 @@
 use crate::browser::Browser;
-use crate::common::{display_item::DisplayItem, ui::UiObject};
 use crate::renderer::html::dom::Node;
 use crate::renderer::js::ast::Program;
 use crate::renderer::layout::layout_object::LayoutObject;
+use crate::{display_item::DisplayItem, ui::UiObject};
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
