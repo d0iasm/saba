@@ -136,7 +136,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_url1() {
+    fn test_url() {
         let url = "http://example.com".to_string();
         let expected = Ok(HtmlUrl {
             url: url.clone(),
@@ -149,7 +149,7 @@ mod tests {
     }
 
     #[test]
-    fn test_url2() {
+    fn test_url_with_port() {
         let url = "http://example.com:8888".to_string();
         let expected = Ok(HtmlUrl {
             url: url.clone(),
@@ -162,20 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn test_url3() {
-        let url = "http://example.com:8888/index.html".to_string();
-        let expected = Ok(HtmlUrl {
-            url: url.clone(),
-            host: "example.com".to_string(),
-            port: "8888".to_string(),
-            path: "index.html".to_string(),
-            searchpart: "".to_string(),
-        });
-        assert_eq!(expected, HtmlUrl::new(url).parse());
-    }
-
-    #[test]
-    fn test_url4() {
+    fn test_url_with_path() {
         let url = "http://example.com/index.html".to_string();
         let expected = Ok(HtmlUrl {
             url: url.clone(),
@@ -188,7 +175,20 @@ mod tests {
     }
 
     #[test]
-    fn test_url5() {
+    fn test_url_with_port_path() {
+        let url = "http://example.com:8888/index.html".to_string();
+        let expected = Ok(HtmlUrl {
+            url: url.clone(),
+            host: "example.com".to_string(),
+            port: "8888".to_string(),
+            path: "index.html".to_string(),
+            searchpart: "".to_string(),
+        });
+        assert_eq!(expected, HtmlUrl::new(url).parse());
+    }
+
+    #[test]
+    fn test_url_with_port_path_searchpart() {
         let url = "http://example.com:8888/index.html?a=123&b=456".to_string();
         let expected = Ok(HtmlUrl {
             url: url.clone(),

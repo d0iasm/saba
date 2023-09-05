@@ -14,13 +14,24 @@ use ui::app::Tui;
 
 fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
     // parse url
-    let html_url = HtmlUrl::new(url.to_string());
+    let html_url = match HtmlUrl::new(url.to_string()).parse() {
+        Ok(url) => url,
+        Err(e) => {
+            return Err(Error::UnexpectedInput(format!(
+                "input html is not supported: {:?}",
+                e
+            )));
+        }
+    };
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
     let response = match client.get(
         html_url.host(),
-        html_url.port().parse().expect("port number can be u16"),
+        html_url.port().parse::<u16>().expect(&format!(
+            "port number should be u16 but got {}",
+            html_url.port()
+        )),
         html_url.path(),
     ) {
         Ok(res) => {
@@ -31,10 +42,10 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
                 let redirect_client = HttpClient::new();
                 let redirect_res = match redirect_client.get(
                     redirect_html_url.host(),
-                    redirect_html_url
-                        .port()
-                        .parse()
-                        .expect("port number can be u16"),
+                    redirect_html_url.port().parse::<u16>().expect(&format!(
+                        "port number should be u16 but got {}",
+                        html_url.port()
+                    )),
                     redirect_html_url.path(),
                 ) {
                     Ok(res) => res,
