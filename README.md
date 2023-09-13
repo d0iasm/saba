@@ -1,18 +1,21 @@
 # toybr
-A toy Web browser on single process / thread
+
+A toy Web browser on single process / thread.
 
 ## how to run
 
-For Linux,
-
+For CUI browser on your host computer,
 ```
-$ cd toybr_on_host
-$ cargo run
+$ cargo run --features=cui --bin=toybr_cui
+```
+
+For GUI browser on your host computer,
+```
+$ cargo run --features=gui --bin=toybr_gui
 ```
 
 For [Wasabi OS](https://github.com/hikalium/wasabi),
 
 ```
-$ cd toybr_on_wasabi
-$ cargo run
+$ cargo run --features=wasabi --bin=toybr
 ```

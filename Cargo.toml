@@ -11,14 +11,19 @@ gui = []
 wasabi = []
 
 [[bin]]
-name = "fake_example"
-path = "main/fake_main.rs"
+name = "toybr"
+path = "main/main.rs"
+required-features = ["wasabi"]
+
+[[bin]]
+name = "toybr_gui"
+path = "main/main_gui.rs"
 required-features = ["gui"]
 
 [[bin]]
-name = "toybr"
+name = "toybr_cui"
 test = false
-path = "main/main.rs"
+path = "main/main_cui.rs"
 required-features = ["cui"]
 
 #[lib]
