@@ -6,3 +6,4 @@ edition = "2021"
 
 [dependencies]
 dns-lookup = "1.0.8"
+toybr_core = { path = "../core"}

@@ -5,8 +5,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-toybr_core = { path = "../../toybr_core"}
-net = { path = "../net"}
+toybr_core = { path = "../core"}
+net = { path = "../net_with_std"}
 tui = "0.19"
 crossterm = "0.25"
 unicode-width = "0.1.10"

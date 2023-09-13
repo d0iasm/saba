@@ -4,6 +4,7 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h
 
 use crate::browser::Browser;
+use crate::http::HttpResponse;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::*;
@@ -19,7 +20,6 @@ use crate::renderer::layout::layout_view::LayoutView;
 use crate::ui::UiObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
-use net::http::HttpResponse;
 
 /// Represents a page. It only supports a main frame.
 #[derive(Debug, Clone)]

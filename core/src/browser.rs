@@ -1,12 +1,12 @@
 use crate::display_item::DisplayItem;
 use crate::error::Error;
 use crate::event::Event;
+use crate::http::HttpResponse;
 use crate::log::{Log, LogLevel};
 use crate::renderer::page::Page;
 use crate::ui::UiObject;
 use alloc::rc::Rc;
 use core::cell::RefCell;
-use net::http::HttpResponse;
 
 #[derive(Debug, Clone)]
 pub struct Browser<U: UiObject> {

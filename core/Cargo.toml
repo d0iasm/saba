@@ -5,5 +5,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-net = { path = "../toybr_on_host/net"}
 hashbrown = "0.13.2"

@@ -9,9 +9,9 @@ use crossterm::{
         LeaveAlternateScreen,
     },
 };
-use net::http::HttpResponse;
 use std::io;
 use toybr_core::browser::Browser;
+use toybr_core::http::HttpResponse;
 use toybr_core::renderer::layout::computed_style::FontSize;
 use toybr_core::{
     display_item::DisplayItem,

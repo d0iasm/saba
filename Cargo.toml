@@ -1,0 +1,34 @@
+[package]
+authors = ["d0iasm"]
+name = "toybr"
+version = "0.1.0"
+edition = "2021"
+default-run = "toybr"
+
+[features]
+cui = ["dep:net", "dep:ui"]
+gui = []
+wasabi = []
+
+[[bin]]
+name = "fake_example"
+path = "main/fake_main.rs"
+required-features = ["gui"]
+
+[[bin]]
+name = "toybr"
+test = false
+path = "main/main.rs"
+required-features = ["cui"]
+
+#[lib]
+#name = "core"
+#path = "core/lib.rs"
+#crate-type = ["staticlib"]
+#required-features = []
+
+[dependencies]
+toybr_core = { path = "./core"}
+
+net = { path = "./net_with_std", optional=true }
+ui = { path = "./ui_cui", optional=true }
