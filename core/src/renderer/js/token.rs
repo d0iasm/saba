@@ -336,6 +336,33 @@ mod tests {
     }
 
     #[test]
+    fn test_define_function_with_args() {
+        let input = "function foo(a, b) { return 42; }".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::Keyword("function".to_string()),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('('),
+            Token::Identifier("a".to_string()),
+            Token::Punctuator(','),
+            Token::Identifier("b".to_string()),
+            Token::Punctuator(')'),
+            Token::Punctuator('{'),
+            Token::Keyword("return".to_string()),
+            Token::Number(42),
+            Token::Punctuator(';'),
+            Token::Punctuator('}'),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
     fn test_add_function_num() {
         let input = "function foo() { return 42; } var result = foo() + 1;".to_string();
         let mut lexer = JsLexer::new(input);
