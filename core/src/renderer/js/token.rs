@@ -177,3 +177,194 @@ impl Iterator for JsLexer {
         self.get_next_token()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let input = "".to_string();
+        let mut lexer = JsLexer::new(input);
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_num() {
+        let input = "42".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [Token::Number(42)].to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_string() {
+        let input = "\"foo\"".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [Token::StringLiteral("foo".to_string())].to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_add_nums() {
+        let input = "1 + 2".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [Token::Number(1), Token::Punctuator('+'), Token::Number(2)].to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_add_strings() {
+        let input = "\"foo\" + \"bar\"".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::StringLiteral("foo".to_string()),
+            Token::Punctuator('+'),
+            Token::StringLiteral("bar".to_string()),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_add_num_string() {
+        let input = "1 + \"2\"".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::Number(1),
+            Token::Punctuator('+'),
+            Token::StringLiteral("2".to_string()),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_assign_variable() {
+        let input = "var foo=42;".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::Keyword("var".to_string()),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('='),
+            Token::Number(42),
+            Token::Punctuator(';'),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_add_variable_num() {
+        let input = "var foo=42; var result=foo+1;".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::Keyword("var".to_string()),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('='),
+            Token::Number(42),
+            Token::Punctuator(';'),
+            Token::Keyword("var".to_string()),
+            Token::Identifier("result".to_string()),
+            Token::Punctuator('='),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('+'),
+            Token::Number(1),
+            Token::Punctuator(';'),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_define_function() {
+        let input = "function foo() { return 42; }".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::Keyword("function".to_string()),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('('),
+            Token::Punctuator(')'),
+            Token::Punctuator('{'),
+            Token::Keyword("return".to_string()),
+            Token::Number(42),
+            Token::Punctuator(';'),
+            Token::Punctuator('}'),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_add_function_num() {
+        let input = "function foo() { return 42; } var result = foo() + 1;".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::Keyword("function".to_string()),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('('),
+            Token::Punctuator(')'),
+            Token::Punctuator('{'),
+            Token::Keyword("return".to_string()),
+            Token::Number(42),
+            Token::Punctuator(';'),
+            Token::Punctuator('}'),
+            Token::Keyword("var".to_string()),
+            Token::Identifier("result".to_string()),
+            Token::Punctuator('='),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('('),
+            Token::Punctuator(')'),
+            Token::Punctuator('+'),
+            Token::Number(1),
+            Token::Punctuator(';'),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+}
