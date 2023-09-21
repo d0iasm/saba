@@ -247,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_num_string() {
+    fn test_add_num_and_string() {
         let input = "1 + \"2\"".to_string();
         let mut lexer = JsLexer::new(input);
         let expected = [
@@ -285,7 +285,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_variable_num() {
+    fn test_add_variable_and_num() {
         let input = "var foo=42; var result=foo+1;".to_string();
         let mut lexer = JsLexer::new(input);
         let expected = [
@@ -337,7 +337,7 @@ mod tests {
 
     #[test]
     fn test_define_function_with_args() {
-        let input = "function foo(a, b) { return 42; }".to_string();
+        let input = "function foo(a, b) { return a+b; }".to_string();
         let mut lexer = JsLexer::new(input);
         let expected = [
             Token::Keyword("function".to_string()),
@@ -349,7 +349,9 @@ mod tests {
             Token::Punctuator(')'),
             Token::Punctuator('{'),
             Token::Keyword("return".to_string()),
-            Token::Number(42),
+            Token::Identifier("a".to_string()),
+            Token::Punctuator('+'),
+            Token::Identifier("b".to_string()),
             Token::Punctuator(';'),
             Token::Punctuator('}'),
         ]
@@ -363,7 +365,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_function_num() {
+    fn test_add_function_and_num() {
         let input = "function foo() { return 42; } var result = foo() + 1;".to_string();
         let mut lexer = JsLexer::new(input);
         let expected = [
@@ -374,6 +376,44 @@ mod tests {
             Token::Punctuator('{'),
             Token::Keyword("return".to_string()),
             Token::Number(42),
+            Token::Punctuator(';'),
+            Token::Punctuator('}'),
+            Token::Keyword("var".to_string()),
+            Token::Identifier("result".to_string()),
+            Token::Punctuator('='),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('('),
+            Token::Punctuator(')'),
+            Token::Punctuator('+'),
+            Token::Number(1),
+            Token::Punctuator(';'),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
+    fn test_add_local_variable_and_num() {
+        let input = "function foo() { var a=42; return a; } var result = foo() + 1;".to_string();
+        let mut lexer = JsLexer::new(input);
+        let expected = [
+            Token::Keyword("function".to_string()),
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('('),
+            Token::Punctuator(')'),
+            Token::Punctuator('{'),
+            Token::Keyword("var".to_string()),
+            Token::Identifier("a".to_string()),
+            Token::Punctuator('='),
+            Token::Number(42),
+            Token::Punctuator(';'),
+            Token::Keyword("return".to_string()),
+            Token::Identifier("a".to_string()),
             Token::Punctuator(';'),
             Token::Punctuator('}'),
             Token::Keyword("var".to_string()),
