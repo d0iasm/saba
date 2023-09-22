@@ -6,7 +6,7 @@ use alloc::rc::Rc;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Program {
     body: Vec<Rc<Node>>,
 }
@@ -586,5 +586,19 @@ impl JsParser {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let input = "".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let expected = Program::new();
+        assert_eq!(expected, parser.parse_ast());
     }
 }
