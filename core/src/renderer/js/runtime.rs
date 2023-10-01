@@ -552,7 +552,7 @@ mod tests {
     }
 
     #[test]
-    fn test_empty() {
+    fn test_add_nums() {
         let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
         let input = "1 + 2".to_string();
         let lexer = JsLexer::new(input);
