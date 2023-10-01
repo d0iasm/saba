@@ -525,3 +525,47 @@ impl JsRuntime {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::renderer::html::dom::NodeKind;
+    use crate::renderer::js::ast::JsParser;
+    use crate::renderer::js::token::JsLexer;
+
+    #[test]
+    fn test_num() {
+        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let input = "42".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let expected = [RuntimeValue::Number(42)];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(Some(expected[i].clone()), result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_empty() {
+        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let input = "1 + 2".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let expected = [RuntimeValue::Number(3)];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(Some(expected[i].clone()), result);
+            i += 1;
+        }
+    }
+}

@@ -633,4 +633,22 @@ mod tests {
         expected.set_body(body);
         assert_eq!(expected, parser.parse_ast());
     }
+
+    #[test]
+    fn test_assign_variable() {
+        let input = "var foo=42;".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let mut expected = Program::new();
+        let mut body = Vec::new();
+        body.push(Rc::new(Node::VariableDeclaration {
+            declarations: [Some(Rc::new(Node::VariableDeclarator {
+                id: Some(Rc::new(Node::Identifier("foo".to_string()))),
+                init: Some(Rc::new(Node::NumericLiteral(42))),
+            }))]
+            .to_vec(),
+        }));
+        expected.set_body(body);
+        assert_eq!(expected, parser.parse_ast());
+    }
 }
