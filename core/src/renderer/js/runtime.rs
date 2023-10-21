@@ -218,12 +218,6 @@ impl JsRuntime {
             );
         }
 
-        /*
-        if func == &RuntimeValue::StringLiteral("setTimeout".to_string()) {
-            return (true, None);
-        }
-        */
-
         (false, None)
     }
 

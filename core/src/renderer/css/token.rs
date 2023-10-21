@@ -229,3 +229,65 @@ impl Iterator for CssTokenizer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let style = "".to_string();
+        let mut t = CssTokenizer::new(style);
+        assert!(t.next().is_none());
+    }
+
+    #[test]
+    fn test_one_rule() {
+        let style = "p { color: red; }".to_string();
+        let mut t = CssTokenizer::new(style);
+        let expected = [
+            CssToken::Ident("p".to_string()),
+            CssToken::OpenCurly,
+            CssToken::Ident("color".to_string()),
+            CssToken::Colon,
+            CssToken::Ident("red".to_string()),
+            CssToken::SemiColon,
+            CssToken::CloseCurly,
+        ];
+        for e in expected {
+            assert_eq!(Some(e.clone()), t.next());
+        }
+        assert!(t.next().is_none());
+    }
+
+    #[test]
+    fn test_multiple_rules() {
+        // The value like "40px" is not supported yet.
+        let style = "p { color: red; } h1 { font-size: 40; color: blue; }".to_string();
+        let mut t = CssTokenizer::new(style);
+        let expected = [
+            CssToken::Ident("p".to_string()),
+            CssToken::OpenCurly,
+            CssToken::Ident("color".to_string()),
+            CssToken::Colon,
+            CssToken::Ident("red".to_string()),
+            CssToken::SemiColon,
+            CssToken::CloseCurly,
+            CssToken::Ident("h1".to_string()),
+            CssToken::OpenCurly,
+            CssToken::Ident("font-size".to_string()),
+            CssToken::Colon,
+            CssToken::Number(40.0),
+            CssToken::SemiColon,
+            CssToken::Ident("color".to_string()),
+            CssToken::Colon,
+            CssToken::Ident("blue".to_string()),
+            CssToken::SemiColon,
+            CssToken::CloseCurly,
+        ];
+        for e in expected {
+            assert_eq!(Some(e.clone()), t.next());
+        }
+        assert!(t.next().is_none());
+    }
+}
