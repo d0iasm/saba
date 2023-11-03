@@ -6,9 +6,9 @@ edition = "2021"
 default-run = "toybr"
 
 [features]
-cui = ["dep:net", "dep:ui"]
+cui = ["dep:net_std", "dep:ui_cui"]
 gui = []
-wasabi = []
+wasabi = ["dep:net_wasabi", "dep:ui_wasabi"]
 
 [[bin]]
 name = "toybr"
@@ -35,8 +35,8 @@ required-features = ["cui"]
 [dependencies]
 toybr_core = { path = "./core"}
 
-net = { path = "./net/std", optional=true }
-ui = { path = "./ui/cui", optional=true }
+net_std = { path = "./net/std", optional=true }
+ui_cui = { path = "./ui/cui", optional=true }
 
-#net = { path = "./net_wasabi", optional=true }
-#ui = { path = "./ui_wasabi", optional=true }
+net_wasabi = { path = "./net/wasabi", optional=true }
+ui_wasabi = { path = "./ui/wasabi", optional=true }

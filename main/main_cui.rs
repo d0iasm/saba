@@ -1,5 +1,8 @@
 extern crate alloc;
 
+use net_std as net;
+use ui_cui as ui;
+
 use alloc::rc::Rc;
 use alloc::string::String;
 use core::cell::RefCell;
