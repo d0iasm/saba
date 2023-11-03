@@ -188,7 +188,7 @@ impl JsRuntime {
         if func == &RuntimeValue::StringLiteral("console.log".to_string()) {
             match self.eval(&arguments[0], env.clone()) {
                 Some(arg) => {
-                    println!("[console.log] {:?}", arg.to_string());
+                    //println!("[console.log] {:?}", arg.to_string());
                     return (true, None);
                 }
                 None => return (false, None),
@@ -204,11 +204,13 @@ impl JsRuntime {
                 Some(n) => n,
                 None => return (true, None),
             };
+            /*
             println!(
                 "[document.getElementById] {:?}\n{:?}",
                 arg.to_string(),
                 target
             );
+            */
             return (
                 true,
                 Some(RuntimeValue::HtmlElement {
@@ -319,7 +321,7 @@ impl JsRuntime {
                         None => return None,
                     };
 
-                    println!("AssignmentExpression {:?} = {:?}", left_value, right_value);
+                    //println!("AssignmentExpression {:?} = {:?}", left_value, right_value);
 
                     match left_value {
                         RuntimeValue::Number(n) => panic!("unexpected value {:?}", n),
@@ -389,7 +391,7 @@ impl JsRuntime {
 
                         if object_value == RuntimeValue::StringLiteral("location".to_string()) {
                             if property_value == RuntimeValue::StringLiteral("href".to_string()) {
-                                println!("[location.href] {:?}", self.url);
+                                //println!("[location.href] {:?}", self.url);
                                 return Some(RuntimeValue::StringLiteral(self.url.clone()));
                             }
 
@@ -398,7 +400,7 @@ impl JsRuntime {
                                     Some(i) => self.url[i..].to_string(),
                                     None => "".to_string(),
                                 };
-                                println!("[location.hash] {:?}", hash);
+                                //println!("[location.hash] {:?}", hash);
                                 return Some(RuntimeValue::StringLiteral(hash.clone()));
                             }
                         }

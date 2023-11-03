@@ -45,12 +45,13 @@ echo "copying the toybr application to wasabi OS..."
 cp -R `ls -A ./ | grep -v "target" | grep -v ".git" | grep -v "build"` $APP_PATH
 
 cd $OS_PATH
-make
 
 # add app target to Wasabi OS
 mv Cargo.toml Cargo.toml.original
 sed 's/members = \[/members = \[\n    "app\/toybr",/' Cargo.toml.original > Cargo.toml
+#sed 's/'
 
+make
 make run
 
 cd $HOME_PATH

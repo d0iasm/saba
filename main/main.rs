@@ -1,3 +1,2 @@
-fn main() {
-    println!("feature wasabi is enabled");
-}
+#![no_std]
+#![no_main]

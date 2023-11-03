@@ -3,7 +3,9 @@ use crate::renderer::html::dom::Node;
 use crate::renderer::js::ast::Program;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::{display_item::DisplayItem, ui::UiObject};
+use alloc::format;
 use alloc::rc::{Rc, Weak};
+use alloc::string::String;
 use core::cell::RefCell;
 
 pub fn add_rect_display_item<U: UiObject>(layout_object: &LayoutObject<U>) {

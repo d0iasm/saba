@@ -1,6 +1,7 @@
 //! UI interface that should be implemented in another module.
 use crate::error::Error;
 use crate::http::HttpResponse;
+use alloc::string::String;
 
 pub trait UiObject {
     fn new() -> Self;

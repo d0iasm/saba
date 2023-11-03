@@ -3,6 +3,7 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h
 
+use crate::alloc::string::ToString;
 use crate::browser::Browser;
 use crate::http::HttpResponse;
 use crate::renderer::css::cssom::StyleSheet;
@@ -19,6 +20,7 @@ use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::layout_view::LayoutView;
 use crate::ui::UiObject;
 use alloc::rc::{Rc, Weak};
+use alloc::string::String;
 use core::cell::RefCell;
 
 /// Represents a page. It only supports a main frame.

@@ -1,5 +1,6 @@
 /// Helper struct and methods to handle color name, color code and RGB value.
 use crate::error::Error;
+use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
 

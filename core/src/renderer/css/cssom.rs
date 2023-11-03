@@ -10,6 +10,7 @@ use crate::browser::Browser;
 use crate::renderer::css::token::*;
 use crate::ui::UiObject;
 use crate::utils::*;
+use alloc::format;
 use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::string::ToString;

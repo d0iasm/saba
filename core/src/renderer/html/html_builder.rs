@@ -2,6 +2,7 @@
 
 use crate::renderer::html::dom::{Node, NodeKind};
 use alloc::rc::Rc;
+use alloc::string::String;
 use core::cell::RefCell;
 
 pub fn dom_to_html(root: &Option<Rc<RefCell<Node>>>) -> String {

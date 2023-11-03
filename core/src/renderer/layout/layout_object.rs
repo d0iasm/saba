@@ -13,7 +13,9 @@ use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
 use crate::ui::UiObject;
 use crate::utils::*;
+use alloc::format;
 use alloc::rc::{Rc, Weak};
+use alloc::string::String;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 

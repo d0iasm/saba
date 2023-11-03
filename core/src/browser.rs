@@ -5,7 +5,10 @@ use crate::http::HttpResponse;
 use crate::log::{Log, LogLevel};
 use crate::renderer::page::Page;
 use crate::ui::UiObject;
+use alloc::format;
 use alloc::rc::Rc;
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::cell::RefCell;
 
 #[derive(Debug, Clone)]

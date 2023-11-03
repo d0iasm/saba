@@ -1,3 +1,7 @@
+use crate::alloc::string::ToString;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 #[derive(Debug, Clone)]
 pub struct Header {
     pub name: String,

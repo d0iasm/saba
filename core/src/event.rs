@@ -1,6 +1,8 @@
 //! This is a part of "UI Events" in the W3C specification.
 //! https://www.w3.org/TR/uievents/
 
+use alloc::string::String;
+
 #[derive(Debug, Clone)]
 pub enum Event {
     /// https://www.w3.org/TR/uievents/#events-mouseevents

@@ -3,6 +3,7 @@
 use crate::renderer::layout::computed_style::ComputedStyle;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
+use alloc::string::String;
 
 #[derive(Debug, Clone)]
 pub enum DisplayItem {
