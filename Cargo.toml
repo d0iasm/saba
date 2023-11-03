@@ -35,5 +35,8 @@ required-features = ["cui"]
 [dependencies]
 toybr_core = { path = "./core"}
 
-net = { path = "./net_with_std", optional=true }
-ui = { path = "./ui_cui", optional=true }
+net = { path = "./net/std", optional=true }
+ui = { path = "./ui/cui", optional=true }
+
+#net = { path = "./net_wasabi", optional=true }
+#ui = { path = "./ui_wasabi", optional=true }
