@@ -8,7 +8,7 @@ default-run = "toybr"
 [features]
 cui = ["dep:net_std", "dep:ui_cui"]
 gui = []
-wasabi = ["dep:net_wasabi", "dep:ui_wasabi"]
+wasabi = ["dep:net_wasabi", "dep:ui_wasabi", "dep:noli"]
 
 [[bin]]
 name = "toybr"
@@ -40,3 +40,4 @@ ui_cui = { path = "./ui/cui", optional=true }
 
 net_wasabi = { path = "./net/wasabi", optional=true }
 ui_wasabi = { path = "./ui/wasabi", optional=true }
+noli = { git = "https://github.com/hikalium/wasabi.git", optional = true }

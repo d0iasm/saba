@@ -16,6 +16,16 @@ $ cargo run --features=gui --bin=toybr_gui
 
 For [Wasabi OS](https://github.com/hikalium/wasabi),
 
+To build,
+
 ```
-$ cargo run --features=wasabi --bin=toybr
+$ cargo build --features=wasabi --bin=toybr --target=x86_64-unknown-none
+```
+
+You may not be able to run via `cargo run` because the target archtecture
+is different from your environment.
+So use a helper script to run the code,
+
+```
+$ ./run_on_wasabi.sh
 ```
