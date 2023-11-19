@@ -385,8 +385,8 @@ impl Tui {
             .direction(Direction::Vertical)
             .constraints(
                 [
-                    Constraint::Percentage(4),
-                    Constraint::Percentage(6),
+                    Constraint::Percentage(3),
+                    Constraint::Percentage(7),
                     Constraint::Percentage(50),
                     Constraint::Percentage(40),
                 ]
