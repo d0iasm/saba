@@ -7,9 +7,10 @@ RUSTFLAGS=\
 		  -C link-args=-z \
 		  -C link-args=execstack
 CARGO=RUSTFLAGS='${RUSTFLAGS}' cargo
+FEATURES=--features=wasabi --bin=toybr
 
 .PHONY : build
 build :
 	rustup target add $(TARGET)
-	$(CARGO) build --features=wasabi --bin=toybr --target=$(TARGET)
-	$(CARGO) install --force --root $(ROOT) --path .
+	$(CARGO) build $(FEATURES) --target=$(TARGET)
+	$(CARGO) install $(FEATURES) --force --root $(ROOT) --path .
