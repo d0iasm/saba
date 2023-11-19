@@ -46,10 +46,27 @@ cp -R `ls -A ./ | grep -v "target" | grep -v ".git" | grep -v "build"` $APP_PATH
 
 cd $OS_PATH
 
-# add app target to Wasabi OS
+# update Cargo.toml to add toybr
+# this is very hacky and not stable
 mv Cargo.toml Cargo.toml.original
-sed 's/members = \[/members = \[\n    "app\/toybr",/' Cargo.toml.original > Cargo.toml
-#sed 's/'
+if grep -Fq "app/toybr" Cargo.toml.original
+then
+  echo "app/toybr already exists in Cargo.toml"
+  mv Cargo.toml.original Cargo.toml
+else
+  sed 's/members = \[/members = \[\n    "app\/toybr",/' Cargo.toml.original >| Cargo.toml
+fi
+
+# update Makefile to add toybr
+# this is very hacky and not stable
+mv Makefile Makefile.original
+if grep -Fq "app/toybr" Makefile.original
+then
+  echo "app/toybr already exists in Makefile"
+  mv Makefile.original Makefile
+else
+  sed 's/make -C app\/window0/make -C app\/window0\n\tmake -C app\/toybr/' Makefile.original >| Makefile
+fi
 
 make
 make run
