@@ -13,4 +13,4 @@ FEATURES=--features=wasabi --bin=toybr
 build :
 	rustup target add $(TARGET)
 	$(CARGO) build $(FEATURES) --target=$(TARGET)
-	$(CARGO) install $(FEATURES) --force --root $(ROOT) --path .
+	$(CARGO) install $(FEATURES) --target=$(TARGET) --force --root $(ROOT) --path .
