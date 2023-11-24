@@ -8,7 +8,7 @@ default-run = "toybr"
 [features]
 cui = ["dep:net_std", "dep:ui_cui"]
 gui = []
-wasabi = ["dep:net_wasabi", "dep:ui_wasabi", "dep:noli"]
+wasabi = ["dep:libc", "dep:net_wasabi", "dep:ui_wasabi", "dep:noli"]
 
 [[bin]]
 name = "toybr"
@@ -33,6 +33,7 @@ required-features = ["cui"]
 #required-features = []
 
 [dependencies]
+libc = { version = "0.2.150", optional=true}
 toybr_core = { path = "./core"}
 
 net_std = { path = "./net/std", optional=true }
