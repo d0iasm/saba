@@ -11,6 +11,7 @@ use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::cell::RefCell;
+use core::ptr;
 use noli::*;
 use toybr_core::browser::Browser;
 use toybr_core::error::Error;
@@ -19,17 +20,78 @@ use toybr_core::renderer::page::Page;
 use toybr_core::ui::UiObject;
 use ui_wasabi::WasabiUI;
 
-#[derive(Default)]
-pub struct Allocator;
+#[global_allocator]
+static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 
-// TODO: implement allocator
-unsafe impl GlobalAlloc for Allocator {
-    unsafe fn alloc(&self, _layout: Layout) -> *mut u8 {
-        core::ptr::null_mut()
-        //malloc(layout.size() as u32) as *mut u8
+/// The implementation comes from https://os.phil-opp.com/allocator-designs/
+pub struct BumpAllocator {
+    heap_start: usize,
+    heap_end: usize,
+    next: usize,
+    allocations: usize,
+}
+
+impl BumpAllocator {
+    /// Creates a new empty bump allocator.
+    pub const fn new() -> Self {
+        BumpAllocator {
+            heap_start: 0,
+            heap_end: 0,
+            next: 0,
+            allocations: 0,
+        }
     }
+}
+
+/// Align the given address `addr` upwards to alignment `align`.
+///
+/// Requires that `align` is a power of two.
+fn align_up(addr: usize, align: usize) -> usize {
+    (addr + align - 1) & !(align - 1)
+}
+
+unsafe impl GlobalAlloc for Locked<BumpAllocator> {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        let mut bump = self.lock(); // get a mutable reference
+
+        let alloc_start = align_up(bump.next, layout.align());
+        let alloc_end = match alloc_start.checked_add(layout.size()) {
+            Some(end) => end,
+            None => return ptr::null_mut(),
+        };
+
+        if alloc_end > bump.heap_end {
+            ptr::null_mut() // out of memory
+        } else {
+            bump.next = alloc_end;
+            bump.allocations += 1;
+            alloc_start as *mut u8
+        }
+    }
+
     unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
-        //free(ptr as *mut c_void);
+        let mut bump = self.lock(); // get a mutable reference
+
+        bump.allocations -= 1;
+        if bump.allocations == 0 {
+            bump.next = bump.heap_start;
+        }
+    }
+}
+
+pub struct Locked<A> {
+    inner: spin::Mutex<A>,
+}
+
+impl<A> Locked<A> {
+    pub const fn new(inner: A) -> Self {
+        Locked {
+            inner: spin::Mutex::new(inner),
+        }
+    }
+
+    pub fn lock(&self) -> spin::MutexGuard<A> {
+        self.inner.lock()
     }
 }
 
@@ -37,9 +99,6 @@ unsafe impl GlobalAlloc for Allocator {
 fn my_allocator_error(_layout: Layout) -> ! {
     panic!("out of memory");
 }
-
-#[global_allocator]
-static GLOBAL_ALLOCATOR: Allocator = Allocator;
 
 fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
     Ok(HttpResponse::new(
@@ -56,18 +115,20 @@ fn main() -> u64 {
 
     // initialize the UI object
     let ui = Rc::new(RefCell::new(WasabiUI::new()));
-    let page = Rc::new(RefCell::new(Page::new()));
+    /*
+        let page = Rc::new(RefCell::new(Page::new()));
 
-    // initialize the main browesr struct
-    let browser = Rc::new(RefCell::new(Browser::new(ui.clone(), page.clone())));
+        // initialize the main browesr struct
+        let browser = Rc::new(RefCell::new(Browser::new(ui.clone(), page.clone())));
 
-    match ui.borrow_mut().start(handle_url::<WasabiUI>) {
-        Ok(_) => {}
-        Err(e) => {
-            println!("browser fails to start {:?}", e);
-            sys_exit(1);
-        }
-    };
+        match ui.borrow_mut().start(handle_url::<WasabiUI>) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("browser fails to start {:?}", e);
+                sys_exit(1);
+            }
+        };
+    */
     0
 }
 
