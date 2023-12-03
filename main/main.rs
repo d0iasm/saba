@@ -161,7 +161,27 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
         200,
         "".to_string(),
         Vec::new(),
-        "<h1>example</h1>".to_string(),
+        r#"
+<html>
+<head>
+  <style type="text/css">
+    div {
+      width: 600;
+      margin: 200;
+      background-color: white;
+    }
+  </style>
+</head>
+<body>
+<div>
+  <h1>Example Domain</h1>
+  <p>This domain is for use in illustrative examples in documents. You may use this
+  domain in literature without prior coordination or asking for permission.</p>
+  <p><a href="http://localhost:8000/test2.html">More information...</a></p>
+</div>
+</body>
+</html>"#
+            .to_string(),
     ))
 }
 

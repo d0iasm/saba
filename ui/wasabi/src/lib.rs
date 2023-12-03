@@ -4,9 +4,12 @@ extern crate alloc;
 
 use alloc::rc::Weak;
 use alloc::string::String;
+use alloc::string::ToString;
 use core::cell::RefCell;
 use noli::*;
-use toybr_core::{browser::Browser, error::Error, http::HttpResponse, ui::UiObject};
+use toybr_core::{
+    browser::Browser, display_item::DisplayItem, error::Error, http::HttpResponse, ui::UiObject,
+};
 
 static WHITE: u32 = 0xffffff;
 static RED: u32 = 0xff0000;
@@ -46,6 +49,10 @@ impl UiObject for WasabiUI {
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
         self.setup();
+
+        self.start_navigation(handle_url, "http://example.com".to_string());
+
+        self.update_ui();
 
         Ok(())
     }
@@ -88,5 +95,70 @@ impl WasabiUI {
             13 + BUTTON_SIZE,
         )
         .unwrap();
+    }
+
+    fn start_navigation(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+        destination: String,
+    ) -> Result<(), Error> {
+        match handle_url(destination) {
+            Ok(response) => {
+                let page = match self.browser().upgrade() {
+                    Some(browser) => {
+                        // clean up Browser struct
+                        {
+                            browser.borrow_mut().clear_display_items();
+                        }
+                        {
+                            browser.borrow_mut().clear_logs();
+                        }
+
+                        browser.borrow().page()
+                    }
+                    None => {
+                        return Err(Error::Other("associated browser is not found".to_string()))
+                    }
+                };
+
+                page.borrow_mut().receive_response(response);
+            }
+            Err(e) => {
+                //self.console_error(format!("{:?}", e));
+                return Err(e);
+            }
+        }
+        Ok(())
+    }
+
+    fn update_ui(&mut self) {
+        let browser = match self.browser().upgrade() {
+            Some(browser) => browser,
+            None => return,
+        };
+        let display_items = browser.borrow().display_items();
+
+        for item in display_items {
+            match item {
+                DisplayItem::Rect {
+                    style: _,
+                    layout_point: _,
+                    layout_size: _,
+                } => {}
+                DisplayItem::Link {
+                    text,
+                    destination,
+                    style: _,
+                    layout_point: _,
+                } => {}
+                DisplayItem::Text {
+                    text,
+                    style,
+                    layout_point: _,
+                } => {
+                    draw_string(BLACK, 10, 40, &text).unwrap();
+                }
+            }
+        }
     }
 }
