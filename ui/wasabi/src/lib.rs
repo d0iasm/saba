@@ -22,8 +22,8 @@ static BLACK: u32 = 0x000000;
 
 //static WIDTH: i64 = 1024;
 //static HEIGHT: i64 = 768;
-static WIDTH: i64 = 500;
-static HEIGHT: i64 = 300;
+static WIDTH: i64 = 600;
+static HEIGHT: i64 = 400;
 
 static BUTTON_SIZE: i64 = 14;
 
@@ -31,6 +31,8 @@ static BUTTON_SIZE: i64 = 14;
 pub struct WasabiUI {
     browser: Weak<RefCell<Browser<Self>>>,
     input_url: String,
+    // The (x, y) position to render a next display item.
+    position: (i64, i64),
 }
 
 impl UiObject for WasabiUI {
@@ -38,6 +40,7 @@ impl UiObject for WasabiUI {
         Self {
             browser: Weak::new(),
             input_url: String::new(),
+            position: (10, 30),
         }
     }
 
@@ -156,7 +159,10 @@ impl WasabiUI {
                     style,
                     layout_point: _,
                 } => {
-                    draw_string(BLACK, 10, 40, &text).unwrap();
+                    for line in text.split("\n") {
+                        draw_string(BLACK, self.position.0, self.position.1, &line).unwrap();
+                        self.position.1 += 20;
+                    }
                 }
             }
         }
