@@ -6,9 +6,10 @@ use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::string::ToString;
 use core::cell::RefCell;
-use noli::{window::Window, *};
+use noli::{window::StringSize, window::Window, *};
 use toybr_core::{
-    browser::Browser, display_item::DisplayItem, error::Error, http::HttpResponse, ui::UiObject,
+    browser::Browser, display_item::DisplayItem, error::Error, http::HttpResponse,
+    renderer::layout::computed_style::FontSize, ui::UiObject,
 };
 
 static WHITE: u32 = 0xffffff;
@@ -44,7 +45,7 @@ impl UiObject for WasabiUI {
             browser: Weak::new(),
             input_url: String::new(),
             window: Window::new("toybr".to_string(), WHITE, 0, 0, WIDTH, HEIGHT).unwrap(),
-            position: (10, 30),
+            position: (5, TOOLBAR_HEIGHT + 5),
         }
     }
 
@@ -110,7 +111,11 @@ impl WasabiUI {
             ));
         }
 
-        if self.window.draw_string(BLACK, 5, 5, "Address:").is_err() {
+        if self
+            .window
+            .draw_string(BLACK, 5, 5, "Address:", StringSize::Medium)
+            .is_err()
+        {
             return Err(Error::InvalidUI(
                 "failed to initialize a toolbar".to_string(),
             ));
@@ -147,6 +152,7 @@ impl WasabiUI {
                 "failed to initialize a toolbar".to_string(),
             ));
         }
+
         if self
             .window
             .draw_line(GREY, 71, 3, 71, 1 + ADDRESSBAR_HEIGHT)
@@ -247,18 +253,34 @@ impl WasabiUI {
                     style,
                     layout_point: _,
                 } => {
+                    let string_size = convert_font_size(style.font_size());
                     for line in text.split("\n") {
-                        draw_string(
-                            BLACK,
-                            self.position.0,
-                            self.position.1 + TOOLBAR_HEIGHT,
-                            &line,
-                        )
-                        .unwrap();
-                        self.position.1 += 20;
+                        self.window
+                            .draw_string(
+                                style.color().code_u32(),
+                                self.position.0,
+                                self.position.1,
+                                &line,
+                                string_size.clone(),
+                            )
+                            .unwrap();
+
+                        match string_size {
+                            StringSize::Medium => self.position.1 += 20,
+                            StringSize::Large => self.position.1 += 40,
+                            StringSize::XLarge => self.position.1 += 60,
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+fn convert_font_size(size: FontSize) -> StringSize {
+    match size {
+        FontSize::Medium => StringSize::Medium,
+        FontSize::XLarge => StringSize::Large,
+        FontSize::XXLarge => StringSize::XLarge,
     }
 }
