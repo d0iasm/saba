@@ -6,7 +6,7 @@ use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::string::ToString;
 use core::cell::RefCell;
-use noli::*;
+use noli::{window::Window, *};
 use toybr_core::{
     browser::Browser, display_item::DisplayItem, error::Error, http::HttpResponse, ui::UiObject,
 };
@@ -16,6 +16,7 @@ static RED: u32 = 0xff0000;
 static GREEN: u32 = 0x00ff00;
 static BLUE: u32 = 0x0000ff;
 static DARKBLUE: u32 = 0x00008b;
+static LIGHTGREY: u32 = 0xd3d3d3;
 static GREY: u32 = 0x808080;
 static DARKGREY: u32 = 0x5a5a5a;
 static BLACK: u32 = 0x000000;
@@ -25,12 +26,14 @@ static BLACK: u32 = 0x000000;
 static WIDTH: i64 = 600;
 static HEIGHT: i64 = 400;
 
-static BUTTON_SIZE: i64 = 14;
+static TOOLBAR_HEIGHT: i64 = 26;
+static ADDRESSBAR_HEIGHT: i64 = 20;
 
 #[derive(Clone, Debug)]
 pub struct WasabiUI {
     browser: Weak<RefCell<Browser<Self>>>,
     input_url: String,
+    window: Window,
     // The (x, y) position to render a next display item.
     position: (i64, i64),
 }
@@ -40,6 +43,7 @@ impl UiObject for WasabiUI {
         Self {
             browser: Weak::new(),
             input_url: String::new(),
+            window: Window::new("toybr".to_string(), WHITE, 0, 0, WIDTH, HEIGHT).unwrap(),
             position: (10, 30),
         }
     }
@@ -70,34 +74,118 @@ impl WasabiUI {
         self.browser.clone()
     }
 
-    fn setup(&self) {
-        fill_rect(WHITE, 10, 10, WIDTH, HEIGHT).unwrap();
+    fn setup(&self) -> Result<(), Error> {
+        self.toolbar()?;
 
-        self.toolbar();
+        Ok(())
     }
 
-    fn toolbar(&self) {
-        fill_rect(DARKBLUE, 10, 10, WIDTH, 20).unwrap();
+    fn toolbar(&self) -> Result<(), Error> {
+        if self
+            .window
+            .fill_rect(LIGHTGREY, 0, 0, WIDTH, TOOLBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
 
-        fill_rect(DARKGREY, WIDTH - 10, 13, BUTTON_SIZE, BUTTON_SIZE).unwrap();
-        draw_line(WHITE, WIDTH - 10, 13, WIDTH - 10, 13 + BUTTON_SIZE);
-        draw_line(WHITE, WIDTH - 10, 13, WIDTH - 10 + BUTTON_SIZE, 13);
-        draw_line(
-            BLACK,
-            WIDTH - 10,
-            13,
-            WIDTH - 10 + BUTTON_SIZE,
-            13 + BUTTON_SIZE,
-        )
-        .unwrap();
-        draw_line(
-            BLACK,
-            WIDTH - 10 + BUTTON_SIZE,
-            13,
-            WIDTH - 10,
-            13 + BUTTON_SIZE,
-        )
-        .unwrap();
+        if self
+            .window
+            .draw_line(GREY, 0, TOOLBAR_HEIGHT, WIDTH, TOOLBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+        if self
+            .window
+            .draw_line(DARKGREY, 0, TOOLBAR_HEIGHT + 1, WIDTH, TOOLBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        if self.window.draw_string(BLACK, 5, 5, "Address:").is_err() {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        // address bar
+        if self
+            .window
+            .fill_rect(WHITE, 70, 2, WIDTH - 74, 2 + ADDRESSBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        // shadow for address bar
+        if self.window.draw_line(GREY, 70, 2, WIDTH - 4, 2).is_err() {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+        if self
+            .window
+            .draw_line(GREY, 70, 2, 70, 2 + ADDRESSBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+        if self.window.draw_line(BLACK, 71, 3, WIDTH - 5, 3).is_err() {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+        if self
+            .window
+            .draw_line(GREY, 71, 3, 71, 1 + ADDRESSBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        /*
+        // high light for address bar
+        if self
+            .window
+            .draw_line(
+                LIGHTGREY,
+                71,
+                2 + ADDRESSBAR_HEIGHT,
+                WIDTH - 5,
+                2 + ADDRESSBAR_HEIGHT,
+            )
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+        if self
+            .window
+            .draw_line(LIGHTGREY, WIDTH - 5, 2, WIDTH - 5, 2 + ADDRESSBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+        */
+
+        Ok(())
     }
 
     fn start_navigation(
@@ -160,7 +248,13 @@ impl WasabiUI {
                     layout_point: _,
                 } => {
                     for line in text.split("\n") {
-                        draw_string(BLACK, self.position.0, self.position.1, &line).unwrap();
+                        draw_string(
+                            BLACK,
+                            self.position.0,
+                            self.position.1 + TOOLBAR_HEIGHT,
+                            &line,
+                        )
+                        .unwrap();
                         self.position.1 += 20;
                     }
                 }
