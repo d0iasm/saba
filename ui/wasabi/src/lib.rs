@@ -245,9 +245,20 @@ impl WasabiUI {
                 DisplayItem::Link {
                     text,
                     destination,
-                    style: _,
+                    style,
                     layout_point: _,
-                } => {}
+                } => {
+                    self.window
+                        .draw_string(
+                            style.color().code_u32(),
+                            self.position.0,
+                            self.position.1,
+                            &text,
+                            StringSize::Medium,
+                        )
+                        .unwrap();
+                    self.position.1 += 20;
+                }
                 DisplayItem::Text {
                     text,
                     style,
@@ -260,7 +271,7 @@ impl WasabiUI {
                                 style.color().code_u32(),
                                 self.position.0,
                                 self.position.1,
-                                &line,
+                                &line.trim(),
                                 string_size.clone(),
                             )
                             .unwrap();

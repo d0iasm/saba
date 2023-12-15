@@ -1,4 +1,6 @@
 //! https://developer.mozilla.org/en-US/docs/Web/CSS/computed_value
+//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/style/computed_style.h
+//! https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Cascade_and_inheritance
 
 use crate::renderer::html::dom::{ElementKind, Node, NodeKind};
 use crate::renderer::layout::color::*;
@@ -19,6 +21,19 @@ pub struct ComputedStyle {
     text_decoration: TextDecoration,
 }
 
+/// The value of a CSS property is converted like:
+/// a declared value
+/// -> a cascaded value
+/// -> a specified value
+/// -> a computed value
+/// -> a used value
+/// -> an actual value
+/// https://www.w3.org/TR/css-cascade-4/#value-stages
+///
+/// "The computed value is the value that is transferred from parent to child during inheritance."
+/// https://www.w3.org/TR/css-cascade-4/#computed
+///
+/// https://www.w3.org/TR/css-cascade-4/#stages-examples
 impl ComputedStyle {
     pub fn new(node: &Rc<RefCell<Node>>) -> Self {
         Self {
@@ -258,6 +273,14 @@ pub enum TextDecoration {
 pub enum WhiteSpace {
     Normal,
     Pre,
+}
+
+fn default_color(node: &Rc<RefCell<Node>>) -> Color {
+    match &node.borrow().kind() {
+        NodeKind::Document => DisplayType::Block,
+        NodeKind::Element(e) => {}
+        NodeKind::Text(_) => DisplayType::Inline,
+    }
 }
 
 fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
