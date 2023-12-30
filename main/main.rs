@@ -47,8 +47,6 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
 }
 
 fn main() -> u64 {
-    sys_print("**** Hello from an app!\n");
-
     // initialize the UI object
     let ui = Rc::new(RefCell::new(WasabiUI::new()));
     let page = Rc::new(RefCell::new(Page::new()));
@@ -62,9 +60,10 @@ fn main() -> u64 {
         Ok(_) => {}
         Err(e) => {
             println!("browser fails to start {:?}", e);
-            sys_exit(1);
+            return 1;
         }
     };
+
     0
 }
 

@@ -15,6 +15,7 @@ else
 fi
 
 # install Wasabi OS (https://github.com/hikalium/wasabi)
+# You should manually remove wasabi/ if it's conflict via `rm -rf $OS_PATH`
 if [ -d $OS_PATH ]
 then
   echo $OS_PATH" exists"

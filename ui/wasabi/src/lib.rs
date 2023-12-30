@@ -5,8 +5,10 @@ extern crate alloc;
 use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::cell::RefCell;
-use noli::{window::StringSize, window::Window, *};
+use noli::{window::StringSize, window::Window};
 use toybr_core::{
     browser::Browser, display_item::DisplayItem, error::Error, http::HttpResponse,
     renderer::layout::computed_style::FontSize, ui::UiObject,
@@ -22,13 +24,17 @@ static GREY: u32 = 0x808080;
 static DARKGREY: u32 = 0x5a5a5a;
 static BLACK: u32 = 0x000000;
 
-//static WIDTH: i64 = 1024;
-//static HEIGHT: i64 = 768;
-static WIDTH: i64 = 600;
-static HEIGHT: i64 = 400;
+//static WINDOW_WIDTH: i64 = 1024;
+//static WINDOW_HEIGHT: i64 = 768;
+static WINDOW_WIDTH: i64 = 600;
+static WINDOW_HEIGHT: i64 = 400;
+static WINDOW_PADDING: i64 = 5;
 
 static TOOLBAR_HEIGHT: i64 = 26;
 static ADDRESSBAR_HEIGHT: i64 = 20;
+
+static CHAR_WIDTH: i64 = 8;
+static CHAR_HEIGHT: i64 = 16;
 
 #[derive(Clone, Debug)]
 pub struct WasabiUI {
@@ -44,8 +50,16 @@ impl UiObject for WasabiUI {
         Self {
             browser: Weak::new(),
             input_url: String::new(),
-            window: Window::new("toybr".to_string(), WHITE, 0, 0, WIDTH, HEIGHT).unwrap(),
-            position: (5, TOOLBAR_HEIGHT + 5),
+            window: Window::new(
+                "toybr".to_string(),
+                WHITE,
+                0,
+                0,
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT,
+            )
+            .unwrap(),
+            position: (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
         }
     }
 
@@ -84,7 +98,7 @@ impl WasabiUI {
     fn toolbar(&self) -> Result<(), Error> {
         if self
             .window
-            .fill_rect(LIGHTGREY, 0, 0, WIDTH, TOOLBAR_HEIGHT)
+            .fill_rect(LIGHTGREY, 0, 0, WINDOW_WIDTH, TOOLBAR_HEIGHT)
             .is_err()
         {
             return Err(Error::InvalidUI(
@@ -94,7 +108,7 @@ impl WasabiUI {
 
         if self
             .window
-            .draw_line(GREY, 0, TOOLBAR_HEIGHT, WIDTH, TOOLBAR_HEIGHT)
+            .draw_line(GREY, 0, TOOLBAR_HEIGHT, WINDOW_WIDTH, TOOLBAR_HEIGHT)
             .is_err()
         {
             return Err(Error::InvalidUI(
@@ -103,7 +117,13 @@ impl WasabiUI {
         }
         if self
             .window
-            .draw_line(DARKGREY, 0, TOOLBAR_HEIGHT + 1, WIDTH, TOOLBAR_HEIGHT)
+            .draw_line(
+                DARKGREY,
+                0,
+                TOOLBAR_HEIGHT + 1,
+                WINDOW_WIDTH,
+                TOOLBAR_HEIGHT,
+            )
             .is_err()
         {
             return Err(Error::InvalidUI(
@@ -124,7 +144,7 @@ impl WasabiUI {
         // address bar
         if self
             .window
-            .fill_rect(WHITE, 70, 2, WIDTH - 74, 2 + ADDRESSBAR_HEIGHT)
+            .fill_rect(WHITE, 70, 2, WINDOW_WIDTH - 74, 2 + ADDRESSBAR_HEIGHT)
             .is_err()
         {
             return Err(Error::InvalidUI(
@@ -133,7 +153,11 @@ impl WasabiUI {
         }
 
         // shadow for address bar
-        if self.window.draw_line(GREY, 70, 2, WIDTH - 4, 2).is_err() {
+        if self
+            .window
+            .draw_line(GREY, 70, 2, WINDOW_WIDTH - 4, 2)
+            .is_err()
+        {
             return Err(Error::InvalidUI(
                 "failed to initialize a toolbar".to_string(),
             ));
@@ -147,7 +171,11 @@ impl WasabiUI {
                 "failed to initialize a toolbar".to_string(),
             ));
         }
-        if self.window.draw_line(BLACK, 71, 3, WIDTH - 5, 3).is_err() {
+        if self
+            .window
+            .draw_line(BLACK, 71, 3, WINDOW_WIDTH - 5, 3)
+            .is_err()
+        {
             return Err(Error::InvalidUI(
                 "failed to initialize a toolbar".to_string(),
             ));
@@ -171,7 +199,7 @@ impl WasabiUI {
                 LIGHTGREY,
                 71,
                 2 + ADDRESSBAR_HEIGHT,
-                WIDTH - 5,
+                WINDOW_WIDTH - 5,
                 2 + ADDRESSBAR_HEIGHT,
             )
             .is_err()
@@ -182,7 +210,7 @@ impl WasabiUI {
         }
         if self
             .window
-            .draw_line(LIGHTGREY, WIDTH - 5, 2, WIDTH - 5, 2 + ADDRESSBAR_HEIGHT)
+            .draw_line(LIGHTGREY, WINDOW_WIDTH - 5, 2, WINDOW_WIDTH - 5, 2 + ADDRESSBAR_HEIGHT)
             .is_err()
         {
             return Err(Error::InvalidUI(
@@ -265,13 +293,28 @@ impl WasabiUI {
                     layout_point: _,
                 } => {
                     let string_size = convert_font_size(style.font_size());
-                    for line in text.split("\n") {
+                    let char_width = match string_size {
+                        StringSize::Medium => CHAR_WIDTH,
+                        StringSize::Large => CHAR_WIDTH * 2,
+                        StringSize::XLarge => CHAR_WIDTH * 3,
+                    };
+                    // replace new lines to white spaces and replace sequential multiple white
+                    // spaces with one white space.
+                    let plain_text = text
+                        .replace("\n", " ")
+                        .split(' ')
+                        .filter(|s| !s.is_empty())
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    let lines = split_text(plain_text, char_width);
+
+                    for line in lines {
                         self.window
                             .draw_string(
                                 style.color().code_u32(),
                                 self.position.0,
                                 self.position.1,
-                                &line.trim(),
+                                &line,
                                 string_size.clone(),
                             )
                             .unwrap();
@@ -288,10 +331,39 @@ impl WasabiUI {
     }
 }
 
+/// Converts FontSize, defined in renderer::layout::computed_style::FontSize, to StringSize to make
+/// it compatible with noli library.
 fn convert_font_size(size: FontSize) -> StringSize {
     match size {
         FontSize::Medium => StringSize::Medium,
         FontSize::XLarge => StringSize::Large,
         FontSize::XXLarge => StringSize::XLarge,
     }
+}
+
+/// This is used when { word-break: normal; } in CSS.
+/// https://drafts.csswg.org/css-text/#word-break-property
+fn find_index_for_line_break(line: String, max_index: usize) -> usize {
+    for i in (0..max_index).rev() {
+        if line.chars().collect::<Vec<char>>()[i] == ' ' {
+            return i;
+        }
+    }
+    max_index
+}
+
+/// https://drafts.csswg.org/css-text/#word-break-property
+fn split_text(line: String, char_width: i64) -> Vec<String> {
+    let mut result: Vec<String> = vec![];
+    if line.len() as i64 * char_width > (WINDOW_WIDTH + WINDOW_PADDING) {
+        let s = line.split_at(find_index_for_line_break(
+            line.clone(),
+            ((WINDOW_WIDTH + WINDOW_PADDING) / char_width) as usize,
+        ));
+        result.push(s.0.to_string());
+        result.extend(split_text(s.1.trim().to_string(), char_width))
+    } else {
+        result.push(line);
+    }
+    result
 }
