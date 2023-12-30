@@ -275,14 +275,6 @@ pub enum WhiteSpace {
     Pre,
 }
 
-fn default_color(node: &Rc<RefCell<Node>>) -> Color {
-    match &node.borrow().kind() {
-        NodeKind::Document => DisplayType::Block,
-        NodeKind::Element(e) => {}
-        NodeKind::Text(_) => DisplayType::Inline,
-    }
-}
-
 fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
     match &node.borrow().kind() {
         NodeKind::Document => DisplayType::Block,

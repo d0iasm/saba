@@ -10,7 +10,6 @@ use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::cell::RefCell;
 use core::ops::Add;
-use hashbrown::HashMap;
 
 #[derive(Debug, Clone)]
 /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types
@@ -78,7 +77,7 @@ impl Add<RuntimeValue> for RuntimeValue {
     }
 }
 
-type VariableMap = HashMap<String, Option<RuntimeValue>>;
+type VariableMap = Vec<(String, Option<RuntimeValue>)>;
 
 /// https://262.ecma-international.org/12.0/#sec-environment-records
 #[derive(Debug, Clone)]
@@ -96,20 +95,23 @@ impl Environment {
     }
 
     pub fn get_variable(&self, name: String) -> Option<RuntimeValue> {
-        match self.variables.get(&name) {
-            Some(val) => val.clone(),
-            None => {
-                if let Some(p) = &self.outer {
-                    p.borrow_mut().get_variable(name)
-                } else {
-                    None
-                }
+        if self.variables.len() == 0 {
+            return None;
+        }
+        for variable in &self.variables {
+            if variable.0 == name {
+                return variable.1.clone();
             }
+        }
+        if let Some(env) = &self.outer {
+            return env.borrow_mut().get_variable(name);
+        } else {
+            return None;
         }
     }
 
     fn add_variable(&mut self, name: String, value: Option<RuntimeValue>) {
-        self.variables.insert(name, value);
+        self.variables.push((name, value));
     }
 
     /*
@@ -149,7 +151,7 @@ pub struct JsRuntime {
     dom_root: Option<Rc<RefCell<DomNode>>>,
     dom_modified: bool,
     url: String,
-    pub global_variables: HashMap<String, Option<RuntimeValue>>,
+    pub global_variables: Vec<(String, Option<RuntimeValue>)>,
     pub functions: Vec<Function>,
     pub env: Rc<RefCell<Environment>>,
 }
@@ -160,7 +162,7 @@ impl JsRuntime {
             dom_root: Some(dom_root),
             dom_modified: false,
             url,
-            global_variables: HashMap::new(),
+            global_variables: Vec::new(),
             functions: Vec::new(),
             env: Rc::new(RefCell::new(Environment::new(None))),
         }
@@ -488,7 +490,7 @@ impl JsRuntime {
                         None => return None,
                     };
 
-                    new_local_variables.insert(name, self.eval(&arguments[i], env.clone()));
+                    new_local_variables.push((name, self.eval(&arguments[i], env.clone())));
                 }
 
                 // call function with arguments
