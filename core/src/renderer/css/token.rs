@@ -5,7 +5,6 @@
 //! https://www.w3.org/TR/css-syntax-3/#tokenization
 
 use alloc::string::String;
-use alloc::string::ToString;
 use alloc::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -234,6 +233,7 @@ impl Iterator for CssTokenizer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::string::ToString;
 
     #[test]
     fn test_empty() {

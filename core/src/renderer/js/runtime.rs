@@ -539,12 +539,12 @@ mod tests {
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
         let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
-        let expected = [RuntimeValue::Number(42)];
+        let expected = [Some(RuntimeValue::Number(42))];
         let mut i = 0;
 
         for node in ast.body() {
             let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
-            assert_eq!(Some(expected[i].clone()), result);
+            assert_eq!(expected[i], result);
             i += 1;
         }
     }
@@ -557,12 +557,47 @@ mod tests {
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
         let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
-        let expected = [RuntimeValue::Number(3)];
+        let expected = [Some(RuntimeValue::Number(3))];
         let mut i = 0;
 
         for node in ast.body() {
             let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
-            assert_eq!(Some(expected[i].clone()), result);
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_assign_variable() {
+        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let input = "var foo=42;".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let expected = [None];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+    #[test]
+    fn test_add_variable_and_num() {
+        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let input = "var foo=42; foo+1".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let expected = [None, Some(RuntimeValue::Number(43))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
             i += 1;
         }
     }
