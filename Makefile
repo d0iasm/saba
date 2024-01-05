@@ -1,6 +1,6 @@
 # This is used for Wasabi OS
 TARGET=x86_64-unknown-none
-ROOT=$(shell readlink -f ../../generated)
+ROOT=$(shell readlink -f ../..)/generated
 RUSTFLAGS=\
 		  -C link-args=-e \
 		  -C link-args=entry \
