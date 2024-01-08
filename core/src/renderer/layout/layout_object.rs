@@ -66,7 +66,7 @@ impl<U: UiObject> LayoutObject<U> {
             node: node.clone(),
             first_child: None,
             next_sibling: None,
-            style: ComputedStyle::new(&node),
+            style: ComputedStyle::new(),
             point: LayoutPoint::new(0.0, 0.0),
             size: LayoutSize::new(0.0, 0.0),
         }
@@ -108,12 +108,12 @@ impl<U: UiObject> LayoutObject<U> {
         self.size.clone()
     }
 
-    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
-    pub fn inherit_style(&mut self, parent_style: &ComputedStyle) {
-        self.style.inherit(parent_style);
-    }
-
-    pub fn calculate_style(&mut self, declarations: Vec<Declaration>) {
+    /// https://www.w3.org/TR/css-cascade-4/#cascading
+    /// Cascading yields the cascaded value. It takes takes an unordered list of declared values
+    /// and outputs a single cascaded value for a property.
+    // It doens't implement https://www.w3.org/TR/css-cascade-4/#cascade-sort properly
+    // because it supports "Normal user declarations" input only.
+    pub fn cascading_style(&mut self, declarations: Vec<Declaration>) {
         for declaration in declarations {
             match declaration.property.as_str() {
                 "background-color" => {
@@ -126,6 +126,7 @@ impl<U: UiObject> LayoutObject<U> {
                             }
                         };
                         self.style.set_background_color(color);
+                        continue;
                     }
 
                     if let ComponentValue::InputToken(value) = &declaration.value {
@@ -138,6 +139,7 @@ impl<U: UiObject> LayoutObject<U> {
                                 }
                             };
                             self.style.set_background_color(color);
+                            continue;
                         }
                     }
                 }
@@ -219,6 +221,24 @@ impl<U: UiObject> LayoutObject<U> {
                     format!("css property {} is not supported yet", declaration.property),
                 ),
             }
+        }
+    }
+
+    /// https://www.w3.org/TR/css-cascade-4/#defaulting
+    pub fn defaulting_style(&mut self, node: &Rc<RefCell<Node>>) {
+        self.style.defaulting(node);
+    }
+
+    /// https://www.w3.org/TR/css-cascade-4/#inheriting
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
+    pub fn inherit_style(&mut self, parent_style: &ComputedStyle) {
+        // This may be a hacky way to inherit.
+        match self.kind() {
+            LayoutObjectKind::Text => {
+                // Now, only text object inherits CSS properties from its parent.
+                self.style.inherit(parent_style);
+            }
+            _ => {}
         }
     }
 

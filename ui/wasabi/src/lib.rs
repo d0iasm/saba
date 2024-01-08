@@ -10,8 +10,12 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use noli::{window::StringSize, window::Window};
 use toybr_core::{
-    browser::Browser, display_item::DisplayItem, error::Error, http::HttpResponse,
-    renderer::layout::computed_style::FontSize, ui::UiObject,
+    browser::Browser,
+    display_item::DisplayItem,
+    error::Error,
+    http::HttpResponse,
+    renderer::layout::computed_style::{FontSize, TextDecoration},
+    ui::UiObject,
 };
 
 static WHITE: u32 = 0xffffff;
@@ -290,7 +294,7 @@ impl WasabiUI {
                             self.position.1,
                             &text,
                             StringSize::Medium,
-                            /*underline=*/ true,
+                            style.text_decoration() == TextDecoration::Underline,
                         )
                         .unwrap();
                     self.position.1 += 20;
@@ -324,7 +328,7 @@ impl WasabiUI {
                                 self.position.1,
                                 &line,
                                 string_size.clone(),
-                                /*underline=*/ false,
+                                style.text_decoration() == TextDecoration::Underline,
                             )
                             .unwrap();
 

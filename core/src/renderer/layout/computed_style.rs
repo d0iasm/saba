@@ -11,14 +11,14 @@ use core::cell::RefCell;
 pub struct ComputedStyle {
     background_color: Option<Color>,
     color: Option<Color>,
-    display: DisplayType,
+    display: Option<DisplayType>,
+    font_size: Option<FontSize>,
     height: Option<f64>,
-    width: Option<f64>,
     margin: Option<BoxInfo>,
     padding: Option<BoxInfo>,
-    font_size: Option<FontSize>,
-    white_space: WhiteSpace,
-    text_decoration: TextDecoration,
+    text_decoration: Option<TextDecoration>,
+    white_space: Option<WhiteSpace>,
+    width: Option<f64>,
 }
 
 /// The value of a CSS property is converted like:
@@ -34,35 +34,93 @@ pub struct ComputedStyle {
 /// https://www.w3.org/TR/css-cascade-4/#computed
 ///
 /// https://www.w3.org/TR/css-cascade-4/#stages-examples
+///
+/// This ComputedStyle contains the information of all computed values that this browser supports.
+/// Used values/actual values are yielded just before it's displayed on UI.
 impl ComputedStyle {
-    pub fn new(node: &Rc<RefCell<Node>>) -> Self {
+    pub fn new() -> Self {
+        // It may be better to handle cascading, defaulting and inheritance here.
         Self {
             background_color: None,
             color: None,
-            display: default_display_type(node),
-            width: None,
+            display: None,
+            font_size: None,
             height: None,
             margin: None,
             padding: None,
-            font_size: default_font_size(node),
-            white_space: default_white_space(node),
-            text_decoration: default_text_decoration(node),
+            text_decoration: None,
+            white_space: None,
+            width: None,
         }
     }
 
+    /// https://www.w3.org/TR/css-cascade-4/#defaulting
+    /// If there is no cascading value, use the default value.
+    pub fn defaulting(&mut self, node: &Rc<RefCell<Node>>) {
+        if self.background_color.is_none() {
+            self.background_color = Some(Color::white());
+        }
+        if self.color.is_none() {
+            self.color = Some(Color::black());
+        }
+        if self.display.is_none() {
+            self.display = Some(DisplayType::default(node));
+        }
+        if self.font_size.is_none() {
+            self.font_size = Some(FontSize::default(node));
+        }
+        if self.height.is_none() {
+            // check the default value for height
+            self.height = Some(0.0);
+        }
+        if self.margin.is_none() {
+            // check the default value for margin
+            self.margin = Some(BoxInfo::new(0.0, 0.0, 0.0, 0.0));
+        }
+        if self.padding.is_none() {
+            // check the default value for padding
+            self.padding = Some(BoxInfo::new(0.0, 0.0, 0.0, 0.0));
+        }
+        if self.text_decoration.is_none() {
+            self.text_decoration = Some(TextDecoration::default(node));
+        }
+        if self.white_space.is_none() {
+            self.white_space = Some(WhiteSpace::default(node));
+        }
+        if self.width.is_none() {
+            // check the default value for width
+            self.width = Some(0.0);
+        }
+    }
+
+    /// https://www.w3.org/TR/css-cascade-4/#inheriting
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
     pub fn inherit(&mut self, parent_style: &ComputedStyle) {
-        if self.color.is_none() {
-            self.color = Some(parent_style.color().clone());
-        }
+        self.background_color = Some(parent_style.background_color().clone());
+        self.color = Some(parent_style.color().clone());
+        self.display = Some(parent_style.display().clone());
+        self.font_size = Some(parent_style.font_size().clone());
+        self.height = Some(parent_style.height().clone());
+        self.margin = Some(parent_style.margin().clone());
+        self.padding = Some(parent_style.padding().clone());
+        self.text_decoration = Some(parent_style.text_decoration().clone());
+        self.white_space = Some(parent_style.white_space().clone());
+        self.width = Some(parent_style.width().clone());
+        /*
         if self.background_color.is_none() {
             self.background_color = Some(parent_style.background_color().clone());
         }
+        if self.color.is_none() {
+            self.color = Some(parent_style.color().clone());
+        }
+        if self.display.is_none() {
+            self.display = Some(parent_style.display().clone());
+        }
+        if self.font_size.is_none() {
+            self.font_size = Some(parent_style.font_size().clone());
+        }
         if self.height.is_none() {
             self.height = Some(parent_style.height().clone());
-        }
-        if self.width.is_none() {
-            self.width = Some(parent_style.width().clone());
         }
         if self.margin.is_none() {
             self.margin = Some(parent_style.margin().clone());
@@ -70,14 +128,16 @@ impl ComputedStyle {
         if self.padding.is_none() {
             self.padding = Some(parent_style.padding().clone());
         }
-        if self.font_size.is_none() {
-            self.font_size = Some(parent_style.font_size().clone());
+        if self.text_decoration.is_none() {
+            self.text_decoration = Some(parent_style.text_decoration().clone());
         }
-
-        // TODO: check if it's ok to inherit parent white space always
-        self.white_space = parent_style.white_space();
-
-        self.text_decoration = parent_style.text_decoration();
+        if self.white_space.is_none() {
+            self.white_space = Some(parent_style.white_space().clone());
+        }
+        if self.width.is_none() {
+            self.width = Some(parent_style.width().clone());
+        }
+        */
     }
 
     pub fn set_background_color(&mut self, color: Color) {
@@ -85,11 +145,9 @@ impl ComputedStyle {
     }
 
     pub fn background_color(&self) -> Color {
-        if let Some(ref bc) = self.background_color {
-            bc.clone()
-        } else {
-            Color::from_name("white").unwrap()
-        }
+        self.background_color
+            .clone()
+            .expect("failed to access CSS property: background_color")
     }
 
     pub fn set_color(&mut self, color: Color) {
@@ -97,11 +155,9 @@ impl ComputedStyle {
     }
 
     pub fn color(&self) -> Color {
-        if let Some(ref c) = self.color {
-            c.clone()
-        } else {
-            Color::from_name("black").unwrap()
-        }
+        self.color
+            .clone()
+            .expect("failed to access CSS property: color")
     }
 
     pub fn set_height(&mut self, height: f64) {
@@ -109,15 +165,12 @@ impl ComputedStyle {
     }
 
     pub fn height(&self) -> f64 {
-        if let Some(h) = self.height {
-            h
-        } else {
-            0f64
-        }
+        self.height.expect("failed to access CSS property: height")
     }
 
     pub fn display(&self) -> DisplayType {
         self.display
+            .expect("failed to access CSS property: display")
     }
 
     pub fn set_width(&mut self, width: f64) {
@@ -125,12 +178,7 @@ impl ComputedStyle {
     }
 
     pub fn width(&self) -> f64 {
-        if let Some(w) = self.width {
-            w
-        } else {
-            // 1200 is a default value defined at src/gui/browser_window/window.ui
-            1200.0f64
-        }
+        self.width.expect("failed to access CSS property: width")
     }
 
     pub fn set_margin(&mut self, margin: BoxInfo) {
@@ -138,11 +186,7 @@ impl ComputedStyle {
     }
 
     pub fn margin(&self) -> BoxInfo {
-        if let Some(ref m) = self.margin {
-            m.clone()
-        } else {
-            BoxInfo::new(0.0, 0.0, 0.0, 0.0)
-        }
+        self.margin.expect("failed to access CSS property: margin")
     }
 
     pub fn set_padding(&mut self, padding: BoxInfo) {
@@ -150,27 +194,23 @@ impl ComputedStyle {
     }
 
     pub fn padding(&self) -> BoxInfo {
-        if let Some(ref p) = self.padding {
-            p.clone()
-        } else {
-            BoxInfo::new(0.0, 0.0, 0.0, 0.0)
-        }
+        self.padding
+            .expect("failed to access CSS property: padding")
     }
 
     pub fn font_size(&self) -> FontSize {
-        if let Some(ref s) = self.font_size {
-            s.clone()
-        } else {
-            FontSize::Medium
-        }
+        self.font_size
+            .expect("failed to access CSS property: font_size")
     }
 
     pub fn white_space(&self) -> WhiteSpace {
         self.white_space
+            .expect("failed to access CSS property: white_space")
     }
 
     pub fn text_decoration(&self) -> TextDecoration {
         self.text_decoration
+            .expect("failed to access CSS property: text_decoration")
     }
 
     pub fn margin_top(&self) -> f64 {
@@ -216,7 +256,23 @@ pub enum DisplayType {
     DisplayNone,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl DisplayType {
+    fn default(node: &Rc<RefCell<Node>>) -> Self {
+        match &node.borrow().kind() {
+            NodeKind::Document => DisplayType::Block,
+            NodeKind::Element(e) => {
+                if e.is_block_element() {
+                    DisplayType::Block
+                } else {
+                    DisplayType::Inline
+                }
+            }
+            NodeKind::Text(_) => DisplayType::Inline,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct BoxInfo {
     top: f64,
     right: f64,
@@ -252,13 +308,25 @@ impl BoxInfo {
 }
 
 /// https://www.w3.org/TR/css-fonts-4/#absolute-size-mapping
-/// https://docs.gtk.org/Pango/pango_markup.html
-/// align with pango markup syntax
+/// https://docs.gtk.org/Pango/pango_markup.html align with pango markup syntax
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FontSize {
     Medium,
     XLarge,
     XXLarge,
+}
+
+impl FontSize {
+    fn default(node: &Rc<RefCell<Node>>) -> Self {
+        match &node.borrow().kind() {
+            NodeKind::Element(element) => match element.kind() {
+                ElementKind::H1 => FontSize::XXLarge,
+                ElementKind::H2 => FontSize::XLarge,
+                _ => FontSize::Medium,
+            },
+            _ => FontSize::Medium,
+        }
+    }
 }
 
 /// https://w3c.github.io/csswg-drafts/css-text-decor/#text-decoration-property
@@ -268,6 +336,18 @@ pub enum TextDecoration {
     Underline,
 }
 
+impl TextDecoration {
+    fn default(node: &Rc<RefCell<Node>>) -> Self {
+        match &node.borrow().kind() {
+            NodeKind::Element(element) => match element.kind() {
+                ElementKind::A => TextDecoration::Underline,
+                _ => TextDecoration::None,
+            },
+            _ => TextDecoration::None,
+        }
+    }
+}
+
 /// https://w3c.github.io/csswg-drafts/css-text/#white-space-property
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum WhiteSpace {
@@ -275,48 +355,15 @@ pub enum WhiteSpace {
     Pre,
 }
 
-fn default_display_type(node: &Rc<RefCell<Node>>) -> DisplayType {
-    match &node.borrow().kind() {
-        NodeKind::Document => DisplayType::Block,
-        NodeKind::Element(e) => {
-            if e.is_block_element() {
-                DisplayType::Block
-            } else {
-                DisplayType::Inline
-            }
-        }
-        NodeKind::Text(_) => DisplayType::Inline,
-    }
-}
-
-fn default_font_size(node: &Rc<RefCell<Node>>) -> Option<FontSize> {
-    match &node.borrow().kind() {
-        NodeKind::Element(element) => match element.kind() {
-            ElementKind::H1 => Some(FontSize::XXLarge),
-            ElementKind::H2 => Some(FontSize::XLarge),
-            _ => None,
-        },
-        _ => None,
-    }
-}
-
-fn default_text_decoration(node: &Rc<RefCell<Node>>) -> TextDecoration {
-    match &node.borrow().kind() {
-        NodeKind::Element(element) => match element.kind() {
-            ElementKind::A => TextDecoration::Underline,
-            _ => TextDecoration::None,
-        },
-        _ => TextDecoration::None,
-    }
-}
-
-fn default_white_space(node: &Rc<RefCell<Node>>) -> WhiteSpace {
-    match &node.borrow().kind() {
-        NodeKind::Element(element) => match element.kind() {
-            ElementKind::P => WhiteSpace::Normal,
-            ElementKind::Pre => WhiteSpace::Pre,
+impl WhiteSpace {
+    fn default(node: &Rc<RefCell<Node>>) -> Self {
+        match &node.borrow().kind() {
+            NodeKind::Element(element) => match element.kind() {
+                ElementKind::P => WhiteSpace::Normal,
+                ElementKind::Pre => WhiteSpace::Pre,
+                _ => WhiteSpace::Normal,
+            },
             _ => WhiteSpace::Normal,
-        },
-        _ => WhiteSpace::Normal,
+        }
     }
 }

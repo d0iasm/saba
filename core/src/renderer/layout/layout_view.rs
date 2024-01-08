@@ -24,20 +24,25 @@ fn create_layout_object<U: UiObject>(
             let layout_object =
                 Rc::new(RefCell::new(LayoutObject::new(browser.clone(), n.clone())));
 
-            // Inherit a parent CSS style.
-            if let Some(parent) = parent_obj {
-                layout_object
-                    .borrow_mut()
-                    .inherit_style(&parent.borrow().style());
-            }
-
             // Apply CSS rules to LayoutObject.
             for rule in &cssom.rules {
                 if layout_object.borrow().is_node_selected(&rule.selector) {
                     layout_object
                         .borrow_mut()
-                        .calculate_style(rule.declarations.clone());
+                        .cascading_style(rule.declarations.clone());
                 }
+            }
+
+            // Apply a default value to a property.
+            {
+                layout_object.borrow_mut().defaulting_style(&n);
+            }
+
+            // Inherit a parent CSS style.
+            if let Some(parent) = parent_obj {
+                layout_object
+                    .borrow_mut()
+                    .inherit_style(&parent.borrow().style());
             }
 
             if layout_object.borrow().style().display() == DisplayType::DisplayNone {
@@ -185,7 +190,8 @@ impl<U: UiObject> LayoutView<U> {
     /// Calculate the layout point.
     fn update_layout(&mut self) {
         let fake_node = Rc::new(RefCell::new(Node::new(NodeKind::Document)));
-        let fake_style = ComputedStyle::new(&fake_node);
+        let mut fake_style = ComputedStyle::new();
+        fake_style.defaulting(&fake_node);
         let fake_point = LayoutPoint::new(0.0, 0.0);
         self.layout_node(&self.root, &fake_style, &fake_point);
     }
