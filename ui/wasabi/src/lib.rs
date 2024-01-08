@@ -72,7 +72,7 @@ impl UiObject for WasabiUI {
     ) -> Result<(), Error> {
         self.setup();
 
-        self.start_navigation(handle_url, "http://example.com".to_string());
+        let _ = self.start_navigation(handle_url, "http://example.com".to_string());
 
         self.update_ui();
 
@@ -133,7 +133,14 @@ impl WasabiUI {
 
         if self
             .window
-            .draw_string(BLACK, 5, 5, "Address:", StringSize::Medium)
+            .draw_string(
+                BLACK,
+                5,
+                5,
+                "Address:",
+                StringSize::Medium,
+                /*underline=*/ false,
+            )
             .is_err()
         {
             return Err(Error::InvalidUI(
@@ -283,6 +290,7 @@ impl WasabiUI {
                             self.position.1,
                             &text,
                             StringSize::Medium,
+                            /*underline=*/ true,
                         )
                         .unwrap();
                     self.position.1 += 20;
@@ -316,6 +324,7 @@ impl WasabiUI {
                                 self.position.1,
                                 &line,
                                 string_size.clone(),
+                                /*underline=*/ false,
                             )
                             .unwrap();
 
