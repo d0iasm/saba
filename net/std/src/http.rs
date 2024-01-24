@@ -73,7 +73,7 @@ impl HttpClient {
     */
 }
 
-pub fn parse_http_response(raw_response: String) -> HttpResponse {
+fn parse_http_response(raw_response: String) -> HttpResponse {
     let preprocessed_response = raw_response.replace("\n\r", "\n");
 
     let (status_line, remaining) = match preprocessed_response.split_once("\n") {

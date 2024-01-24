@@ -6,3 +6,4 @@ edition = "2021"
 
 [dependencies]
 toybr_core = { path = "../../core"}
+noli = { git = "https://github.com/hikalium/wasabi.git" }
