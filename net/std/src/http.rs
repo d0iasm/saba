@@ -4,7 +4,7 @@ use std::io::Read;
 use std::net::TcpStream;
 use std::string::String;
 use std::vec::Vec;
-use toybr_core::http::{Header, HttpResponse};
+use toybr_core::http::HttpResponse;
 
 pub struct HttpClient {}
 
@@ -37,7 +37,7 @@ impl HttpClient {
         let mut buf = String::new();
         stream.read_to_string(&mut buf)?;
 
-        Ok(parse_http_response(buf))
+        HttpResponse::new(raw_response.to_string())
     }
 
     // TODO: support correctly
@@ -71,45 +71,4 @@ impl HttpClient {
             Ok(HttpResponse::new(buf))
         }
     */
-}
-
-fn parse_http_response(raw_response: String) -> HttpResponse {
-    let preprocessed_response = raw_response.replace("\n\r", "\n");
-
-    let (status_line, remaining) = match preprocessed_response.split_once("\n") {
-        Some((s, r)) => (s, r),
-        None => panic!("http response doesn't have a new line"),
-    };
-
-    let (headers, body) = match remaining.split_once("\n\n") {
-        Some((h, b)) => {
-            let mut headers = Vec::new();
-            for header in h.split("\n") {
-                // TODO: remove a new line cleaned_header
-                let cleaned_header = header.replace("\r", "");
-                let splitted_header: Vec<&str> = cleaned_header.splitn(2, ":").collect();
-
-                headers.push(Header::new(
-                    String::from(splitted_header[0]),
-                    // TODO: remove a whitespace correctly
-                    String::from(splitted_header[1].replacen(" ", "", 1)),
-                ));
-            }
-            (headers, b)
-        }
-        None => (Vec::new(), remaining),
-    };
-
-    let statuses: Vec<&str> = status_line.split(" ").collect();
-
-    HttpResponse::new(
-        statuses[0].to_string(),
-        match statuses[1].parse() {
-            Ok(s) => s,
-            Err(_) => 404,
-        },
-        statuses[2].to_string(),
-        headers,
-        body.to_string(),
-    )
 }

@@ -4,46 +4,88 @@
 extern crate alloc;
 
 use crate::alloc::string::ToString;
+use alloc::format;
 use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::cell::RefCell;
+use net_wasabi::http::HttpClient;
 use noli::*;
 use toybr_core::browser::Browser;
 use toybr_core::error::Error;
 use toybr_core::http::HttpResponse;
 use toybr_core::renderer::page::Page;
 use toybr_core::ui::UiObject;
+use toybr_core::url::HtmlUrl;
 use ui_wasabi::WasabiUI;
 
 fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::new(
-        "1.1".to_string(),
-        200,
-        "".to_string(),
-        Vec::new(),
-        r#"
-<html>
-<head>
-  <style type="text/css">
-    div {
-      width: 600;
-      margin: 200;
-      background-color: white;
-    }
-  </style>
-</head>
-<body>
-<div>
-  <h1>Example Domain</h1>
-  <p>This domain is for use in illustrative examples in documents. You may use this
-  domain in literature without prior coordination or asking for permission.</p>
-  <p><a href="http://localhost:8000/test2.html">More information...</a></p>
-</div>
-</body>
-</html>"#
-            .to_string(),
-    ))
+    println!("handle_url");
+
+    // parse url
+    let parsed_url = match HtmlUrl::new(url.to_string()).parse() {
+        Ok(url) => url,
+        Err(e) => {
+            return Err(Error::UnexpectedInput(format!(
+                "input html is not supported: {:?}",
+                e
+            )));
+        }
+    };
+    println!("parsed_url: {:?}", parsed_url);
+
+    // send a HTTP request and get a response
+    let client = HttpClient::new();
+    let response = client.get(
+        parsed_url.host(),
+        parsed_url.port().parse::<u16>().expect(&format!(
+            "port number should be u16 but got {}",
+            parsed_url.port()
+        )),
+        parsed_url.path(),
+    );
+    let response = match client.get(
+        parsed_url.host(),
+        parsed_url.port().parse::<u16>().expect(&format!(
+            "port number should be u16 but got {}",
+            parsed_url.port()
+        )),
+        parsed_url.path(),
+    ) {
+        Ok(res) => {
+            // redirect to Location
+            if res.status_code() == 302 {
+                let redirect_parsed_url = HtmlUrl::new(res.header("Location"));
+
+                let redirect_client = HttpClient::new();
+                let redirect_res = match redirect_client.get(
+                    redirect_parsed_url.host(),
+                    redirect_parsed_url.port().parse::<u16>().expect(&format!(
+                        "port number should be u16 but got {}",
+                        parsed_url.port()
+                    )),
+                    redirect_parsed_url.path(),
+                ) {
+                    Ok(res) => res,
+                    Err(e) => return Err(Error::Network(format!("{:?}", e))),
+                };
+
+                redirect_res
+            } else {
+                res
+            }
+        }
+        Err(e) => {
+            return Err(Error::Network(format!(
+                "failed to get http response: {:?}",
+                e
+            )))
+        }
+    };
+
+    println!("response: {:?}", response);
+
+    Ok(response)
 }
 
 fn main() -> u64 {

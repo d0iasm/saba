@@ -17,7 +17,7 @@ use ui::app::Tui;
 
 fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
     // parse url
-    let html_url = match HtmlUrl::new(url.to_string()).parse() {
+    let parsed_url = match HtmlUrl::new(url.to_string()).parse() {
         Ok(url) => url,
         Err(e) => {
             return Err(Error::UnexpectedInput(format!(
@@ -30,26 +30,26 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
     // send a HTTP request and get a response
     let client = HttpClient::new();
     let response = match client.get(
-        html_url.host(),
-        html_url.port().parse::<u16>().expect(&format!(
+        parsed_url.host(),
+        parsed_url.port().parse::<u16>().expect(&format!(
             "port number should be u16 but got {}",
-            html_url.port()
+            parsed_url.port()
         )),
-        html_url.path(),
+        parsed_url.path(),
     ) {
         Ok(res) => {
             // redirect to Location
             if res.status_code() == 302 {
-                let redirect_html_url = HtmlUrl::new(res.header("Location"));
+                let redirect_parsed_url = HtmlUrl::new(res.header("Location"));
 
                 let redirect_client = HttpClient::new();
                 let redirect_res = match redirect_client.get(
-                    redirect_html_url.host(),
-                    redirect_html_url.port().parse::<u16>().expect(&format!(
+                    redirect_parsed_url.host(),
+                    redirect_parsed_url.port().parse::<u16>().expect(&format!(
                         "port number should be u16 but got {}",
-                        html_url.port()
+                        parsed_url.port()
                     )),
-                    redirect_html_url.path(),
+                    redirect_parsed_url.path(),
                 ) {
                     Ok(res) => res,
                     Err(e) => return Err(Error::Network(format!("{:?}", e))),

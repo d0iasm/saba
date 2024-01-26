@@ -1,4 +1,5 @@
 use crate::alloc::string::ToString;
+use crate::error::Error;
 use alloc::string::String;
 use alloc::vec::Vec;
 
@@ -24,20 +25,45 @@ pub struct HttpResponse {
 }
 
 impl HttpResponse {
-    pub fn new(
-        version: String,
-        status_code: u32,
-        reason: String,
-        headers: Vec<Header>,
-        body: String,
-    ) -> Self {
-        Self {
-            _version: version,
-            status_code,
-            _reason: reason,
+    pub fn new(raw_response: String) -> Result<Self, Error> {
+        let preprocessed_response = raw_response.replace("\n\r", "\n");
+
+        let (status_line, remaining) = match preprocessed_response.split_once("\n") {
+            Some((s, r)) => (s, r),
+            None => panic!("http response doesn't have a new line"),
+        };
+
+        let (headers, body) = match remaining.split_once("\n\n") {
+            Some((h, b)) => {
+                let mut headers = Vec::new();
+                for header in h.split("\n") {
+                    // TODO: remove a new line cleaned_header
+                    let cleaned_header = header.replace("\r", "");
+                    let splitted_header: Vec<&str> = cleaned_header.splitn(2, ":").collect();
+
+                    headers.push(Header::new(
+                        String::from(splitted_header[0]),
+                        // TODO: remove a whitespace correctly
+                        String::from(splitted_header[1].replacen(" ", "", 1)),
+                    ));
+                }
+                (headers, b)
+            }
+            None => (Vec::new(), remaining),
+        };
+
+        let statuses: Vec<&str> = status_line.split(" ").collect();
+
+        Ok(Self {
+            _version: statuses[0].to_string(),
+            status_code: match statuses[1].parse() {
+                Ok(s) => s,
+                Err(_) => 404,
+            },
+            _reason: statuses[2].to_string(),
             headers,
-            body,
-        }
+            body: body.to_string(),
+        })
     }
     pub fn status_code(&self) -> u32 {
         self.status_code
