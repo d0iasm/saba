@@ -1,5 +1,6 @@
 use dns_lookup::lookup_host;
 use std::io::prelude::*;
+use std::io::ErrorKind;
 use std::io::Read;
 use std::net::TcpStream;
 use std::string::String;
@@ -37,7 +38,13 @@ impl HttpClient {
         let mut buf = String::new();
         stream.read_to_string(&mut buf)?;
 
-        HttpResponse::new(raw_response.to_string())
+        match HttpResponse::new(buf.to_string()) {
+            Ok(res) => Ok(res),
+            Err(e) => Err(std::io::Error::new(
+                ErrorKind::InvalidData,
+                format!("{:?}", e),
+            )),
+        }
     }
 
     // TODO: support correctly
