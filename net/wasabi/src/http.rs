@@ -1,3 +1,12 @@
+//! Http client aligned with a subset of HTTP/1.1.
+//!
+//! https://tools.ietf.org/html/rfc7230
+//! https://tools.ietf.org/html/rfc7231
+//! https://tools.ietf.org/html/rfc7232
+//! https://tools.ietf.org/html/rfc7233
+//! https://tools.ietf.org/html/rfc7234
+//! https://tools.ietf.org/html/rfc7235
+
 extern crate alloc;
 use alloc::string::String;
 use alloc::string::ToString;

@@ -17,13 +17,13 @@ pub enum Event {
 pub struct MouseEvent {
     /// "click", (and TBD) are supported.
     /// https://www.w3.org/TR/uievents/#events-mouse-types
-    kind: String,
+    _kind: String,
     //target: EventTarget,
 }
 
 impl MouseEvent {
-    pub fn new(kind: String) -> Self {
-        Self { kind }
+    pub fn new(_kind: String) -> Self {
+        Self { _kind }
     }
 }
 
@@ -33,9 +33,9 @@ impl MouseEvent {
 pub struct KeyboardEvent {
     /// "keydown" and "keyup" are supported.
     /// https://www.w3.org/TR/uievents/#events-keyboard-types
-    kind: String,
+    _kind: String,
     /// https://www.w3.org/TR/uievents/#dom-keyboardevent-key
-    key: String,
+    _key: String,
     // https://www.w3.org/TR/uievents/#dom-keyboardevent-ctrlkey
     //ctrlKey: bool,
     // https://www.w3.org/TR/uievents/#dom-keyboardevent-shiftkey
@@ -43,7 +43,7 @@ pub struct KeyboardEvent {
 }
 
 impl KeyboardEvent {
-    pub fn new(kind: String, key: String) -> Self {
-        Self { kind, key }
+    pub fn new(_kind: String, _key: String) -> Self {
+        Self { _kind, _key }
     }
 }

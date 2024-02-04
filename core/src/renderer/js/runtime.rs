@@ -189,7 +189,7 @@ impl JsRuntime {
     ) -> (bool, Option<RuntimeValue>) {
         if func == &RuntimeValue::StringLiteral("console.log".to_string()) {
             match self.eval(&arguments[0], env.clone()) {
-                Some(arg) => {
+                Some(_arg) => {
                     //println!("[console.log] {:?}", arg.to_string());
                     return (true, None);
                 }

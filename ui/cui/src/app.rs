@@ -16,7 +16,7 @@ use toybr_core::renderer::layout::computed_style::FontSize;
 use toybr_core::{
     display_item::DisplayItem,
     error::Error,
-    event::{Event as BrowserEvent, KeyboardEvent, MouseEvent},
+    event::{Event as BrowserEvent, KeyboardEvent},
     ui::UiObject,
 };
 use tui::{

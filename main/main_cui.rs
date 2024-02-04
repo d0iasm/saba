@@ -15,7 +15,7 @@ use toybr_core::ui::UiObject;
 use toybr_core::url::HtmlUrl;
 use ui::app::Tui;
 
-fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
+fn handle_url(url: String) -> Result<HttpResponse, Error> {
     // parse url
     let parsed_url = match HtmlUrl::new(url.to_string()).parse() {
         Ok(url) => url,
@@ -31,10 +31,10 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
     let client = HttpClient::new();
     let response = match client.get(
         parsed_url.host(),
-        parsed_url.port().parse::<u16>().expect(&format!(
-            "port number should be u16 but got {}",
-            parsed_url.port()
-        )),
+        parsed_url
+            .port()
+            .parse::<u16>()
+            .unwrap_or_else(|_| panic!("port number should be u16 but got {}", parsed_url.port())),
         parsed_url.path(),
     ) {
         Ok(res) => {
@@ -43,19 +43,19 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
                 let redirect_parsed_url = HtmlUrl::new(res.header("Location"));
 
                 let redirect_client = HttpClient::new();
-                let redirect_res = match redirect_client.get(
+                match redirect_client.get(
                     redirect_parsed_url.host(),
-                    redirect_parsed_url.port().parse::<u16>().expect(&format!(
-                        "port number should be u16 but got {}",
-                        parsed_url.port()
-                    )),
+                    redirect_parsed_url
+                        .port()
+                        .parse::<u16>()
+                        .unwrap_or_else(|_| {
+                            panic!("port number should be u16 but got {}", parsed_url.port())
+                        }),
                     redirect_parsed_url.path(),
                 ) {
                     Ok(res) => res,
                     Err(e) => return Err(Error::Network(format!("{:?}", e))),
-                };
-
-                redirect_res
+                }
             } else {
                 res
             }
@@ -81,7 +81,7 @@ fn main() {
     ui.borrow_mut().set_browser(Rc::downgrade(&browser));
     page.borrow_mut().set_browser(Rc::downgrade(&browser));
 
-    match ui.borrow_mut().start(handle_url::<Tui>) {
+    match ui.borrow_mut().start(handle_url) {
         Ok(_) => {}
         Err(e) => {
             println!("browser fails to start {:?}", e);
