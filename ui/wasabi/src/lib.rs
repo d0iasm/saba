@@ -19,10 +19,10 @@ use toybr_core::{
 };
 
 static WHITE: u32 = 0xffffff;
-static RED: u32 = 0xff0000;
-static GREEN: u32 = 0x00ff00;
-static BLUE: u32 = 0x0000ff;
-static DARKBLUE: u32 = 0x00008b;
+static _RED: u32 = 0xff0000;
+static _GREEN: u32 = 0x00ff00;
+static _BLUE: u32 = 0x0000ff;
+static _DARKBLUE: u32 = 0x00008b;
 static LIGHTGREY: u32 = 0xd3d3d3;
 static GREY: u32 = 0x808080;
 static DARKGREY: u32 = 0x5a5a5a;
@@ -38,12 +38,12 @@ static TOOLBAR_HEIGHT: i64 = 26;
 static ADDRESSBAR_HEIGHT: i64 = 20;
 
 static CHAR_WIDTH: i64 = 8;
-static CHAR_HEIGHT: i64 = 16;
+static _CHAR_HEIGHT: i64 = 16;
 
 #[derive(Clone, Debug)]
 pub struct WasabiUI {
     browser: Weak<RefCell<Browser<Self>>>,
-    input_url: String,
+    _input_url: String,
     window: Window,
     // The (x, y) position to render a next display item.
     position: (i64, i64),
@@ -53,7 +53,7 @@ impl UiObject for WasabiUI {
     fn new() -> Self {
         Self {
             browser: Weak::new(),
-            input_url: String::new(),
+            _input_url: String::new(),
             window: Window::new(
                 "toybr".to_string(),
                 WHITE,
@@ -67,14 +67,14 @@ impl UiObject for WasabiUI {
         }
     }
 
-    fn console_debug(&mut self, log: String) {}
-    fn console_warning(&mut self, log: String) {}
-    fn console_error(&mut self, log: String) {}
+    fn console_debug(&mut self, _log: String) {}
+    fn console_warning(&mut self, _log: String) {}
+    fn console_error(&mut self, _log: String) {}
     fn start(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
-        self.setup();
+        self.setup()?;
 
         let _ = self.start_navigation(handle_url, "http://example.com".to_string());
 
@@ -283,7 +283,7 @@ impl WasabiUI {
                 } => {}
                 DisplayItem::Link {
                     text,
-                    destination,
+                    destination: _,
                     style,
                     layout_point: _,
                 } => {

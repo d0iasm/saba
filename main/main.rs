@@ -7,7 +7,6 @@ use crate::alloc::string::ToString;
 use alloc::format;
 use alloc::rc::Rc;
 use alloc::string::String;
-use alloc::vec::Vec;
 use core::cell::RefCell;
 use net_wasabi::http::HttpClient;
 use noli::*;
@@ -36,14 +35,6 @@ fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
 
     // send a HTTP request and get a response
     let client = HttpClient::new();
-    let response = client.get(
-        parsed_url.host(),
-        parsed_url.port().parse::<u16>().expect(&format!(
-            "port number should be u16 but got {}",
-            parsed_url.port()
-        )),
-        parsed_url.path(),
-    );
     let response = match client.get(
         parsed_url.host(),
         parsed_url.port().parse::<u16>().expect(&format!(

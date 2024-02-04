@@ -10,13 +10,10 @@
 extern crate alloc;
 use alloc::string::String;
 use alloc::string::ToString;
-use alloc::vec::Vec;
 use noli::net::lookup_host;
-use noli::net::IpV4Addr;
 use noli::net::SocketAddr;
 use noli::net::TcpStream;
-use noli::print::hexdump;
-use noli::println;
+//use noli::println;
 use toybr_core::error::Error;
 use toybr_core::http::HttpResponse;
 
@@ -31,7 +28,7 @@ impl HttpClient {
         let ips = lookup_host(&"example.com").unwrap();
 
         let socket_addr: SocketAddr = (ips[0], port).into();
-        println!("socket_addr: {:?}", socket_addr);
+        //println!("socket_addr: {:?}", socket_addr);
 
         let mut stream = TcpStream::connect(socket_addr).unwrap();
 
@@ -48,9 +45,9 @@ impl HttpClient {
 
         request.push('\n');
 
-        println!("http request: {:?}", request);
+        //println!("http request: {:?}", request);
 
-        let bytes_written = stream.write(request.as_bytes()).unwrap();
+        let _bytes_written = stream.write(request.as_bytes()).unwrap();
 
         let mut buf = [0u8; 40960];
         let bytes_read = stream.read(&mut buf).unwrap();
@@ -58,7 +55,7 @@ impl HttpClient {
 
         let raw_response = core::str::from_utf8(data).unwrap();
 
-        println!("raw_response: {:?}", raw_response);
+        //println!("raw_response: {:?}", raw_response);
 
         HttpResponse::new(raw_response.to_string())
     }
