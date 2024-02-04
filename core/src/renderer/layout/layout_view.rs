@@ -35,7 +35,7 @@ fn create_layout_object<U: UiObject>(
 
             // Apply a default value to a property.
             {
-                layout_object.borrow_mut().defaulting_style(&n);
+                layout_object.borrow_mut().defaulting_style(n);
             }
 
             // Inherit a parent CSS style.
@@ -62,11 +62,9 @@ fn build_layout_tree<U: UiObject>(
     parent_obj: &Option<Rc<RefCell<LayoutObject<U>>>>,
     cssom: &StyleSheet,
 ) -> Option<Rc<RefCell<LayoutObject<U>>>> {
-    let layout_object = create_layout_object(browser.clone(), &node, parent_obj, cssom);
+    let layout_object = create_layout_object(browser.clone(), node, parent_obj, cssom);
 
-    if layout_object.is_none() {
-        return None;
-    }
+    layout_object.as_ref()?;
 
     if let Some(n) = node {
         let original_first_child = n.borrow().first_child();
@@ -138,7 +136,7 @@ fn build_layout_tree<U: UiObject>(
         obj.borrow_mut().next_sibling = next_sibling;
     }
 
-    return layout_object;
+    layout_object
 }
 
 /// LayoutView is the root of the layout tree.
@@ -183,7 +181,7 @@ impl<U: UiObject> LayoutView<U> {
                 let next_sibling = n.borrow().next_sibling();
                 self.layout_node(&next_sibling, &n.borrow().style(), &n.borrow().point());
             }
-            None => return,
+            None => (),
         }
     }
 
@@ -211,7 +209,7 @@ impl<U: UiObject> LayoutView<U> {
                 let next_sibling = n.borrow().next_sibling();
                 self.paint_node(&next_sibling);
             }
-            None => return,
+            None => (),
         }
     }
 

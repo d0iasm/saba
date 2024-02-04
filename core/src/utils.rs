@@ -1,3 +1,4 @@
+use crate::alloc::string::ToString;
 use crate::browser::Browser;
 use crate::renderer::html::dom::Node;
 use crate::renderer::js::ast::Program;
@@ -91,13 +92,13 @@ pub fn print_dom<U: UiObject>(ui: &Rc<RefCell<U>>, node: &Option<Rc<RefCell<Node
     match node {
         Some(n) => {
             ui.borrow_mut()
-                .console_debug(format!("{}", "  ".repeat(depth)));
+                .console_debug("  ".repeat(depth).to_string());
             ui.borrow_mut()
                 .console_debug(format!("{:?}", n.borrow().kind()));
             print_dom(ui, &n.borrow().first_child(), depth + 1);
             print_dom(ui, &n.borrow().next_sibling(), depth);
         }
-        None => return,
+        None => (),
     }
 }
 
@@ -110,7 +111,7 @@ pub fn print_layout_tree<U: UiObject>(
     match node {
         Some(n) => {
             ui.borrow_mut()
-                .console_debug(format!("{}", "  ".repeat(depth)));
+                .console_debug("  ".repeat(depth).to_string());
             ui.borrow_mut().console_debug(format!(
                 "{:?} {:?}",
                 n.borrow().kind(),
@@ -119,7 +120,7 @@ pub fn print_layout_tree<U: UiObject>(
             print_layout_tree(ui, &n.borrow().first_child(), depth + 1);
             print_layout_tree(ui, &n.borrow().next_sibling(), depth);
         }
-        None => return,
+        None => (),
     }
 }
 

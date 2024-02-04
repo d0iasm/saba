@@ -34,6 +34,12 @@ pub struct Page<U: UiObject> {
     modified: bool,
 }
 
+impl<U: UiObject> Default for Page<U> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<U: UiObject> Page<U> {
     pub fn new() -> Self {
         Self {

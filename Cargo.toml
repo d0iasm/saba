@@ -12,7 +12,7 @@ wasabi = ["dep:libc", "dep:spin", "dep:net_wasabi", "dep:ui_wasabi", "dep:noli"]
 
 [[bin]]
 name = "toybr"
-path = "main/main.rs"
+path = "main/main_wasabi.rs"
 required-features = ["wasabi"]
 
 [[bin]]
@@ -22,7 +22,6 @@ required-features = ["gui"]
 
 [[bin]]
 name = "toybr_cui"
-test = false
 path = "main/main_cui.rs"
 required-features = ["cui"]
 

@@ -129,18 +129,18 @@ impl<U: UiObject> LayoutObject<U> {
                         continue;
                     }
 
-                    if let ComponentValue::InputToken(value) = &declaration.value {
-                        if let CssToken::HashToken(color_code) = value {
-                            let color = match Color::from_code(color_code) {
-                                Ok(color) => color,
-                                Err(e) => {
-                                    console_error(self.browser.clone(), format!("{:?}", e));
-                                    Color::white()
-                                }
-                            };
-                            self.style.set_background_color(color);
-                            continue;
-                        }
+                    if let ComponentValue::InputToken(CssToken::HashToken(color_code)) =
+                        &declaration.value
+                    {
+                        let color = match Color::from_code(color_code) {
+                            Ok(color) => color,
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
+                                Color::white()
+                            }
+                        };
+                        self.style.set_background_color(color);
+                        continue;
                     }
                 }
                 "color" => {
@@ -155,17 +155,17 @@ impl<U: UiObject> LayoutObject<U> {
                         self.style.set_color(color);
                     }
 
-                    if let ComponentValue::InputToken(value) = &declaration.value {
-                        if let CssToken::HashToken(color_code) = value {
-                            let color = match Color::from_code(color_code) {
-                                Ok(color) => color,
-                                Err(e) => {
-                                    console_error(self.browser.clone(), format!("{:?}", e));
-                                    Color::black()
-                                }
-                            };
-                            self.style.set_color(color);
-                        }
+                    if let ComponentValue::InputToken(CssToken::HashToken(color_code)) =
+                        &declaration.value
+                    {
+                        let color = match Color::from_code(color_code) {
+                            Ok(color) => color,
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
+                                Color::black()
+                            }
+                        };
+                        self.style.set_color(color);
                     }
                 }
                 "height" => {
@@ -233,12 +233,9 @@ impl<U: UiObject> LayoutObject<U> {
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
     pub fn inherit_style(&mut self, parent_style: &ComputedStyle) {
         // This may be a hacky way to inherit.
-        match self.kind() {
-            LayoutObjectKind::Text => {
-                // Now, only text object inherits CSS properties from its parent.
-                self.style.inherit(parent_style);
-            }
-            _ => {}
+        if self.kind() == LayoutObjectKind::Text {
+            // Now, only text object inherits CSS properties from its parent.
+            self.style.inherit(parent_style);
         }
     }
 
@@ -290,7 +287,7 @@ impl<U: UiObject> LayoutObject<U> {
                     if e.kind().to_string() == *type_name {
                         return true;
                     }
-                    return false;
+                    false
                 }
                 Selector::ClassSelector(class_name) => {
                     for attr in &e.attributes() {
@@ -298,7 +295,7 @@ impl<U: UiObject> LayoutObject<U> {
                             return true;
                         }
                     }
-                    return false;
+                    false
                 }
                 Selector::IdSelector(id_name) => {
                     for attr in &e.attributes() {
@@ -306,7 +303,7 @@ impl<U: UiObject> LayoutObject<U> {
                             return true;
                         }
                     }
-                    return false;
+                    false
                 }
                 Selector::UnknownSelector => false,
             },
@@ -321,45 +318,43 @@ impl<U: UiObject> LayoutObject<U> {
         }
 
         match self.kind() {
-            LayoutObjectKind::Block => match self.node_kind() {
-                NodeKind::Element(_e) => add_rect_display_item(self),
-                _ => {}
-            },
-            LayoutObjectKind::Inline => {
-                match self.node_kind() {
-                    NodeKind::Element(e) => match e.kind() {
-                        ElementKind::A => {
-                            // <a> element should have a text node as a first child
-                            let text_node = self.first_child();
-                            let mut link_text = String::new();
-                            if let Some(text_node) = text_node {
-                                match text_node.borrow().node_kind() {
-                                    NodeKind::Text(text) => link_text = text,
-                                    _ => return,
-                                }
-                            }
-
-                            let mut href = String::new();
-                            for attr in e.attributes() {
-                                if attr.name() == "href" {
-                                    href = attr.value()
-                                }
-                            }
-
-                            add_link_display_item(self, href, link_text);
-
-                            // remove the first child from the tree to avoid operating it twice
-                            self.first_child = None;
-                        }
-                        _ => {}
-                    },
-                    _ => {}
+            LayoutObjectKind::Block => {
+                if let NodeKind::Element(_e) = self.node_kind() {
+                    add_rect_display_item(self)
                 }
             }
-            LayoutObjectKind::Text => match self.node_kind() {
-                NodeKind::Text(t) => add_text_display_item(self, t),
-                _ => {}
-            },
+            LayoutObjectKind::Inline => {
+                if let NodeKind::Element(e) = self.node_kind() {
+                    if e.kind() == ElementKind::A {
+                        // <a> element should have a text node as a first child
+                        let text_node = self.first_child();
+                        let mut link_text = String::new();
+                        if let Some(text_node) = text_node {
+                            match text_node.borrow().node_kind() {
+                                NodeKind::Text(text) => link_text = text,
+                                _ => return,
+                            }
+                        }
+
+                        let mut href = String::new();
+                        for attr in e.attributes() {
+                            if attr.name() == "href" {
+                                href = attr.value()
+                            }
+                        }
+
+                        add_link_display_item(self, href, link_text);
+
+                        // remove the first child from the tree to avoid operating it twice
+                        self.first_child = None;
+                    }
+                }
+            }
+            LayoutObjectKind::Text => {
+                if let NodeKind::Text(t) = self.node_kind() {
+                    add_text_display_item(self, t)
+                }
+            }
         }
     }
 }
