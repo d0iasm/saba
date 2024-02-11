@@ -205,7 +205,7 @@ impl Display for ElementKind {
             ElementKind::Div => "div",
             ElementKind::A => "a",
         };
-        write!(f, s)
+        write!(f, "{}", s)
     }
 }
 
@@ -227,26 +227,6 @@ impl ElementKind {
             ElementKind::A => "a",
         }
         .to_string()
-    }
-}
-
-impl Display for ElementKind {
-    fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
-        match self {
-            ElementKind::Html => write!(f, "html"),
-            ElementKind::Head => write!(f, "head"),
-            ElementKind::Style => write!(f, "style"),
-            ElementKind::Script => write!(f, "script"),
-            ElementKind::Body => write!(f, "body"),
-            ElementKind::H1 => write!(f, "h1"),
-            ElementKind::H2 => write!(f, "h2"),
-            ElementKind::P => write!(f, "p"),
-            ElementKind::Pre => write!(f, "pre"),
-            ElementKind::Ul => write!(f, "ul"),
-            ElementKind::Li => write!(f, "li"),
-            ElementKind::Div => write!(f, "div"),
-            ElementKind::A => write!(f, "a"),
-        }
     }
 }
 
