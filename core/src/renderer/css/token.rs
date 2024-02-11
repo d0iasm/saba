@@ -67,7 +67,7 @@ impl CssTokenizer {
             }
         }
 
-        return s;
+        s
     }
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-a-string-token
@@ -87,7 +87,7 @@ impl CssTokenizer {
             }
         }
 
-        return s;
+        s
     }
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-number
@@ -108,7 +108,7 @@ impl CssTokenizer {
                 '0'..='9' => {
                     if floating {
                         floating_digit *= 1f64 / 10f64;
-                        num = num + (c.to_digit(10).unwrap() as f64) * floating_digit;
+                        num += (c.to_digit(10).unwrap() as f64) * floating_digit
                     } else {
                         num = num * 10.0 + (c.to_digit(10).unwrap() as f64);
                     }
@@ -122,7 +122,7 @@ impl CssTokenizer {
             }
         }
 
-        return num;
+        num
     }
 }
 

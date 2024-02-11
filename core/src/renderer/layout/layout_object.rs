@@ -81,7 +81,7 @@ impl<U: UiObject> LayoutObject<U> {
     }
 
     pub fn kind(&self) -> LayoutObjectKind {
-        self.kind.clone()
+        self.kind
     }
 
     pub fn node_kind(&self) -> NodeKind {
@@ -89,11 +89,11 @@ impl<U: UiObject> LayoutObject<U> {
     }
 
     pub fn first_child(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
-        self.first_child.as_ref().map(|n| n.clone())
+        self.first_child.as_ref().cloned()
     }
 
     pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
-        self.next_sibling.as_ref().map(|n| n.clone())
+        self.next_sibling.as_ref().cloned()
     }
 
     pub fn style(&self) -> ComputedStyle {

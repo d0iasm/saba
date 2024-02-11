@@ -7,6 +7,12 @@ pub struct Attribute {
     value: String,
 }
 
+impl Default for Attribute {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Attribute {
     pub fn new() -> Self {
         Self {

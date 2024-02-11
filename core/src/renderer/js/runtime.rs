@@ -37,7 +37,7 @@ impl RuntimeValue {
                 object: _,
                 property: _,
             } => {
-                format!("HtmlElement")
+                "HtmlElement".to_string()
                 // TODO: fix
                 //format!("{:?}", object.borrow().kind())
             }
@@ -73,7 +73,7 @@ impl Add<RuntimeValue> for RuntimeValue {
             return RuntimeValue::Number(left_num + right_num);
         }
 
-        return RuntimeValue::StringLiteral(self.to_string() + &rhs.to_string());
+        RuntimeValue::StringLiteral(self.to_string() + &rhs.to_string())
     }
 }
 
@@ -95,7 +95,7 @@ impl Environment {
     }
 
     pub fn get_variable(&self, name: String) -> Option<RuntimeValue> {
-        if self.variables.len() == 0 {
+        if self.variables.is_empty() {
             return None;
         }
         for variable in &self.variables {
@@ -104,9 +104,9 @@ impl Environment {
             }
         }
         if let Some(env) = &self.outer {
-            return env.borrow_mut().get_variable(name);
+            env.borrow_mut().get_variable(name)
         } else {
-            return None;
+            None
         }
     }
 
@@ -184,7 +184,7 @@ impl JsRuntime {
     fn call_web_api(
         &mut self,
         func: &RuntimeValue,
-        arguments: &Vec<Option<Rc<Node>>>,
+        arguments: &[Option<Rc<Node>>],
         env: Rc<RefCell<Environment>>,
     ) -> (bool, Option<RuntimeValue>) {
         if func == &RuntimeValue::StringLiteral("console.log".to_string()) {
@@ -236,19 +236,17 @@ impl JsRuntime {
         };
 
         match node.borrow() {
-            Node::ExpressionStatement(expr) => return self.eval(&expr, env.clone()),
+            Node::ExpressionStatement(expr) => self.eval(expr, env.clone()),
             Node::BlockStatement { body } => {
                 let mut result: Option<RuntimeValue> = None;
                 for stmt in body {
-                    result = self.eval(&stmt, env.clone());
+                    result = self.eval(stmt, env.clone());
                 }
                 result
             }
-            Node::ReturnStatement { argument } => {
-                return self.eval(&argument, env.clone());
-            }
+            Node::ReturnStatement { argument } => self.eval(argument, env.clone()),
             Node::FunctionDeclaration { id, params, body } => {
-                let id = match self.eval(&id, env.clone()) {
+                let id = match self.eval(id, env.clone()) {
                     Some(value) => match value {
                         RuntimeValue::Number(n) => {
                             unimplemented!("id should be string but got {:?}", n)
@@ -263,24 +261,21 @@ impl JsRuntime {
                     },
                     None => return None,
                 };
-                let cloned_body = match body {
-                    Some(b) => Some(b.clone()),
-                    None => None,
-                };
+                let cloned_body = body.as_ref().cloned();
                 self.functions
                     .push(Function::new(id, params.to_vec(), cloned_body));
                 None
             }
             Node::VariableDeclaration { declarations } => {
                 for declaration in declarations {
-                    self.eval(&declaration, env.clone());
+                    self.eval(declaration, env.clone());
                 }
                 None
             }
             Node::VariableDeclarator { id, init } => {
                 if let Some(node) = id {
                     if let Node::Identifier(id) = node.borrow() {
-                        let init = self.eval(&init, env.clone());
+                        let init = self.eval(init, env.clone());
                         env.borrow_mut().add_variable(id.to_string(), init);
                         //self.global_variables.insert(id.to_string(), init);
                     }
@@ -292,11 +287,11 @@ impl JsRuntime {
                 left,
                 right,
             } => {
-                let left_value = match self.eval(&left, env.clone()) {
+                let left_value = match self.eval(left, env.clone()) {
                     Some(value) => value,
                     None => return None,
                 };
-                let right_value = match self.eval(&right, env.clone()) {
+                let right_value = match self.eval(right, env.clone()) {
                     Some(value) => value,
                     None => return None,
                 };
@@ -305,7 +300,7 @@ impl JsRuntime {
                 if operator == &'+' {
                     Some(left_value + right_value)
                 } else {
-                    return None;
+                    None
                 }
             }
             Node::AssignmentExpression {
@@ -314,11 +309,11 @@ impl JsRuntime {
                 right,
             } => {
                 if operator == &'=' {
-                    let left_value = match self.eval(&left, env.clone()) {
+                    let left_value = match self.eval(left, env.clone()) {
                         Some(value) => value,
                         None => return None,
                     };
-                    let right_value = match self.eval(&right, env.clone()) {
+                    let right_value = match self.eval(right, env.clone()) {
                         Some(value) => value,
                         None => return None,
                     };
@@ -347,14 +342,14 @@ impl JsRuntime {
                         }
                     }
                 }
-                return None;
+                None
             }
             Node::MemberExpression { object, property } => {
-                let object_value = match self.eval(&object, env.clone()) {
+                let object_value = match self.eval(object, env.clone()) {
                     Some(value) => value,
                     None => return None,
                 };
-                let property_value = match self.eval(&property, env.clone()) {
+                let property_value = match self.eval(property, env.clone()) {
                     Some(value) => value,
                     // return RuntimeValue in `object` because of no `property`
                     None => return Some(object_value),
@@ -366,10 +361,10 @@ impl JsRuntime {
                         assert!(property.is_none());
 
                         // set `property` to the HtmlElement value.
-                        return Some(RuntimeValue::HtmlElement {
+                        Some(RuntimeValue::HtmlElement {
                             object,
                             property: Some(property_value.to_string()),
-                        });
+                        })
                     }
                     _ => {
                         if object_value == RuntimeValue::StringLiteral("document".to_string()) {
@@ -398,7 +393,7 @@ impl JsRuntime {
                             }
 
                             if property_value == RuntimeValue::StringLiteral("hash".to_string()) {
-                                let hash = match self.url.find("#") {
+                                let hash = match self.url.find('#') {
                                     Some(i) => self.url[i..].to_string(),
                                     None => "".to_string(),
                                 };
@@ -408,17 +403,17 @@ impl JsRuntime {
                         }
 
                         // return a concatenated string such as "console.log"
-                        return Some(
+                        Some(
                             object_value
                                 + RuntimeValue::StringLiteral(".".to_string())
                                 + property_value,
-                        );
+                        )
                     }
                 }
             }
             Node::CallExpression { callee, arguments } => {
                 let env = Rc::new(RefCell::new(Environment::new(Some(env))));
-                let callee_value = match self.eval(&callee, env.clone()) {
+                let callee_value = match self.eval(callee, env.clone()) {
                     Some(value) => value,
                     None => return None,
                 };
@@ -473,7 +468,7 @@ impl JsRuntime {
 
                 // assign arguments to params as local variables
                 assert!(arguments.len() == function.params.len());
-                for i in 0..arguments.len() {
+                for (i, _item) in arguments.iter().enumerate() {
                     let name = match self.eval(&function.params[i], env.clone()) {
                         Some(value) => match value {
                             RuntimeValue::Number(n) => {

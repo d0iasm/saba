@@ -11,6 +11,12 @@ pub struct Program {
     body: Vec<Rc<Node>>,
 }
 
+impl Default for Program {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Program {
     pub fn new() -> Self {
         Self { body: Vec::new() }
@@ -310,18 +316,11 @@ impl JsParser {
         };
 
         match t {
-            Token::Punctuator(c) => match c {
-                '=' => {
-                    // consume '='
-                    assert!(self.t.next().is_some());
-                    return Node::new_assignment_expression(
-                        '=',
-                        expr,
-                        self.assignment_expression(),
-                    );
-                }
-                _ => expr,
-            },
+            Token::Punctuator('=') => {
+                // consume '='
+                assert!(self.t.next().is_some());
+                Node::new_assignment_expression('=', expr, self.assignment_expression())
+            }
             _ => expr,
         }
     }
@@ -339,16 +338,13 @@ impl JsParser {
         };
 
         match t {
-            Token::Punctuator(c) => match c {
-                ',' => {
-                    // consume ','
-                    assert!(self.t.next().is_some());
-                    // TODO: how to hold multiple expressions?
-                    // currently, an old expr is overriden by a new one
-                    self.expression()
-                }
-                _ => expr,
-            },
+            Token::Punctuator(',') => {
+                // consume ','
+                assert!(self.t.next().is_some());
+                // TODO: how to hold multiple expressions?
+                // currently, an old expr is overriden by a new one
+                self.expression()
+            }
             _ => expr,
         }
     }
@@ -362,7 +358,7 @@ impl JsParser {
 
         match t {
             Token::Identifier(name) => Node::new_identifier(name),
-            _ => return None,
+            _ => None,
         }
     }
 
@@ -374,10 +370,7 @@ impl JsParser {
         };
 
         match t {
-            Token::Punctuator(c) => match c {
-                '=' => self.expression(),
-                _ => None,
-            },
+            Token::Punctuator('=') => self.expression(),
             _ => None,
         }
     }
@@ -428,12 +421,10 @@ impl JsParser {
             _ => Node::new_expression_statement(self.expression()),
         };
 
-        if let Some(t) = self.t.peek() {
-            if let Token::Punctuator(c) = t {
-                // consume ';'
-                if c == ';' {
-                    assert!(self.t.next().is_some());
-                }
+        if let Some(Token::Punctuator(c)) = self.t.peek() {
+            // consume ';'
+            if c == ';' {
+                assert!(self.t.next().is_some());
             }
         }
 
@@ -454,18 +445,12 @@ impl JsParser {
         let mut body = Vec::new();
         loop {
             // loop until hits '}'
-            match self.t.peek() {
-                Some(t) => match t {
-                    Token::Punctuator(c) => {
-                        if c == '}' {
-                            // consume '}'
-                            assert!(self.t.next().is_some());
-                            return Node::new_block_statement(body);
-                        }
-                    }
-                    _ => {}
-                },
-                None => {}
+            if let Some(Token::Punctuator(c)) = self.t.peek() {
+                if c == '}' {
+                    // consume '}'
+                    assert!(self.t.next().is_some());
+                    return Node::new_block_statement(body);
+                }
             }
 
             body.push(self.source_element());
@@ -551,7 +536,7 @@ impl JsParser {
 
         match t {
             Token::Keyword(keyword) => {
-                if keyword == "function".to_string() {
+                if keyword == *"function" {
                     // consume "function"
                     assert!(self.t.next().is_some());
                     self.function_declaration()

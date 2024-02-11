@@ -47,6 +47,12 @@ pub struct StyleSheet {
     pub rules: Vec<QualifiedRule>,
 }
 
+impl Default for StyleSheet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StyleSheet {
     pub fn new() -> Self {
         Self { rules: Vec::new() }
@@ -64,6 +70,12 @@ pub struct AtRule {
     /// https://www.w3.org/TR/mediaqueries-5/#typedef-media-query-list
     pub prelude: String,
     pub rule: QualifiedRule,
+}
+
+impl Default for AtRule {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // TODO: support list of media query
@@ -87,6 +99,12 @@ pub struct QualifiedRule {
     /// https://www.w3.org/TR/css-syntax-3/#parse-a-list-of-declarations
     /// The content of the qualified rule’s block is parsed as a list of declarations.
     pub declarations: Vec<Declaration>,
+}
+
+impl Default for QualifiedRule {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl QualifiedRule {
@@ -123,6 +141,12 @@ pub enum Selector {
 pub struct Declaration {
     pub property: String,
     pub value: ComponentValue,
+}
+
+impl Default for Declaration {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// https://www.w3.org/TR/css-syntax-3/#declaration
@@ -194,7 +218,7 @@ impl<U: UiObject> CssParser<U> {
 
         match token {
             CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
-            CssToken::Number(num) => ComponentValue::Number(num.clone()),
+            CssToken::Number(num) => ComponentValue::Number(num),
             _ => ComponentValue::InputToken(token),
         }
     }
@@ -246,9 +270,7 @@ impl<U: UiObject> CssParser<U> {
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-a-declaration
     fn consume_declaration(&mut self) -> Option<Declaration> {
-        if self.t.peek().is_none() {
-            return None;
-        }
+        self.t.peek()?;
 
         // Create a new declaration with its name set to the value of the current input token.
         let mut declaration = Declaration::new();
@@ -257,11 +279,8 @@ impl<U: UiObject> CssParser<U> {
         // "2. If the next input token is anything other than a <colon-token>, this is a parse error.
         // Return nothing. Otherwise, consume the next input token."
         match self.t.next() {
-            Some(token) => match token {
-                CssToken::Colon => {}
-                _ => return None,
-            },
-            None => return None,
+            Some(CssToken::Colon) => {}
+            _ => return None,
         }
 
         // "3. While the next input token is a <whitespace-token>, consume the next input token."
@@ -296,15 +315,14 @@ impl<U: UiObject> CssParser<U> {
                     assert_eq!(self.t.next(), Some(CssToken::SemiColon));
                     // Do nothing.
                 }
-                CssToken::Ident(ref _ident) => match self.consume_declaration() {
-                    Some(declaration) => {
+                CssToken::Ident(ref _ident) => {
+                    if let Some(declaration) = self.consume_declaration() {
                         declarations.push(declaration);
                         if self.t.peek() == Some(&CssToken::Delim(',')) {
                             self.t.next();
                         }
                     }
-                    None => {}
-                },
+                }
                 CssToken::StringToken(_) => {
                     self.t.next();
                     if self.t.peek() == Some(&CssToken::Delim(',')) {

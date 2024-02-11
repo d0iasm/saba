@@ -28,36 +28,36 @@ pub enum DisplayItem {
 
 impl DisplayItem {
     pub fn is_rect(&self) -> bool {
-        match self {
+        matches!(
+            self,
             DisplayItem::Rect {
                 style: _,
                 layout_point: _,
                 layout_size: _,
-            } => true,
-            _ => false,
-        }
+            }
+        )
     }
 
     pub fn is_link(&self) -> bool {
-        match self {
+        matches!(
+            self,
             DisplayItem::Link {
                 text: _,
                 destination: _,
                 style: _,
                 layout_point: _,
-            } => true,
-            _ => false,
-        }
+            }
+        )
     }
 
     pub fn is_text(&self) -> bool {
-        match self {
+        matches!(
+            self,
             DisplayItem::Text {
                 text: _,
                 style: _,
                 layout_point: _,
-            } => true,
-            _ => false,
-        }
+            }
+        )
     }
 }

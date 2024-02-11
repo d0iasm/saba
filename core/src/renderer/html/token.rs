@@ -201,7 +201,7 @@ impl HtmlTokenizer {
     fn take_latest_token(&mut self) -> Option<HtmlToken> {
         assert!(self.latest_token.is_some());
 
-        let t = self.latest_token.as_ref().and_then(|t| Some(t.clone()));
+        let t = self.latest_token.as_ref().cloned();
         self.latest_token = None;
         assert!(self.latest_token.is_none());
 
@@ -480,20 +480,16 @@ impl Iterator for HtmlTokenizer {
                     // this is not aligned with the spec.
                     // check the temporary buffer
                     if c == '>' {
-                        if let Some(t) = self.latest_token.as_mut() {
-                            match t {
-                                HtmlToken::EndTag {
-                                    ref tag,
-                                    self_closing: _,
-                                } => {
-                                    if tag == "script" {
-                                        self.state = State::Data;
-                                        return self.take_latest_token();
-                                    } else {
-                                        self.latest_token = None;
-                                    }
-                                }
-                                _ => {}
+                        if let Some(HtmlToken::EndTag {
+                            ref tag,
+                            self_closing: _,
+                        }) = self.latest_token.as_mut()
+                        {
+                            if tag == "script" {
+                                self.state = State::Data;
+                                return self.take_latest_token();
+                            } else {
+                                self.latest_token = None;
                             }
                         }
                     }

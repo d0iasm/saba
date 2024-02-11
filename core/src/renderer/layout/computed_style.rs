@@ -21,6 +21,12 @@ pub struct ComputedStyle {
     width: Option<f64>,
 }
 
+impl Default for ComputedStyle {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// The value of a CSS property is converted like:
 /// a declared value
 /// -> a cascaded value
@@ -96,16 +102,16 @@ impl ComputedStyle {
     /// https://www.w3.org/TR/css-cascade-4/#inheriting
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
     pub fn inherit(&mut self, parent_style: &ComputedStyle) {
-        self.background_color = Some(parent_style.background_color().clone());
-        self.color = Some(parent_style.color().clone());
-        self.display = Some(parent_style.display().clone());
-        self.font_size = Some(parent_style.font_size().clone());
-        self.height = Some(parent_style.height().clone());
-        self.margin = Some(parent_style.margin().clone());
-        self.padding = Some(parent_style.padding().clone());
-        self.text_decoration = Some(parent_style.text_decoration().clone());
-        self.white_space = Some(parent_style.white_space().clone());
-        self.width = Some(parent_style.width().clone());
+        self.background_color = Some(parent_style.background_color());
+        self.color = Some(parent_style.color());
+        self.display = Some(parent_style.display());
+        self.font_size = Some(parent_style.font_size());
+        self.height = Some(parent_style.height());
+        self.margin = Some(parent_style.margin());
+        self.padding = Some(parent_style.padding());
+        self.text_decoration = Some(parent_style.text_decoration());
+        self.white_space = Some(parent_style.white_space());
+        self.width = Some(parent_style.width());
         /*
         if self.background_color.is_none() {
             self.background_color = Some(parent_style.background_color().clone());

@@ -11,15 +11,12 @@ pub fn get_element_by_id(
 ) -> Option<Rc<RefCell<Node>>> {
     match node {
         Some(n) => {
-            match n.borrow().kind() {
-                NodeKind::Element(e) => {
-                    for attr in &e.attributes() {
-                        if attr.name() == "id" && attr.value() == *id_name {
-                            return Some(n.clone());
-                        }
+            if let NodeKind::Element(e) = n.borrow().kind() {
+                for attr in &e.attributes() {
+                    if attr.name() == "id" && attr.value() == *id_name {
+                        return Some(n.clone());
                     }
                 }
-                _ => {}
             }
 
             let result1 = get_element_by_id(n.borrow().first_child(), id_name);
@@ -31,9 +28,9 @@ pub fn get_element_by_id(
                 return result2;
             }
 
-            return result1;
+            result1
         }
-        None => return None,
+        None => None,
     }
 }
 
@@ -56,9 +53,9 @@ pub fn get_target_element_node(
             if result1.is_none() {
                 return result2;
             }
-            return result1;
+            result1
         }
-        None => return None,
+        None => None,
     }
 }
 

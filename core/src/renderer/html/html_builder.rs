@@ -18,15 +18,15 @@ fn dom_to_html_internal(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
             match n.borrow().kind() {
                 NodeKind::Document => {}
                 NodeKind::Element(ref e) => {
-                    html.push_str("<");
+                    html.push('<');
                     html.push_str(&e.kind().to_string());
                     for attr in e.attributes() {
-                        html.push_str(" ");
+                        html.push(' ');
                         html.push_str(&attr.name());
-                        html.push_str("=");
+                        html.push('=');
                         html.push_str(&attr.value());
                     }
-                    html.push_str(">");
+                    html.push('>');
                 }
                 NodeKind::Text(ref s) => html.push_str(s),
             }
@@ -39,13 +39,13 @@ fn dom_to_html_internal(node: &Option<Rc<RefCell<Node>>>, html: &mut String) {
                 NodeKind::Element(ref e) => {
                     html.push_str("</");
                     html.push_str(&e.kind().to_string());
-                    html.push_str(">");
+                    html.push('>');
                 }
                 NodeKind::Text(_s) => {}
             }
 
             dom_to_html_internal(&n.borrow().next_sibling(), html);
         }
-        None => return,
+        None => (),
     }
 }

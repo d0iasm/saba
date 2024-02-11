@@ -55,21 +55,21 @@ impl Node {
     }
 
     pub fn first_child(&self) -> Option<Rc<RefCell<Node>>> {
-        self.first_child.as_ref().map(|n| n.clone())
+        self.first_child.as_ref().cloned()
     }
 
     #[allow(dead_code)]
     pub fn last_child(&self) -> Option<Weak<RefCell<Node>>> {
-        self.last_child.as_ref().map(|n| n.clone())
+        self.last_child.as_ref().cloned()
     }
 
     #[allow(dead_code)]
     pub fn previous_sibling(&self) -> Option<Weak<RefCell<Node>>> {
-        self.previous_sibling.as_ref().map(|n| n.clone())
+        self.previous_sibling.as_ref().cloned()
     }
 
     pub fn next_sibling(&self) -> Option<Rc<RefCell<Node>>> {
-        self.next_sibling.as_ref().map(|n| n.clone())
+        self.next_sibling.as_ref().cloned()
     }
 }
 
@@ -86,18 +86,12 @@ pub enum NodeKind {
 impl PartialEq for NodeKind {
     fn eq(&self, other: &Self) -> bool {
         match &self {
-            NodeKind::Document => match &other {
-                NodeKind::Document => true,
-                _ => false,
-            },
+            NodeKind::Document => matches!(other, NodeKind::Document),
             NodeKind::Element(e1) => match &other {
                 NodeKind::Element(e2) => e1.kind == e2.kind,
                 _ => false,
             },
-            NodeKind::Text(_) => match &other {
-                NodeKind::Text(_) => true,
-                _ => false,
-            },
+            NodeKind::Text(_) => matches!(other, NodeKind::Text(_)),
         }
     }
 }
@@ -192,6 +186,27 @@ pub enum ElementKind {
     Div,
     /// https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element
     A,
+}
+
+impl Display for ElementKind {
+    fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
+        let s = match self {
+            ElementKind::Html => "html",
+            ElementKind::Head => "head",
+            ElementKind::Style => "style",
+            ElementKind::Script => "script",
+            ElementKind::Body => "body",
+            ElementKind::H1 => "h1",
+            ElementKind::H2 => "h2",
+            ElementKind::P => "p",
+            ElementKind::Pre => "pre",
+            ElementKind::Ul => "ul",
+            ElementKind::Li => "li",
+            ElementKind::Div => "div",
+            ElementKind::A => "a",
+        };
+        write!(f, s)
+    }
 }
 
 impl ElementKind {
@@ -299,12 +314,12 @@ impl<U: UiObject> HtmlParser<U> {
     fn create_char(&self, c: char) -> Node {
         let mut s = String::new();
         s.push(c);
-        return Node::new(NodeKind::Text(s));
+        Node::new(NodeKind::Text(s))
     }
 
     /// Creates an element node.
     fn create_element(&self, tag: &str, attributes: Vec<Attribute>) -> Node {
-        return Node::new(NodeKind::Element(Element::new(tag, attributes)));
+        Node::new(NodeKind::Element(Element::new(tag, attributes)))
     }
 
     /// Creates an element node for the token and insert it to the appropriate place for inserting
@@ -341,7 +356,7 @@ impl<U: UiObject> HtmlParser<U> {
         }
 
         current.borrow_mut().last_child = Some(Rc::downgrade(&node));
-        node.borrow_mut().parent = Some(Rc::downgrade(&current));
+        node.borrow_mut().parent = Some(Rc::downgrade(current));
 
         self.stack_of_open_elements.push(node);
     }
@@ -354,12 +369,9 @@ impl<U: UiObject> HtmlParser<U> {
         };
 
         // When the current node is Text, add a character to the current node.
-        match current.borrow_mut().kind {
-            NodeKind::Text(ref mut s) => {
-                s.push(c);
-                return;
-            }
-            _ => {}
+        if let NodeKind::Text(ref mut s) = current.borrow_mut().kind {
+            s.push(c);
+            return;
         }
 
         // do not create a Text node if new char is '\n' or ' '
@@ -383,7 +395,7 @@ impl<U: UiObject> HtmlParser<U> {
         }
 
         current.borrow_mut().last_child = Some(Rc::downgrade(&node));
-        node.borrow_mut().parent = Some(Rc::downgrade(&current));
+        node.borrow_mut().parent = Some(Rc::downgrade(current));
 
         self.stack_of_open_elements.push(node);
     }

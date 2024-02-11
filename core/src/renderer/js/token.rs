@@ -52,7 +52,7 @@ impl JsLexer {
             }
         }
 
-        return num;
+        num
     }
 
     fn consume_string(&mut self) -> String {
@@ -142,13 +142,10 @@ impl JsLexer {
             }
         }
 
-        match self.check_reserved_word() {
-            Some(keyword) => {
-                self.pos += keyword.len();
-                let token = Some(Token::Keyword(keyword));
-                return token;
-            }
-            None => {}
+        if let Some(keyword) = self.check_reserved_word() {
+            self.pos += keyword.len();
+            let token = Some(Token::Keyword(keyword));
+            return token;
         }
 
         let c = self.input[self.pos];
