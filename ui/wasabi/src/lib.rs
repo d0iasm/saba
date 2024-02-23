@@ -8,7 +8,7 @@ use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
-use noli::{window::StringSize, window::Window};
+use noli::{print, window::StringSize, window::Window};
 use toybr_core::{
     browser::Browser,
     display_item::DisplayItem,
@@ -43,7 +43,7 @@ static _CHAR_HEIGHT: i64 = 16;
 #[derive(Clone, Debug)]
 pub struct WasabiUI {
     browser: Weak<RefCell<Browser<Self>>>,
-    _input_url: String,
+    input_url: String,
     window: Window,
     // The (x, y) position to render a next display item.
     position: (i64, i64),
@@ -53,7 +53,7 @@ impl UiObject for WasabiUI {
     fn new() -> Self {
         Self {
             browser: Weak::new(),
-            _input_url: String::new(),
+            input_url: String::new(),
             window: Window::new(
                 "toybr".to_string(),
                 WHITE,
@@ -76,9 +76,8 @@ impl UiObject for WasabiUI {
     ) -> Result<(), Error> {
         self.setup()?;
 
-        let _ = self.start_navigation(handle_url, "http://example.com".to_string());
-
-        self.update_ui();
+        // never return unless a user quits the app.
+        self.run_app(handle_url)?;
 
         Ok(())
     }
@@ -94,12 +93,12 @@ impl WasabiUI {
     }
 
     fn setup(&self) -> Result<(), Error> {
-        self.toolbar()?;
+        self.setup_toolbar()?;
 
         Ok(())
     }
 
-    fn toolbar(&self) -> Result<(), Error> {
+    fn setup_toolbar(&self) -> Result<(), Error> {
         if self
             .window
             .fill_rect(LIGHTGREY, 0, 0, WINDOW_WIDTH, TOOLBAR_HEIGHT)
@@ -231,6 +230,48 @@ impl WasabiUI {
         */
 
         Ok(())
+    }
+
+    fn update_toolbar(&self) -> Result<(), Error> {
+        if self
+            .window
+            .draw_string(
+                BLACK,
+                74,
+                2,
+                &self.input_url,
+                StringSize::Medium,
+                /*underline=*/ false,
+            )
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn run_app(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+    ) -> Result<(), Error> {
+        loop {
+            if let Some(c) = noli::sys::read_key() {
+                print!("{c}");
+                print!("{}", self.input_url);
+                if c == '\n' {
+                    let _ = self.start_navigation(handle_url, "http://example.com".to_string());
+                    self.update_ui();
+                    self.update_toolbar()?;
+                    self.input_url = String::new();
+                } else {
+                    self.input_url.push(c);
+                    self.update_toolbar()?;
+                }
+            }
+        }
     }
 
     fn start_navigation(
