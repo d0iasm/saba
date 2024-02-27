@@ -1,17 +1,17 @@
-# toybr
+# SaBA
 
-A toy Web browser on single process / thread.
+Sample Browser App (SaBA) on single process / thread.
 
 ## how to run
 
 For CUI browser on your host computer,
 ```
-$ cargo run --features=cui --bin=toybr_cui
+$ cargo run --features=cui --bin=saba_cui
 ```
 
 For GUI browser on your host computer,
 ```
-$ cargo run --features=gui --bin=toybr_gui
+$ cargo run --features=gui --bin=saba_gui
 ```
 
 For [Wasabi OS](https://github.com/hikalium/wasabi),
@@ -19,7 +19,7 @@ For [Wasabi OS](https://github.com/hikalium/wasabi),
 To build,
 
 ```
-$ cargo build --features=wasabi --bin=toybr --target=x86_64-unknown-none
+$ cargo build --features=wasabi --bin=saba --target=x86_64-unknown-none
 ```
 
 You may not be able to run via `cargo run` because the target archtecture
