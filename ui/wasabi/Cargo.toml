@@ -5,5 +5,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-toybr_core = { path = "../../core"}
+saba_core = { path = "../../core"}
 noli = { git = "https://github.com/hikalium/wasabi.git" }

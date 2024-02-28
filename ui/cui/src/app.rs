@@ -10,10 +10,10 @@ use crossterm::{
     },
 };
 use std::io;
-use toybr_core::browser::Browser;
-use toybr_core::http::HttpResponse;
-use toybr_core::renderer::layout::computed_style::FontSize;
-use toybr_core::{
+use saba_core::browser::Browser;
+use saba_core::http::HttpResponse;
+use saba_core::renderer::layout::computed_style::FontSize;
+use saba_core::{
     display_item::DisplayItem,
     error::Error,
     event::{Event as BrowserEvent, KeyboardEvent},

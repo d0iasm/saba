@@ -9,7 +9,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use noli::{print, window::StringSize, window::Window};
-use toybr_core::{
+use saba_core::{
     browser::Browser,
     display_item::DisplayItem,
     error::Error,
@@ -55,7 +55,7 @@ impl UiObject for WasabiUI {
             browser: Weak::new(),
             input_url: String::new(),
             window: Window::new(
-                "toybr".to_string(),
+                "saba".to_string(),
                 WHITE,
                 0,
                 0,

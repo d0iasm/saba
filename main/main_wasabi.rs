@@ -10,12 +10,12 @@ use alloc::string::String;
 use core::cell::RefCell;
 use net_wasabi::http::HttpClient;
 use noli::*;
-use toybr_core::browser::Browser;
-use toybr_core::error::Error;
-use toybr_core::http::HttpResponse;
-use toybr_core::renderer::page::Page;
-use toybr_core::ui::UiObject;
-use toybr_core::url::HtmlUrl;
+use saba_core::browser::Browser;
+use saba_core::error::Error;
+use saba_core::http::HttpResponse;
+use saba_core::renderer::page::Page;
+use saba_core::ui::UiObject;
+use saba_core::url::HtmlUrl;
 use ui_wasabi::WasabiUI;
 
 fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {

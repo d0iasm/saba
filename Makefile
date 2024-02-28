@@ -7,7 +7,7 @@ RUSTFLAGS=\
 		  -C link-args=-z \
 		  -C link-args=execstack
 CARGO=RUSTFLAGS='${RUSTFLAGS}' cargo
-FEATURES=--features=wasabi --bin=toybr
+FEATURES=--features=wasabi --bin=saba
 
 .PHONY : build
 build :

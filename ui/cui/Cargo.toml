@@ -5,7 +5,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-toybr_core = { path = "../../core"}
+saba_core = { path = "../../core"}
 net_std = { path = "../../net/std"}
 tui = "0.19"
 crossterm = "0.25"

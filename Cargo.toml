@@ -1,9 +1,9 @@
 [package]
 authors = ["d0iasm"]
-name = "toybr"
+name = "saba"
 version = "0.1.0"
 edition = "2021"
-default-run = "toybr"
+default-run = "saba"
 
 [features]
 cui = ["dep:net_std", "dep:ui_cui"]
@@ -11,17 +11,17 @@ gui = []
 wasabi = ["dep:libc", "dep:net_wasabi", "dep:ui_wasabi", "dep:noli"]
 
 [[bin]]
-name = "toybr"
+name = "saba"
 path = "main/main_wasabi.rs"
 required-features = ["wasabi"]
 
 [[bin]]
-name = "toybr_gui"
+name = "saba_gui"
 path = "main/main_gui.rs"
 required-features = ["gui"]
 
 [[bin]]
-name = "toybr_cui"
+name = "saba_cui"
 path = "main/main_cui.rs"
 required-features = ["cui"]
 
@@ -32,7 +32,7 @@ required-features = ["cui"]
 #required-features = []
 
 [dependencies]
-toybr_core = { path = "./core"}
+saba_core = { path = "./core"}
 
 # Dependencies used for CUI browser
 net_std = { path = "./net/std", optional = true }

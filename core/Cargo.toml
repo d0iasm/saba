@@ -1,6 +1,6 @@
 [package]
 authors = ["d0iasm"]
-name = "toybr_core"
+name = "saba_core"
 version = "0.1.0"
 edition = "2021"
 

@@ -1,4 +1,4 @@
-name: Test toybr
+name: Test saba
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build CUI
       run: |
-        cargo build --features=cui --bin=toybr_cui
+        cargo build --features=cui --bin=saba_cui
     - name: Run tests
       run: |
         cd core
