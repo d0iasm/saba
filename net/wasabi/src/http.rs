@@ -25,12 +25,25 @@ impl HttpClient {
     }
 
     pub fn get(&self, host: String, port: u16, path: String) -> Result<HttpResponse, Error> {
-        let ips = lookup_host(&"example.com").unwrap();
+        let ips = match lookup_host(&"example.com") {
+            Ok(ips) => ips,
+            Err(_) => return Err(Error::Network("Failed to find IP addresses".to_string())),
+        };
+
+        if ips.len() < 1 {
+            return Err(Error::Network("Failed to find IP addresses".to_string()));
+        }
 
         let socket_addr: SocketAddr = (ips[0], port).into();
-        //println!("socket_addr: {:?}", socket_addr);
 
-        let mut stream = TcpStream::connect(socket_addr).unwrap();
+        let mut stream = match TcpStream::connect(socket_addr) {
+            Ok(stream) => stream,
+            Err(_) => {
+                return Err(Error::Network(
+                    "Failed to connect to TCP stream".to_string(),
+                ))
+            }
+        };
 
         let mut request = String::from("GET /");
         request.push_str(&path);
@@ -47,10 +60,24 @@ impl HttpClient {
 
         //println!("http request: {:?}", request);
 
-        let _bytes_written = stream.write(request.as_bytes()).unwrap();
+        let _bytes_written = match stream.write(request.as_bytes()) {
+            Ok(bytes) => bytes,
+            Err(_) => {
+                return Err(Error::Network(
+                    "Failed to send a request to TCP stream".to_string(),
+                ))
+            }
+        };
 
         let mut buf = [0u8; 40960];
-        let bytes_read = stream.read(&mut buf).unwrap();
+        let bytes_read = match stream.read(&mut buf) {
+            Ok(bytes) => bytes,
+            Err(_) => {
+                return Err(Error::Network(
+                    "Failed to receive a request from TCP stream".to_string(),
+                ))
+            }
+        };
         let data = &buf[..bytes_read];
 
         let raw_response = core::str::from_utf8(data).unwrap();
