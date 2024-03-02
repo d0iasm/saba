@@ -577,6 +577,7 @@ impl JsParser {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::alloc::string::ToString;
 
     #[test]
     fn test_empty() {
