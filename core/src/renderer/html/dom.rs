@@ -9,7 +9,6 @@ use crate::utils::*;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
-use alloc::string::ToString;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::fmt::{Display, Formatter};
@@ -206,27 +205,6 @@ impl Display for ElementKind {
             ElementKind::A => "a",
         };
         write!(f, "{}", s)
-    }
-}
-
-impl ElementKind {
-    pub fn to_string(&self) -> String {
-        match self {
-            ElementKind::Html => "html",
-            ElementKind::Head => "head",
-            ElementKind::Style => "style",
-            ElementKind::Script => "script",
-            ElementKind::Body => "body",
-            ElementKind::H1 => "h1",
-            ElementKind::H2 => "h2",
-            ElementKind::P => "p",
-            ElementKind::Pre => "pre",
-            ElementKind::Ul => "ul",
-            ElementKind::Li => "li",
-            ElementKind::Div => "div",
-            ElementKind::A => "a",
-        }
-        .to_string()
     }
 }
 

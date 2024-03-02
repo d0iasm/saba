@@ -9,6 +9,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::cell::RefCell;
+use core::fmt::{Display, Formatter};
 use core::ops::Add;
 
 #[derive(Debug, Clone)]
@@ -28,9 +29,9 @@ pub enum RuntimeValue {
     },
 }
 
-impl RuntimeValue {
-    fn to_string(&self) -> String {
-        match self {
+impl Display for RuntimeValue {
+    fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
+        let s = match self {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
             RuntimeValue::HtmlElement {
@@ -41,7 +42,8 @@ impl RuntimeValue {
                 // TODO: fix
                 //format!("{:?}", object.borrow().kind())
             }
-        }
+        };
+        write!(f, "{}", s)
     }
 }
 

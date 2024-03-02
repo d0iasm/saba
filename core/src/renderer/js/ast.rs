@@ -3,7 +3,8 @@
 
 use crate::renderer::js::token::{JsLexer, Token};
 use alloc::rc::Rc;
-use alloc::string::{String, ToString};
+use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -383,8 +384,7 @@ impl JsParser {
         // TODO: support multiple declarator
         let declarator = Node::new_variable_declarator(ident, self.initialiser());
 
-        let mut declarations = Vec::new();
-        declarations.push(declarator);
+        let declarations = vec![declarator];
 
         Node::new_variable_declaration(declarations)
     }

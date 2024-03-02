@@ -3,6 +3,7 @@
 //! https://www.w3.org/TR/css3-linebox/
 //! https://www.w3.org/TR/css-position-3/
 
+use crate::alloc::string::ToString;
 use crate::browser::Browser;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::CssToken;
