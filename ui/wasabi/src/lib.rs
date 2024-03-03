@@ -33,6 +33,12 @@ static WINDOW_WIDTH: i64 = 600;
 static WINDOW_HEIGHT: i64 = 400;
 static WINDOW_PADDING: i64 = 5;
 
+// defined in noli/src/window.rs
+static TITLE_BAR_HEIGHT: i64 = 24;
+
+static CONTENT_AREA_WIDTH: i64 = WINDOW_WIDTH;
+static CONTENT_AREA_HEIGHT: i64 = WINDOW_HEIGHT - TITLE_BAR_HEIGHT - TOOLBAR_HEIGHT;
+
 static TOOLBAR_HEIGHT: i64 = 26;
 static ADDRESSBAR_HEIGHT: i64 = 20;
 
@@ -267,9 +273,11 @@ impl WasabiUI {
     ) -> Result<(), Error> {
         loop {
             if let Some(c) = noli::sys::read_key() {
-                print!("{}\n", self.input_url);
-                if c == 0xA as char {
+                //print!("{}\n", self.input_url);
+                if c == 0xA as char || c == '\n' {
                     // enter key
+                    self.clear_content_area()?;
+
                     let _ = self.start_navigation(handle_url, "http://example.com".to_string());
                     self.update_ui();
                     self.update_toolbar()?;
@@ -394,6 +402,29 @@ impl WasabiUI {
                 }
             }
         }
+    }
+
+    fn clear_content_area(&mut self) -> Result<(), Error> {
+        self.position = (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING);
+
+        // fill out the content area with white box
+        if self
+            .window
+            .fill_rect(
+                WHITE,
+                0,
+                TOOLBAR_HEIGHT + 2,
+                CONTENT_AREA_WIDTH,
+                CONTENT_AREA_HEIGHT - 2,
+            )
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        Ok(())
     }
 }
 
