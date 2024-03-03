@@ -17,13 +17,19 @@ pub struct Browser {
 }
 
 impl Browser {
-    pub fn new(page: Rc<RefCell<Page>>) -> Self {
-        Self {
-            page,
+    pub fn new() -> Rc<RefCell<Self>> {
+        let page = Rc::new(RefCell::new(Page::new()));
+
+        let browser = Rc::new(RefCell::new(Self {
+            page: page.clone(),
             events: Vec::new(),
             display_items: Vec::new(),
             logs: Vec::new(),
-        }
+        }));
+
+        page.borrow_mut().set_browser(Rc::downgrade(&browser));
+
+        browser
     }
 
     pub fn push_event(&mut self, event: Event) {

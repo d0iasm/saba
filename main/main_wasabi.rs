@@ -13,7 +13,6 @@ use noli::*;
 use saba_core::browser::Browser;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
-use saba_core::renderer::page::Page;
 use saba_core::url::HtmlUrl;
 use ui_wasabi::WasabiUI;
 
@@ -81,12 +80,10 @@ fn handle_url(url: String) -> Result<HttpResponse, Error> {
 fn main() -> u64 {
     // initialize the UI object
     let ui = Rc::new(RefCell::new(WasabiUI::new()));
-    let page = Rc::new(RefCell::new(Page::new()));
 
     // initialize the main browesr struct
-    let browser = Rc::new(RefCell::new(Browser::new(page.clone())));
+    let browser = Browser::new();
     ui.borrow_mut().set_browser(Rc::downgrade(&browser));
-    page.borrow_mut().set_browser(Rc::downgrade(&browser));
 
     match ui.borrow_mut().start(handle_url) {
         Ok(_) => {}
