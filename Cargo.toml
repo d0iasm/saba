@@ -25,12 +25,6 @@ name = "saba_cui"
 path = "main/main_cui.rs"
 required-features = ["cui"]
 
-#[lib]
-#name = "core"
-#path = "core/lib.rs"
-#crate-type = ["staticlib"]
-#required-features = []
-
 [dependencies]
 saba_core = { path = "./core"}
 
@@ -39,7 +33,7 @@ net_std = { path = "./net/std", optional = true }
 ui_cui = { path = "./ui/cui", optional = true }
 
 # Dependencies used for browser on WasabiOS
-libc = { version = "0.2.150", optional = true}
+libc = { version = "0.2.150", optional = true }
 net_wasabi = { path = "./net/wasabi", optional = true }
 ui_wasabi = { path = "./ui/wasabi", optional = true }
 noli = { git = "https://github.com/hikalium/wasabi.git", optional = true }
