@@ -1,15 +1,11 @@
-use crate::alloc::string::ToString;
 use crate::browser::Browser;
-use crate::renderer::html::dom::Node;
-use crate::renderer::js::ast::Program;
+use crate::display_item::DisplayItem;
 use crate::renderer::layout::layout_object::LayoutObject;
-use crate::{display_item::DisplayItem, ui::UiObject};
-use alloc::format;
-use alloc::rc::{Rc, Weak};
+use alloc::rc::Weak;
 use alloc::string::String;
 use core::cell::RefCell;
 
-pub fn add_rect_display_item<U: UiObject>(layout_object: &LayoutObject<U>) {
+pub fn add_rect_display_item(layout_object: &LayoutObject) {
     let style = layout_object.style();
     let point = layout_object.point();
     let size = layout_object.size();
@@ -25,11 +21,7 @@ pub fn add_rect_display_item<U: UiObject>(layout_object: &LayoutObject<U>) {
     });
 }
 
-pub fn add_link_display_item<U: UiObject>(
-    layout_object: &LayoutObject<U>,
-    href: String,
-    link_text: String,
-) {
+pub fn add_link_display_item(layout_object: &LayoutObject, href: String, link_text: String) {
     let style = layout_object.style();
     let point = layout_object.point();
     let browser = match layout_object.browser().upgrade() {
@@ -45,7 +37,7 @@ pub fn add_link_display_item<U: UiObject>(
     });
 }
 
-pub fn add_text_display_item<U: UiObject>(layout_object: &LayoutObject<U>, text: String) {
+pub fn add_text_display_item(layout_object: &LayoutObject, text: String) {
     let style = layout_object.style();
     let point = layout_object.point();
     let browser = match layout_object.browser().upgrade() {
@@ -60,7 +52,7 @@ pub fn add_text_display_item<U: UiObject>(layout_object: &LayoutObject<U>, text:
     });
 }
 
-pub fn console_debug<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {
+pub fn console_debug(browser: Weak<RefCell<Browser>>, log: String) {
     let browser = match browser.upgrade() {
         Some(browser) => browser,
         None => return,
@@ -69,7 +61,7 @@ pub fn console_debug<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: Strin
     browser.borrow_mut().console_debug(log);
 }
 
-pub fn console_warning<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {
+pub fn console_warning(browser: Weak<RefCell<Browser>>, log: String) {
     let browser = match browser.upgrade() {
         Some(browser) => browser,
         None => return,
@@ -78,7 +70,7 @@ pub fn console_warning<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: Str
     browser.borrow_mut().console_warning(log);
 }
 
-pub fn console_error<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: String) {
+pub fn console_error(browser: Weak<RefCell<Browser>>, log: String) {
     let browser = match browser.upgrade() {
         Some(browser) => browser,
         None => return,
@@ -87,8 +79,9 @@ pub fn console_error<U: UiObject>(browser: Weak<RefCell<Browser<U>>>, log: Strin
     browser.borrow_mut().console_error(log);
 }
 
+/*
 /// for debug
-pub fn print_dom<U: UiObject>(ui: &Rc<RefCell<U>>, node: &Option<Rc<RefCell<Node>>>, depth: usize) {
+pub fn print_dom(ui: &Rc<RefCell>, node: &Option<Rc<RefCell<Node>>>, depth: usize) {
     match node {
         Some(n) => {
             ui.borrow_mut()
@@ -103,11 +96,7 @@ pub fn print_dom<U: UiObject>(ui: &Rc<RefCell<U>>, node: &Option<Rc<RefCell<Node
 }
 
 /// for debug
-pub fn print_layout_tree<U: UiObject>(
-    ui: &Rc<RefCell<U>>,
-    node: &Option<Rc<RefCell<LayoutObject<U>>>>,
-    depth: usize,
-) {
+pub fn print_layout_tree(ui: &Rc<RefCell>, node: &Option<Rc<RefCell<LayoutObject>>>, depth: usize) {
     match node {
         Some(n) => {
             ui.borrow_mut()
@@ -125,8 +114,9 @@ pub fn print_layout_tree<U: UiObject>(
 }
 
 /// for debug
-pub fn print_ast<U: UiObject>(ui: &Rc<RefCell<U>>, program: &Program) {
+pub fn print_ast(ui: &Rc<RefCell>, program: &Program) {
     for node in program.body() {
         ui.borrow_mut().console_debug(format!("{:?}", node));
     }
 }
+*/

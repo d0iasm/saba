@@ -12,7 +12,6 @@ use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
-use crate::ui::UiObject;
 use crate::utils::*;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
@@ -43,13 +42,13 @@ fn layout_object_kind_by_node(node: &Rc<RefCell<Node>>) -> LayoutObjectKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct LayoutObject<U: UiObject> {
-    browser: Weak<RefCell<Browser<U>>>,
+pub struct LayoutObject {
+    browser: Weak<RefCell<Browser>>,
     kind: LayoutObjectKind,
     // Similar structure with a DOM node.
     node: Rc<RefCell<Node>>,
-    pub first_child: Option<Rc<RefCell<LayoutObject<U>>>>,
-    pub next_sibling: Option<Rc<RefCell<LayoutObject<U>>>>,
+    pub first_child: Option<Rc<RefCell<LayoutObject>>>,
+    pub next_sibling: Option<Rc<RefCell<LayoutObject>>>,
     // CSS information.
     style: ComputedStyle,
     // Layout information.
@@ -59,8 +58,8 @@ pub struct LayoutObject<U: UiObject> {
     size: LayoutSize,
 }
 
-impl<U: UiObject> LayoutObject<U> {
-    pub fn new(browser: Weak<RefCell<Browser<U>>>, node: Rc<RefCell<Node>>) -> Self {
+impl LayoutObject {
+    pub fn new(browser: Weak<RefCell<Browser>>, node: Rc<RefCell<Node>>) -> Self {
         Self {
             browser,
             kind: layout_object_kind_by_node(&node),
@@ -73,7 +72,7 @@ impl<U: UiObject> LayoutObject<U> {
         }
     }
 
-    pub fn browser(&self) -> Weak<RefCell<Browser<U>>> {
+    pub fn browser(&self) -> Weak<RefCell<Browser>> {
         self.browser.clone()
     }
 
@@ -89,11 +88,11 @@ impl<U: UiObject> LayoutObject<U> {
         self.node.borrow().kind().clone()
     }
 
-    pub fn first_child(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
+    pub fn first_child(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.first_child.as_ref().cloned()
     }
 
-    pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
+    pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.next_sibling.as_ref().cloned()
     }
 

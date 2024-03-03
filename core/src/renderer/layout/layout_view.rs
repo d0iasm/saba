@@ -9,16 +9,15 @@ use crate::renderer::html::dom_api::get_target_element_node;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::renderer::layout::layout_point::LayoutPoint;
-use crate::ui::UiObject;
 use alloc::rc::{Rc, Weak};
 use core::cell::RefCell;
 
-fn create_layout_object<U: UiObject>(
-    browser: Weak<RefCell<Browser<U>>>,
+fn create_layout_object(
+    browser: Weak<RefCell<Browser>>,
     node: &Option<Rc<RefCell<Node>>>,
-    parent_obj: &Option<Rc<RefCell<LayoutObject<U>>>>,
+    parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
     cssom: &StyleSheet,
-) -> Option<Rc<RefCell<LayoutObject<U>>>> {
+) -> Option<Rc<RefCell<LayoutObject>>> {
     match node {
         Some(n) => {
             let layout_object =
@@ -56,12 +55,12 @@ fn create_layout_object<U: UiObject>(
 }
 
 /// Converts DOM tree to render tree.
-fn build_layout_tree<U: UiObject>(
-    browser: Weak<RefCell<Browser<U>>>,
+fn build_layout_tree(
+    browser: Weak<RefCell<Browser>>,
     node: &Option<Rc<RefCell<Node>>>,
-    parent_obj: &Option<Rc<RefCell<LayoutObject<U>>>>,
+    parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
     cssom: &StyleSheet,
-) -> Option<Rc<RefCell<LayoutObject<U>>>> {
+) -> Option<Rc<RefCell<LayoutObject>>> {
     let layout_object = create_layout_object(browser.clone(), node, parent_obj, cssom);
 
     layout_object.as_ref()?;
@@ -142,13 +141,13 @@ fn build_layout_tree<U: UiObject>(
 /// LayoutView is the root of the layout tree.
 /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=64
 #[derive(Debug, Clone)]
-pub struct LayoutView<U: UiObject> {
-    root: Option<Rc<RefCell<LayoutObject<U>>>>,
+pub struct LayoutView {
+    root: Option<Rc<RefCell<LayoutObject>>>,
 }
 
-impl<U: UiObject> LayoutView<U> {
+impl LayoutView {
     pub fn new(
-        browser: Weak<RefCell<Browser<U>>>,
+        browser: Weak<RefCell<Browser>>,
         root: Rc<RefCell<Node>>,
         cssom: &StyleSheet,
     ) -> Self {
@@ -167,7 +166,7 @@ impl<U: UiObject> LayoutView<U> {
 
     fn layout_node(
         &self,
-        node: &Option<Rc<RefCell<LayoutObject<U>>>>,
+        node: &Option<Rc<RefCell<LayoutObject>>>,
         parent_style: &ComputedStyle,
         parent_point: &LayoutPoint,
     ) {
@@ -194,11 +193,11 @@ impl<U: UiObject> LayoutView<U> {
         self.layout_node(&self.root, &fake_style, &fake_point);
     }
 
-    pub fn root(&self) -> Option<Rc<RefCell<LayoutObject<U>>>> {
+    pub fn root(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.root.clone()
     }
 
-    fn paint_node(&self, node: &Option<Rc<RefCell<LayoutObject<U>>>>) {
+    fn paint_node(&self, node: &Option<Rc<RefCell<LayoutObject>>>) {
         match node {
             Some(n) => {
                 n.borrow_mut().paint();

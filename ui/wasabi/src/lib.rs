@@ -15,7 +15,6 @@ use saba_core::{
     error::Error,
     http::HttpResponse,
     renderer::layout::computed_style::{FontSize, TextDecoration},
-    ui::UiObject,
 };
 
 static WHITE: u32 = 0xffffff;
@@ -42,35 +41,25 @@ static _CHAR_HEIGHT: i64 = 16;
 
 #[derive(Clone, Debug)]
 pub struct WasabiUI {
-    browser: Weak<RefCell<Browser<Self>>>,
+    browser: Weak<RefCell<Browser>>,
     input_url: String,
     window: Window,
     // The (x, y) position to render a next display item.
     position: (i64, i64),
 }
 
-impl UiObject for WasabiUI {
-    fn new() -> Self {
+impl WasabiUI {
+    pub fn new() -> Self {
         Self {
             browser: Weak::new(),
             input_url: String::new(),
-            window: Window::new(
-                "saba".to_string(),
-                WHITE,
-                0,
-                0,
-                WINDOW_WIDTH,
-                WINDOW_HEIGHT,
-            )
-            .unwrap(),
+            window: Window::new("saba".to_string(), WHITE, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+                .unwrap(),
             position: (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
         }
     }
 
-    fn console_debug(&mut self, _log: String) {}
-    fn console_warning(&mut self, _log: String) {}
-    fn console_error(&mut self, _log: String) {}
-    fn start(
+    pub fn start(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
@@ -81,14 +70,12 @@ impl UiObject for WasabiUI {
 
         Ok(())
     }
-}
 
-impl WasabiUI {
-    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser<WasabiUI>>>) {
+    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser>>) {
         self.browser = browser;
     }
 
-    pub fn browser(&self) -> Weak<RefCell<Browser<Self>>> {
+    pub fn browser(&self) -> Weak<RefCell<Browser>> {
         self.browser.clone()
     }
 

@@ -9,16 +9,16 @@ use crossterm::{
         LeaveAlternateScreen,
     },
 };
-use std::io;
 use saba_core::browser::Browser;
 use saba_core::http::HttpResponse;
 use saba_core::renderer::layout::computed_style::FontSize;
+use saba_core::utils::*;
 use saba_core::{
     display_item::DisplayItem,
     error::Error,
     event::{Event as BrowserEvent, KeyboardEvent},
-    ui::UiObject,
 };
+use std::io;
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -49,7 +49,7 @@ impl Link {
 
 #[derive(Clone, Debug)]
 pub struct Tui {
-    browser: Weak<RefCell<Browser<Self>>>,
+    browser: Weak<RefCell<Browser>>,
     input_url: String,
     input_mode: InputMode,
     // A user can focus only a link now.
@@ -58,8 +58,8 @@ pub struct Tui {
     //position: (f64, f64),
 }
 
-impl UiObject for Tui {
-    fn new() -> Self {
+impl Tui {
+    pub fn new() -> Self {
         Self {
             browser: Weak::new(),
             input_url: String::new(),
@@ -69,34 +69,7 @@ impl UiObject for Tui {
         }
     }
 
-    fn console_debug(&mut self, log: String) {
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-
-        browser.borrow_mut().console_debug(log);
-    }
-
-    fn console_warning(&mut self, log: String) {
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-
-        browser.borrow_mut().console_warning(log);
-    }
-
-    fn console_error(&mut self, log: String) {
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-
-        browser.borrow_mut().console_error(log);
-    }
-
-    fn start(
+    pub fn start(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
@@ -122,7 +95,10 @@ impl UiObject for Tui {
         };
         match size() {
             Ok((cols, rows)) => {
-                self.console_debug(format!("cols rows {:?} {:?}", cols, rows));
+                console_debug(
+                    self.browser.clone(),
+                    format!("cols rows {:?} {:?}", cols, rows),
+                );
             }
             Err(e) => return Err(Error::Other(format!("{:?}", e))),
         };
@@ -153,14 +129,12 @@ impl UiObject for Tui {
             Err(e) => Err(Error::Other(format!("{:?}", e))),
         }
     }
-}
 
-impl Tui {
-    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser<Tui>>>) {
+    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser>>) {
         self.browser = browser;
     }
 
-    pub fn browser(&self) -> Weak<RefCell<Browser<Self>>> {
+    pub fn browser(&self) -> Weak<RefCell<Browser>> {
         self.browser.clone()
     }
 
@@ -268,7 +242,7 @@ impl Tui {
                 page.borrow_mut().receive_response(response);
             }
             Err(e) => {
-                self.console_error(format!("{:?}", e));
+                console_error(self.browser.clone(), format!("{:?}", e));
                 return Err(e);
             }
         }
@@ -286,7 +260,7 @@ impl Tui {
             KeyCode::Char(c) => c.to_string(),
             _ => {
                 // TODO: propagate backspace key to browser?
-                self.console_debug(format!("{:?} is pressed", key_code));
+                console_debug(self.browser.clone(), format!("{:?} is pressed", key_code));
                 return;
             }
         };
@@ -373,7 +347,6 @@ impl Tui {
                 }
                 Event::Mouse(_) => {
                     // Do not support mouse event in Tui browser.
-                    //self.console_debug(format!("{:?}", event));
                 }
                 _ => {}
             }
@@ -488,10 +461,6 @@ impl Tui {
 
                     /*
                     self.position = (layout_point.x(), layout_point.y());
-                    browser.borrow_mut().console_debug(format!(
-                        "rect position {:?} layout_point {:?} {:?}",
-                        self.position, layout_point, layout_size
-                    ));
                     let block = Block::default().style(Style::default().bg(Color::Green));
                     frame.render_widget(block, content_area[i]);
                     i = i + 1;

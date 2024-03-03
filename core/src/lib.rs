@@ -9,6 +9,5 @@ pub mod event;
 pub mod http;
 pub mod log;
 pub mod renderer;
-pub mod ui;
 pub mod url;
 pub mod utils;

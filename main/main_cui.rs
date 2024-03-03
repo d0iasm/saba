@@ -11,7 +11,6 @@ use saba_core::browser::Browser;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
 use saba_core::renderer::page::Page;
-use saba_core::ui::UiObject;
 use saba_core::url::HtmlUrl;
 use ui::app::Tui;
 
@@ -77,7 +76,7 @@ fn main() {
     let page = Rc::new(RefCell::new(Page::new()));
 
     // initialize the main browesr struct
-    let browser = Rc::new(RefCell::new(Browser::new(ui.clone(), page.clone())));
+    let browser = Rc::new(RefCell::new(Browser::new(page.clone())));
     ui.borrow_mut().set_browser(Rc::downgrade(&browser));
     page.borrow_mut().set_browser(Rc::downgrade(&browser));
 

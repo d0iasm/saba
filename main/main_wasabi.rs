@@ -14,11 +14,10 @@ use saba_core::browser::Browser;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
 use saba_core::renderer::page::Page;
-use saba_core::ui::UiObject;
 use saba_core::url::HtmlUrl;
 use ui_wasabi::WasabiUI;
 
-fn handle_url<U: UiObject>(url: String) -> Result<HttpResponse, Error> {
+fn handle_url(url: String) -> Result<HttpResponse, Error> {
     println!("handle_url");
 
     // parse url
@@ -85,11 +84,11 @@ fn main() -> u64 {
     let page = Rc::new(RefCell::new(Page::new()));
 
     // initialize the main browesr struct
-    let browser = Rc::new(RefCell::new(Browser::new(ui.clone(), page.clone())));
+    let browser = Rc::new(RefCell::new(Browser::new(page.clone())));
     ui.borrow_mut().set_browser(Rc::downgrade(&browser));
     page.borrow_mut().set_browser(Rc::downgrade(&browser));
 
-    match ui.borrow_mut().start(handle_url::<WasabiUI>) {
+    match ui.borrow_mut().start(handle_url) {
         Ok(_) => {}
         Err(e) => {
             println!("browser fails to start {:?}", e);

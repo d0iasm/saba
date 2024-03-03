@@ -8,7 +8,6 @@
 
 use crate::browser::Browser;
 use crate::renderer::css::token::*;
-use crate::ui::UiObject;
 use crate::utils::*;
 use alloc::format;
 use alloc::rc::Weak;
@@ -182,13 +181,13 @@ pub enum ComponentValue {
 }
 
 #[derive(Debug, Clone)]
-pub struct CssParser<U: UiObject> {
-    browser: Weak<RefCell<Browser<U>>>,
+pub struct CssParser {
+    browser: Weak<RefCell<Browser>>,
     t: Peekable<CssTokenizer>,
 }
 
-impl<U: UiObject> CssParser<U> {
-    pub fn new(browser: Weak<RefCell<Browser<U>>>, t: CssTokenizer) -> Self {
+impl CssParser {
+    pub fn new(browser: Weak<RefCell<Browser>>, t: CssTokenizer) -> Self {
         Self {
             browser,
             t: t.peekable(),

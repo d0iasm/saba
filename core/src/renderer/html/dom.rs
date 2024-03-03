@@ -4,7 +4,6 @@
 use crate::browser::Browser;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
-use crate::ui::UiObject;
 use crate::utils::*;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
@@ -245,8 +244,8 @@ pub enum InsertionMode {
 }
 
 #[derive(Debug, Clone)]
-pub struct HtmlParser<U: UiObject> {
-    browser: Weak<RefCell<Browser<U>>>,
+pub struct HtmlParser {
+    browser: Weak<RefCell<Browser>>,
     root: Rc<RefCell<Node>>,
     mode: InsertionMode,
     t: HtmlTokenizer,
@@ -256,8 +255,8 @@ pub struct HtmlParser<U: UiObject> {
     original_insertion_mode: InsertionMode,
 }
 
-impl<U: UiObject> HtmlParser<U> {
-    pub fn new(browser: Weak<RefCell<Browser<U>>>, t: HtmlTokenizer) -> Self {
+impl HtmlParser {
+    pub fn new(browser: Weak<RefCell<Browser>>, t: HtmlTokenizer) -> Self {
         Self {
             browser,
             root: Rc::new(RefCell::new(Node::new(NodeKind::Document))),

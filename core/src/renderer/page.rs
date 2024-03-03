@@ -18,29 +18,28 @@ use crate::renderer::js::ast::JsParser;
 use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::layout_view::LayoutView;
-use crate::ui::UiObject;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use core::cell::RefCell;
 
 /// Represents a page. It only supports a main frame.
 #[derive(Debug, Clone)]
-pub struct Page<U: UiObject> {
-    browser: Weak<RefCell<Browser<U>>>,
+pub struct Page {
+    browser: Weak<RefCell<Browser>>,
     url: Option<String>,
     dom_root: Option<Rc<RefCell<Node>>>,
     style: Option<StyleSheet>,
-    layout_view: Option<LayoutView<U>>,
+    layout_view: Option<LayoutView>,
     modified: bool,
 }
 
-impl<U: UiObject> Default for Page<U> {
+impl Default for Page {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<U: UiObject> Page<U> {
+impl Page {
     pub fn new() -> Self {
         Self {
             browser: Weak::new(),
@@ -94,7 +93,7 @@ impl<U: UiObject> Page<U> {
         self.url = Some(url);
     }
 
-    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser<U>>>) {
+    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser>>) {
         self.browser = browser;
     }
 
@@ -164,7 +163,7 @@ impl<U: UiObject> Page<U> {
     }
 
     /*
-    pub fn layout_view(&self) -> Option<LayoutView<U>> {
+    pub fn layout_view(&self) -> Option<LayoutView> {
         self.layout_view.clone()
     }
     */
