@@ -227,12 +227,26 @@ impl WasabiUI {
     }
 
     fn update_toolbar(&self) -> Result<(), Error> {
+        /*
+        // clear address bar
+        if self
+            .window
+            .fill_rect(WHITE, 72, 4, WINDOW_WIDTH - 76, 2 + ADDRESSBAR_HEIGHT)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+        */
+
+        // draw URL string
         if self
             .window
             .draw_string(
                 BLACK,
                 74,
-                2,
+                6,
                 &self.input_url,
                 StringSize::Medium,
                 /*underline=*/ false,
@@ -253,13 +267,17 @@ impl WasabiUI {
     ) -> Result<(), Error> {
         loop {
             if let Some(c) = noli::sys::read_key() {
-                print!("{c}");
-                print!("{}", self.input_url);
-                if c == '\n' {
+                print!("{}\n", self.input_url);
+                if c == 0xA as char {
+                    // enter key
                     let _ = self.start_navigation(handle_url, "http://example.com".to_string());
                     self.update_ui();
                     self.update_toolbar()?;
                     self.input_url = String::new();
+                } else if c == 0x7F as char {
+                    // delete key
+                    self.input_url.pop();
+                    self.update_toolbar()?;
                 } else {
                     self.input_url.push(c);
                     self.update_toolbar()?;
