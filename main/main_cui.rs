@@ -38,7 +38,11 @@ fn handle_url(url: String) -> Result<HttpResponse, Error> {
         Ok(res) => {
             // redirect to Location
             if res.status_code() == 302 {
-                let redirect_parsed_url = HtmlUrl::new(res.header("Location"));
+                let location = match res.header_value("Location") {
+                    Ok(value) => value,
+                    Err(_) => return Ok(res),
+                };
+                let redirect_parsed_url = HtmlUrl::new(location);
 
                 let redirect_client = HttpClient::new();
                 match redirect_client.get(
