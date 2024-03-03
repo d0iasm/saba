@@ -53,8 +53,15 @@ impl WasabiUI {
         Self {
             browser: Weak::new(),
             input_url: String::new(),
-            window: Window::new("saba".to_string(), WHITE, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-                .unwrap(),
+            window: Window::new(
+                "SaBA".to_string(),
+                WHITE,
+                30,
+                50,
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT,
+            )
+            .unwrap(),
             position: (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
         }
     }
