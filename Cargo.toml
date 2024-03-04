@@ -41,5 +41,5 @@ ui_cui = { path = "./ui/cui", optional = true }
 libc = { version = "0.2.150", optional = true }
 net_wasabi = { path = "./net/wasabi", optional = true }
 ui_wasabi = { path = "./ui/wasabi", optional = true }
-#noli = { git = "https://github.com/hikalium/wasabi.git", optional = true }
-noli = { path = "./../../noli", optional = true }
+noli = { git = "https://github.com/hikalium/wasabi.git", optional = true }
+#noli = { path = "./../../noli", optional = true }
