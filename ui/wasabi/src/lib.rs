@@ -232,63 +232,28 @@ impl WasabiUI {
         Ok(())
     }
 
-    fn update_toolbar(&self) -> Result<(), Error> {
-        /*
-        // clear address bar
-        if self
-            .window
-            .fill_rect(WHITE, 72, 4, WINDOW_WIDTH - 76, 2 + ADDRESSBAR_HEIGHT)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-        */
-
-        // draw URL string
-        if self
-            .window
-            .draw_string(
-                BLACK,
-                74,
-                6,
-                &self.input_url,
-                StringSize::Medium,
-                /*underline=*/ false,
-            )
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-
-        Ok(())
-    }
-
     fn run_app(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
         loop {
             if let Some(c) = noli::sys::read_key() {
-                print!("{}\n", self.input_url);
                 if c == 0xA as char || c == '\n' {
                     // enter key
                     self.clear_content_area()?;
 
                     let _ = self.start_navigation(handle_url, "http://example.com".to_string());
                     self.update_ui();
-                    self.update_toolbar()?;
+
+                    self.clear_address_bar()?;
                     self.input_url = String::new();
                 } else if c == 0x7F as char {
                     // delete key
                     self.input_url.pop();
-                    self.update_toolbar()?;
+                    self.update_address_bar()?;
                 } else {
                     self.input_url.push(c);
-                    self.update_toolbar()?;
+                    self.update_address_bar()?;
                 }
             }
         }
@@ -402,6 +367,43 @@ impl WasabiUI {
                 }
             }
         }
+    }
+
+    fn update_address_bar(&self) -> Result<(), Error> {
+        // draw URL string
+        if self
+            .window
+            .draw_string(
+                BLACK,
+                74,
+                6,
+                &self.input_url,
+                StringSize::Medium,
+                /*underline=*/ false,
+            )
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn clear_address_bar(&mut self) -> Result<(), Error> {
+        // clear address bar
+        if self
+            .window
+            .fill_rect(WHITE, 72, 4, WINDOW_WIDTH - 76, ADDRESSBAR_HEIGHT - 4)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to initialize a toolbar".to_string(),
+            ));
+        }
+
+        Ok(())
     }
 
     fn clear_content_area(&mut self) -> Result<(), Error> {
