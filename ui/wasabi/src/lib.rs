@@ -273,7 +273,7 @@ impl WasabiUI {
     ) -> Result<(), Error> {
         loop {
             if let Some(c) = noli::sys::read_key() {
-                //print!("{}\n", self.input_url);
+                print!("{}\n", self.input_url);
                 if c == 0xA as char || c == '\n' {
                     // enter key
                     self.clear_content_area()?;

@@ -3,7 +3,20 @@
 HOME_PATH=$PWD
 TARGET_PATH=$PWD"/build"
 OS_PATH=$TARGET_PATH"/wasabi"
-APP_PATH=$OS_PATH"/app/saba"
+
+# if --app param is passed to the script, use it
+if [ $1 == "--app" ]
+then
+  if [[ -z "$2" ]]; then
+    APP_NAME="saba"
+  else
+    APP_NAME=$2
+  fi
+else
+  APP_NAME="saba"
+fi
+
+APP_PATH=$OS_PATH"/app/"$APP_NAME
 
 # execute `mkdir build/` if it doesn't exist
 if [ -d $TARGET_PATH ]
@@ -41,32 +54,32 @@ else
   mkdir $APP_PATH
 fi
 
-# copy Toybr application except `target`, `.git` and `build` directories to Wasabi
-echo "copying the saba application to wasabi OS..."
+# copy an application except `target`, `.git` and `build` directories to Wasabi
+echo "copying the $APP_NAME application to wasabi OS..."
 cp -R `ls -A ./ | grep -v "target" | grep -v ".git" | grep -v "build"` $APP_PATH
 
 cd $OS_PATH
 
-# update Cargo.toml to add saba
+# update Cargo.toml to add an app
 # this is very hacky and not stable
 mv Cargo.toml Cargo.toml.original
-if grep -Fq "app/saba" Cargo.toml.original
+if grep -Fq "app/"$APP_NAME Cargo.toml.original
 then
-  echo "app/saba already exists in Cargo.toml"
+  echo "app/$APP_NAME already exists in Cargo.toml"
   mv Cargo.toml.original Cargo.toml
 else
-  sed 's/members = \[/members = \[\n    "app\/saba",/' Cargo.toml.original >| Cargo.toml
+  sed "s/members = \[/members = \[\n    \"app\/$APP_NAME\",/" Cargo.toml.original >| Cargo.toml
 fi
 
-# update Makefile to add saba
+# update Makefile to add an app
 # this is very hacky and not stable
 mv Makefile Makefile.original
-if grep -Fq "app/saba" Makefile.original
+if grep -Fq "app/"$APP_NAME Makefile.original
 then
-  echo "app/saba already exists in Makefile"
+  echo "app/$APP_NAME already exists in Makefile"
   mv Makefile.original Makefile
 else
-  sed 's/make -C app\/window0/make -C app\/window0\n\tmake -C app\/saba/' Makefile.original >| Makefile
+  sed "s/make -C app\/window0/make -C app\/window0\n\tmake -C app\/$APP_NAME/" Makefile.original >| Makefile
 fi
 
 make
