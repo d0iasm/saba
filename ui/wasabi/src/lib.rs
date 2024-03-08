@@ -395,7 +395,7 @@ impl WasabiUI {
         // clear address bar
         if self
             .window
-            .fill_rect(WHITE, 72, 4, WINDOW_WIDTH - 76, ADDRESSBAR_HEIGHT - 4)
+            .fill_rect(WHITE, 72, 4, WINDOW_WIDTH - 76, ADDRESSBAR_HEIGHT - 2)
             .is_err()
         {
             return Err(Error::InvalidUI(
