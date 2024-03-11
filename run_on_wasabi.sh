@@ -71,17 +71,6 @@ else
   sed "s/members = \[/members = \[\n    \"app\/$APP_NAME\",/" Cargo.toml.original >| Cargo.toml
 fi
 
-# update Makefile to add an app
-# this is very hacky and not stable
-mv Makefile Makefile.original
-if grep -Fq "app/"$APP_NAME Makefile.original
-then
-  echo "app/$APP_NAME already exists in Makefile"
-  mv Makefile.original Makefile
-else
-  sed "s/make -C app\/window0/make -C app\/window0\n\tmake -C app\/$APP_NAME/" Makefile.original >| Makefile
-fi
-
 make
 make run
 
