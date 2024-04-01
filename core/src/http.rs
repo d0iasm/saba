@@ -25,6 +25,7 @@ static FAKE_RESPONSE_BODY: &str = r#"
     domain in literature without prior coordination or asking for permission.</p>
     <p><a href="https://www.iana.org/domains/example">More information...</a></p>
     <img src="https://placehold.co/600x400"/>
+    <img src="https://dummyimage.com/300"/>
 </div>
 </body>
 </html>

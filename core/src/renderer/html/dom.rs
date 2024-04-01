@@ -699,6 +699,8 @@ impl HtmlParser {
                                     // Acknowledge the token's self-closing flag, if it is set.
 
                                     // Set the frameset-ok flag to "not ok".
+
+                                    // TODO: handle self-closing flag.
                                     self.insert_element(tag, attributes.to_vec());
                                     token = self.t.next();
                                     continue;
