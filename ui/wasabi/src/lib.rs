@@ -380,6 +380,17 @@ impl WasabiUI {
                 } => {
                     print!("DisplayItem::Img src: {}\n", src);
 
+                    match self.browser().upgrade() {
+                        Some(browser) => {
+                            browser.borrow_mut().push_url_for_subresource(src);
+                        }
+                        None => {
+                            return Err(Error::Other(
+                                "failed to obtain a browser object".to_string(),
+                            ))
+                        }
+                    };
+
                     //let data = include_bytes!("/Users/asami/Projects/saba/test.png");
                     let data: &[u8] = &[
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
