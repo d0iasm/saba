@@ -8,6 +8,12 @@ use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
+use core::fmt::Display;
+use embedded_graphics::{
+    image::{Image, ImageRaw, ImageRawBE},
+    pixelcolor::Rgb565,
+    prelude::*,
+};
 use noli::{print, window::StringSize, window::Window};
 use saba_core::{
     browser::Browser,
@@ -286,7 +292,6 @@ impl WasabiUI {
                 page.borrow_mut().receive_response(response);
             }
             Err(e) => {
-                //self.console_error(format!("{:?}", e));
                 return Err(e);
             }
         }
@@ -365,7 +370,34 @@ impl WasabiUI {
                         }
                     }
                 }
+                DisplayItem::Img {
+                    src,
+                    style: _,
+                    layout_point: _,
+                } => {
+                    print!("DisplayItem::Img src: {}\n", src);
+                    // Raw big endian image data for demonstration purposes. A real image would likely be much
+                    // larger.
+                    let data = [
+                        0x00, 0x00, 0xF8, 0x00, 0x07, 0xE0, 0xFF, 0xE0, //
+                        0x00, 0x1F, 0x07, 0xFF, 0xF8, 0x1F, 0xFF, 0xFF, //
+                    ];
+
+                    // Create a raw image instance. Other image formats will require different code to load them.
+                    // All code after loading is the same for any image format.
+                    let raw: ImageRawBE<Rgb565> = ImageRaw::new(&data, 4);
+
+                    // Create an `Image` object to position the image at `Point::zero()`.
+                    let image = Image::new(&raw, Point::zero());
+
+                    // Draw the image to the display.
+                    image.draw(&mut self.window).expect("should draw");
+                }
             }
+        }
+
+        for log in browser.borrow().logs() {
+            print!("{}\n", log.to_string());
         }
     }
 

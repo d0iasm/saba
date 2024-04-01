@@ -504,6 +504,13 @@ impl Tui {
                         });
                     }
                 }
+                DisplayItem::Img {
+                    src: _,
+                    style: _,
+                    layout_point: _,
+                } => {
+                    // Do not support images in CUI.
+                }
             }
         }
 

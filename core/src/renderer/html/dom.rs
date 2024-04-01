@@ -184,6 +184,8 @@ pub enum ElementKind {
     Div,
     /// https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element
     A,
+    /// https://html.spec.whatwg.org/multipage/embedded-content.html#the-img-element
+    IMG,
 }
 
 impl Display for ElementKind {
@@ -202,6 +204,7 @@ impl Display for ElementKind {
             ElementKind::Li => "li",
             ElementKind::Div => "div",
             ElementKind::A => "a",
+            ElementKind::IMG => "img",
         };
         write!(f, "{}", s)
     }
@@ -225,6 +228,7 @@ impl FromStr for ElementKind {
             "li" => Ok(ElementKind::Li),
             "div" => Ok(ElementKind::Div),
             "a" => Ok(ElementKind::A),
+            "img" => Ok(ElementKind::IMG),
             _ => Err(format!("unimplemented element name {:?}", s)),
         }
     }
@@ -682,6 +686,19 @@ impl HtmlParser {
                                     //
                                     // Insert an HTML element for the token. Push onto the list of
                                     // active formatting elements that element.
+                                    self.insert_element(tag, attributes.to_vec());
+                                    token = self.t.next();
+                                    continue;
+                                }
+                                // A start tag whose tag name is one of: "area", "br", "embed", "img", "keygen", "wbr"
+                                "img" => {
+                                    // Reconstruct the active formatting elements, if any.
+
+                                    // Insert an HTML element for the token. Immediately pop the current node off the stack of open elements.
+
+                                    // Acknowledge the token's self-closing flag, if it is set.
+
+                                    // Set the frameset-ok flag to "not ok".
                                     self.insert_element(tag, attributes.to_vec());
                                     token = self.t.next();
                                     continue;

@@ -24,6 +24,11 @@ pub enum DisplayItem {
         style: ComputedStyle,
         layout_point: LayoutPoint,
     },
+    Img {
+        src: String,
+        style: ComputedStyle,
+        layout_point: LayoutPoint,
+    },
 }
 
 impl DisplayItem {

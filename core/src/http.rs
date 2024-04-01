@@ -11,6 +11,25 @@ use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 
+static FAKE_RESPONSE_BODY: &str = r#"
+<!doctype html>
+<html>
+<head>
+    <title>Example Domain Response</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+<div>
+    <h1>Example Domain Response</h1>
+    <p>This domain is for use in illustrative examples in documents. You may use this
+    domain in literature without prior coordination or asking for permission.</p>
+    <p><a href="https://www.iana.org/domains/example">More information...</a></p>
+    <img src="https://placehold.co/600x400"/>
+</div>
+</body>
+</html>
+"#;
+
 #[derive(Debug, Clone)]
 pub struct Header {
     pub name: String,
@@ -51,7 +70,7 @@ impl HttpResponse {
             }
         };
 
-        let (headers, body) = match remaining.split_once("\n\n") {
+        let (headers, _body) = match remaining.split_once("\n\n") {
             Some((h, b)) => {
                 let mut headers = Vec::new();
                 for header in h.split('\n') {
@@ -73,7 +92,7 @@ impl HttpResponse {
             status_code: statuses[1].parse().unwrap_or(404),
             reason: statuses[2].to_string(),
             headers,
-            body: body.to_string(),
+            body: FAKE_RESPONSE_BODY.to_string(),
         })
     }
 

@@ -347,6 +347,14 @@ impl LayoutObject {
 
                         // remove the first child from the tree to avoid operating it twice
                         self.first_child = None;
+                        return;
+                    }
+                    if e.kind() == ElementKind::IMG {
+                        for attr in &e.attributes() {
+                            if attr.name() == "src" {
+                                add_img_display_item(self, attr.value());
+                            }
+                        }
                     }
                 }
             }

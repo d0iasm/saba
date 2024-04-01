@@ -52,6 +52,21 @@ pub fn add_text_display_item(layout_object: &LayoutObject, text: String) {
     });
 }
 
+pub fn add_img_display_item(layout_object: &LayoutObject, src: String) {
+    let style = layout_object.style();
+    let point = layout_object.point();
+    let browser = match layout_object.browser().upgrade() {
+        Some(browser) => browser,
+        None => return,
+    };
+
+    browser.borrow_mut().push_display_item(DisplayItem::Img {
+        src,
+        style,
+        layout_point: point,
+    });
+}
+
 pub fn console_debug(browser: Weak<RefCell<Browser>>, log: String) {
     let browser = match browser.upgrade() {
         Some(browser) => browser,
