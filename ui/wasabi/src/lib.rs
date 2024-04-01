@@ -8,9 +8,6 @@ use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
-use embedded_graphics::primitives::Circle;
-use embedded_graphics::primitives::PrimitiveStyle;
-use embedded_graphics::primitives::Rectangle;
 use embedded_graphics::{
     image::{Image, ImageRaw, ImageRawBE},
     pixelcolor::Rgb565,
@@ -384,7 +381,7 @@ impl WasabiUI {
                     print!("DisplayItem::Img src: {}\n", src);
 
                     //let data = include_bytes!("/Users/asami/Projects/saba/test.png");
-                    const data: &[u8] = &[
+                    let data: &[u8] = &[
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
@@ -403,12 +400,6 @@ impl WasabiUI {
                     let img: ImageRawBE<Rgb565> = ImageRaw::new(data, 10);
                     let image = Image::new(&img, Point::new(100, 100));
                     //print!("image: {:#?}\n", image);
-
-                    /*
-                    let circle = Circle::new(Point::new(100, 100), 100)
-                        .into_styled(PrimitiveStyle::with_stroke(Rgb565::RED, 5));
-                    circle.draw(&mut self.window);
-                    */
 
                     if image.draw(&mut self.window).is_err() {
                         return Err(Error::Other("failed to draw an image".to_string()));
