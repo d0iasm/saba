@@ -11,26 +11,6 @@ use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-static FAKE_RESPONSE_BODY: &str = r#"
-<!doctype html>
-<html>
-<head>
-    <title>Example Domain Response</title>
-    <meta charset="utf-8" />
-</head>
-<body>
-<div>
-    <h1>Example Domain Response</h1>
-    <p>This domain is for use in illustrative examples in documents. You may use this
-    domain in literature without prior coordination or asking for permission.</p>
-    <p><a href="https://www.iana.org/domains/example">More information...</a></p>
-    <img src="https://placehold.co/600x400"/>
-    <img src="https://dummyimage.com/300"/>
-</div>
-</body>
-</html>
-"#;
-
 #[derive(Debug, Clone)]
 pub struct Header {
     pub name: String,
@@ -49,7 +29,7 @@ pub struct HttpResponse {
     status_code: u32,
     reason: String,
     headers: Vec<Header>,
-    body: String,
+    pub body: String,
 }
 
 /// https://datatracker.ietf.org/doc/html/rfc7230#section-3
@@ -71,7 +51,7 @@ impl HttpResponse {
             }
         };
 
-        let (headers, _body) = match remaining.split_once("\n\n") {
+        let (headers, body) = match remaining.split_once("\n\n") {
             Some((h, b)) => {
                 let mut headers = Vec::new();
                 for header in h.split('\n') {
@@ -93,7 +73,7 @@ impl HttpResponse {
             status_code: statuses[1].parse().unwrap_or(404),
             reason: statuses[2].to_string(),
             headers,
-            body: FAKE_RESPONSE_BODY.to_string(),
+            body: body.to_string(),
         })
     }
 

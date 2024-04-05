@@ -17,6 +17,26 @@ use noli::net::TcpStream;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
 
+static FAKE_RESPONSE_BODY: &str = r#"
+<!doctype html>
+<html>
+<head>
+    <title>Example Domain Response</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+<div>
+    <h1>Example Domain Response</h1>
+    <p>This domain is for use in illustrative examples in documents. You may use this
+    domain in literature without prior coordination or asking for permission.</p>
+    <p><a href="https://www.iana.org/domains/example">More information...</a></p>
+    <img src="https://placehold.co/600x400"/>
+    <img src="https://dummyimage.com/300"/>
+</div>
+</body>
+</html>
+"#;
+
 pub struct HttpClient {}
 
 impl HttpClient {
@@ -84,7 +104,14 @@ impl HttpClient {
 
         //println!("raw_response: {:?}", raw_response);
 
-        HttpResponse::new(raw_response.to_string())
+        //TODO: remove FAKE_RESPONSE_BODY
+        match HttpResponse::new(raw_response.to_string()) {
+            Ok(mut res) => {
+                res.body = FAKE_RESPONSE_BODY.to_string();
+                Ok(res)
+            }
+            Err(e) => Err(e),
+        }
     }
 
     pub fn post(&self) {}
