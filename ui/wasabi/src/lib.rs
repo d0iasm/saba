@@ -9,10 +9,12 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use embedded_graphics::{
-    image::{Image, ImageRaw, ImageRawBE},
+    image::{Image, ImageRaw, ImageRawBE, ImageRawLE},
     pixelcolor::Rgb565,
+    pixelcolor::Rgb888,
     prelude::*,
 };
+use noli::prelude::*;
 use noli::{print, window::StringSize, window::Window};
 use saba_core::{
     browser::Browser,
@@ -242,7 +244,7 @@ impl WasabiUI {
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
         loop {
-            if let Some(c) = noli::sys::read_key() {
+            if let Some(c) = Api::read_key() {
                 if c == 0xA as char || c == '\n' {
                     // enter key
                     self.clear_content_area()?;
@@ -391,7 +393,7 @@ impl WasabiUI {
                         }
                     };
 
-                    //let data = include_bytes!("/Users/asami/Projects/saba/test.png");
+                    //let data = include_bytes!("/Users/asami/Projects/saba/test.rgb");
                     let data: &[u8] = &[
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
@@ -408,9 +410,9 @@ impl WasabiUI {
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
                         0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
                     ];
-                    let img: ImageRawBE<Rgb565> = ImageRaw::new(data, 10);
-                    let image = Image::new(&img, Point::new(100, 100));
-                    //print!("image: {:#?}\n", image);
+                    let img: ImageRawBE<Rgb888> = ImageRaw::new(data, 300);
+                    let image = Image::new(&img, Point::new(50, 50));
+                    print!("image: {:#?}\n", image);
 
                     if image.draw(&mut self.window).is_err() {
                         return Err(Error::Other("failed to draw an image".to_string()));
