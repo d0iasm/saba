@@ -14,8 +14,11 @@ use embedded_graphics::{
     pixelcolor::Rgb888,
     prelude::*,
 };
-use noli::prelude::*;
-use noli::{print, window::StringSize, window::Window};
+use noli::prelude::SystemApi;
+use noli::print;
+use noli::sys::wasabi::Api;
+use noli::window::StringSize;
+use noli::window::Window;
 use saba_core::{
     browser::Browser,
     display_item::DisplayItem,

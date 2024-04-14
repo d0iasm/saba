@@ -13,7 +13,7 @@ use alloc::string::ToString;
 use noli::net::lookup_host;
 use noli::net::SocketAddr;
 use noli::net::TcpStream;
-//use noli::println;
+//use noli::print::hexdump;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
 
