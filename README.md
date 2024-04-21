@@ -6,7 +6,7 @@ Sample Browser App (SaBA) on single process / thread.
 
 For CUI browser on your host computer,
 ```
-$ cargo run --features=cui --bin=saba_cui
+$ cargo run --features=cui --bin=saba_cui --no-default-features
 ```
 
 For GUI browser on your host computer,

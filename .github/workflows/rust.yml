@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build CUI
       run: |
-        cargo build --features=cui --bin=saba_cui
+        cargo build --features=cui --bin=saba_cui --no-default-features
     - name: Run tests
       run: |
         cd core

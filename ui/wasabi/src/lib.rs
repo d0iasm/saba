@@ -2,18 +2,15 @@
 
 extern crate alloc;
 
+use alloc::format;
 use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
-use embedded_graphics::{
-    image::{Image, ImageRaw, ImageRawBE, ImageRawLE},
-    pixelcolor::Rgb565,
-    pixelcolor::Rgb888,
-    prelude::*,
-};
+use core::include_bytes;
+use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
 use noli::prelude::SystemApi;
 use noli::print;
 use noli::sys::wasabi::Api;
@@ -26,6 +23,7 @@ use saba_core::{
     http::HttpResponse,
     renderer::layout::computed_style::{FontSize, TextDecoration},
 };
+use tinybmp::{Bmp, RawBmp};
 
 static WHITE: u32 = 0xffffff;
 static _RED: u32 = 0xff0000;
@@ -396,30 +394,33 @@ impl WasabiUI {
                         }
                     };
 
-                    //let data = include_bytes!("/Users/asami/Projects/saba/test.rgb");
-                    let data: &[u8] = &[
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                        0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0, 0b0,
-                    ];
-                    let img: ImageRawBE<Rgb888> = ImageRaw::new(data, 300);
-                    let image = Image::new(&img, Point::new(50, 50));
-                    print!("image: {:#?}\n", image);
+                    let data = include_bytes!("/Users/asami/Projects/saba/test.bmp");
+                    let bmp = match Bmp::<Rgb888>::from_slice(data) {
+                        Ok(bmp) => bmp,
+                        Err(e) => {
+                            return Err(Error::Other(format!("failed to draw an image: {:?}", e)))
+                        }
+                    };
+                    let bmp_header = match RawBmp::from_slice(data) {
+                        Ok(bmp) => bmp.header().clone(),
+                        Err(e) => {
+                            return Err(Error::Other(format!("failed to draw an image: {:?}", e)))
+                        }
+                    };
+
+                    //let img: ImageRawBE<Rgb888> = ImageRaw::new(data, 200);
+                    //let image = Image::new(&img, Point::zero());
+                    let image = Image::new(
+                        &bmp,
+                        Point::new(self.position.0 as i32, self.position.1 as i32),
+                    );
+                    //print!("image: {:#?}\n", image);
 
                     if image.draw(&mut self.window).is_err() {
                         return Err(Error::Other("failed to draw an image".to_string()));
                     }
+
+                    self.position.1 += bmp_header.image_size.height as i64;
                 }
             }
         }
