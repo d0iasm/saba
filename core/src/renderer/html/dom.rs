@@ -2,6 +2,7 @@
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
 use crate::browser::Browser;
+use crate::renderer::dom::event::Event;
 use crate::renderer::dom::event::EventListener;
 use crate::renderer::dom::event::EventListenerCallback;
 use crate::renderer::dom::event::EventTarget;
@@ -27,6 +28,8 @@ pub struct Node {
     next_sibling: Option<Rc<RefCell<Node>>>,
     /// https://dom.spec.whatwg.org/#eventtarget-event-listener-list
     events: Vec<EventListener>,
+    /// https://dom.spec.whatwg.org/#eventtarget-activation-behavior
+    activation_behavior: Option<EventListenerCallback>,
 }
 
 ///dom.spec.whatwg.org/#interface-node
@@ -40,6 +43,7 @@ impl Node {
             previous_sibling: None,
             next_sibling: None,
             events: Vec::new(),
+            activation_behavior: None,
         }
     }
 
@@ -79,6 +83,10 @@ impl Node {
 
 /// https://dom.spec.whatwg.org/#interface-eventtarget
 impl EventTarget for Node {
+    fn target_kind(&self) -> NodeKind {
+        self.kind()
+    }
+
     /// https://dom.spec.whatwg.org/#dom-eventtarget-addeventlistener
     fn add_event_listener(&mut self, event_type: String, callback: EventListenerCallback) {
         for e in &self.events {
@@ -100,6 +108,39 @@ impl EventTarget for Node {
         {
             self.events.remove(index);
         }
+    }
+
+    /// https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent
+    fn dispatch_event(&mut self, event: Event) -> bool {
+        // https://dom.spec.whatwg.org/#concept-event-dispatch
+        let mut activation_target: Option<Self> = None;
+        match &event {
+            // "5.4. Let isActivationEvent be true, if event is a MouseEvent object and event’s
+            // type attribute is "click"; otherwise false."
+            Event::MouseEvent(mouse_event) => {
+                // "5. If target is not relatedTarget or target is event’s relatedTarget, then:"
+                //
+                // "5.5. If isActivationEvent is true and target has activation behavior, then set
+                // activationTarget to target."
+                if self.target_kind() == mouse_event.target.target_kind()
+                    && mouse_event.event_type() == "click"
+                {
+                    activation_target = Some(self.clone());
+                }
+            }
+        }
+
+        // "11. If activationTarget is non-null, then:"
+        if let Some(target) = activation_target {
+            if let Some(activation_behavior) = target.activation_behavior {
+                // "11.1. If event’s canceled flag is unset, then run activationTarget’s activation behavior
+                // with event."
+                // "11.2. Otherwise, if activationTarget has legacy-canceled-activation behavior, then run
+                // activationTarget’s legacy-canceled-activation behavior."
+                activation_behavior(event);
+            }
+        }
+        true
     }
 }
 
