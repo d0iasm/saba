@@ -1,5 +1,4 @@
 use crate::display_item::DisplayItem;
-use crate::event::Event;
 use crate::log::{Log, LogLevel};
 use crate::renderer::page::Page;
 use alloc::rc::Rc;
@@ -24,7 +23,6 @@ impl Subresource {
 pub struct Browser {
     // TODO: support multiple tabs/pages. This browser currently supports only one page.
     page: Rc<RefCell<Page>>,
-    events: Vec<Event>,
     display_items: Vec<DisplayItem>,
     logs: Vec<Log>,
     subresources: Vec<Subresource>,
@@ -36,7 +34,6 @@ impl Browser {
 
         let browser = Rc::new(RefCell::new(Self {
             page: page.clone(),
-            events: Vec::new(),
             display_items: Vec::new(),
             logs: Vec::new(),
             subresources: Vec::new(),
@@ -45,10 +42,6 @@ impl Browser {
         page.borrow_mut().set_browser(Rc::downgrade(&browser));
 
         browser
-    }
-
-    pub fn push_event(&mut self, event: Event) {
-        self.events.push(event);
     }
 
     pub fn push_display_item(&mut self, item: DisplayItem) {

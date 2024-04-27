@@ -1,5 +1,6 @@
 //! This is a part of "UI Events" in the W3C specification.
-//! https://www.w3.org/TR/uievents/
+//! DOM Living Standard: https://dom.spec.whatwg.org/#events
+//! UI Events W3C Working Draft: https://www.w3.org/TR/uievents/
 
 use alloc::string::String;
 

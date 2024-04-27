@@ -13,6 +13,8 @@ use core::include_bytes;
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
 use noli::prelude::SystemApi;
 use noli::print;
+use noli::println;
+use noli::sys::api::MouseEvent;
 use noli::sys::wasabi::Api;
 use noli::window::StringSize;
 use noli::window::Window;
@@ -264,6 +266,12 @@ impl WasabiUI {
                     self.update_address_bar()?;
                 }
             }
+
+            if let Some(MouseEvent { button, position }) = Api::get_mouse_cursor_info() {
+                if button.l() || button.c() || button.r() {
+                    println!("button clicked: {button:?} {position:?}");
+                }
+            }
         }
     }
 
@@ -394,7 +402,7 @@ impl WasabiUI {
                         }
                     };
 
-                    let data = include_bytes!("/Users/asami/Projects/saba/test.bmp");
+                    let data = include_bytes!("./test.bmp");
                     let bmp = match Bmp::<Rgb888>::from_slice(data) {
                         Ok(bmp) => bmp,
                         Err(e) => {
