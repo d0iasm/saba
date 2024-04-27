@@ -13,11 +13,7 @@ use saba_core::browser::Browser;
 use saba_core::http::HttpResponse;
 use saba_core::renderer::layout::computed_style::FontSize;
 use saba_core::utils::*;
-use saba_core::{
-    display_item::DisplayItem,
-    error::Error,
-    event::{Event as BrowserEvent, KeyboardEvent},
-};
+use saba_core::{display_item::DisplayItem, error::Error};
 use std::io;
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -249,6 +245,7 @@ impl Tui {
         Ok(())
     }
 
+    /*
     fn push_key_event(&mut self, key_code: KeyCode) {
         let browser = match self.browser().upgrade() {
             Some(browser) => browser,
@@ -264,14 +261,8 @@ impl Tui {
                 return;
             }
         };
-
-        browser
-            .borrow_mut()
-            .push_event(BrowserEvent::Keyboard(KeyboardEvent::new(
-                "keydown".to_string(),
-                key,
-            )));
     }
+    */
 
     fn run_app<B: Backend>(
         &mut self,
@@ -291,7 +282,7 @@ impl Tui {
 
             match event {
                 Event::Key(key) => {
-                    self.push_key_event(key.code);
+                    //self.push_key_event(key.code);
 
                     match self.input_mode {
                         InputMode::Normal => match key.code {
