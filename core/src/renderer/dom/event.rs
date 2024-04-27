@@ -6,12 +6,36 @@ use alloc::boxed::Box;
 use alloc::string::String;
 
 /// https://dom.spec.whatwg.org/#callbackdef-eventlistener
-type EventListener = fn(e: Event);
+pub type EventListenerCallback = fn(e: Event);
+
+/// https://dom.spec.whatwg.org/#concept-event-listener
+#[derive(Debug, Clone)]
+pub struct EventListener {
+    event_type: String,
+    callback: EventListenerCallback,
+    capture: bool,
+}
+
+impl EventListener {
+    pub fn new(event_type: String, callback: EventListenerCallback, capture: bool) -> Self {
+        Self {
+            event_type,
+            callback,
+            capture,
+        }
+    }
+
+    pub fn event_type(&self) -> String {
+        self.event_type.clone()
+    }
+}
 
 /// https://dom.spec.whatwg.org/#interface-eventtarget
 pub trait EventTarget {
-    fn add_event_listener(&self, event_type: String, callback: EventListener);
-    fn remove_event_listener(&self, event_type: String, callback: EventListener);
+    /// https://dom.spec.whatwg.org/#dom-eventtarget-addeventlistener
+    fn add_event_listener(&mut self, event_type: String, callback: EventListenerCallback);
+    /// https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener
+    fn remove_event_listener(&mut self, event_type: String, callback: EventListenerCallback);
 }
 
 /// https://dom.spec.whatwg.org/#interface-event

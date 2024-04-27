@@ -2,6 +2,9 @@
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
 use crate::browser::Browser;
+use crate::renderer::dom::event::EventListener;
+use crate::renderer::dom::event::EventListenerCallback;
+use crate::renderer::dom::event::EventTarget;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
 use crate::utils::*;
@@ -22,6 +25,8 @@ pub struct Node {
     last_child: Option<Weak<RefCell<Node>>>,
     previous_sibling: Option<Weak<RefCell<Node>>>,
     next_sibling: Option<Rc<RefCell<Node>>>,
+    /// https://dom.spec.whatwg.org/#eventtarget-event-listener-list
+    events: Vec<EventListener>,
 }
 
 ///dom.spec.whatwg.org/#interface-node
@@ -34,6 +39,7 @@ impl Node {
             last_child: None,
             previous_sibling: None,
             next_sibling: None,
+            events: Vec::new(),
         }
     }
 
@@ -68,6 +74,32 @@ impl Node {
 
     pub fn next_sibling(&self) -> Option<Rc<RefCell<Node>>> {
         self.next_sibling.as_ref().cloned()
+    }
+}
+
+/// https://dom.spec.whatwg.org/#interface-eventtarget
+impl EventTarget for Node {
+    /// https://dom.spec.whatwg.org/#dom-eventtarget-addeventlistener
+    fn add_event_listener(&mut self, event_type: String, callback: EventListenerCallback) {
+        for e in &self.events {
+            if e.event_type() == event_type {
+                // Do not add a new EventListener if the same event type already exists.
+                return;
+            }
+        }
+        self.events
+            .push(EventListener::new(event_type, callback, false));
+    }
+
+    /// https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener
+    fn remove_event_listener(&mut self, event_type: String, _callback: EventListenerCallback) {
+        if let Some(index) = self
+            .events
+            .iter()
+            .position(|e| e.event_type() == event_type)
+        {
+            self.events.remove(index);
+        }
     }
 }
 
@@ -403,6 +435,7 @@ impl HtmlParser {
         false
     }
 
+    /// https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
     pub fn construct_tree(&mut self) -> Rc<RefCell<Node>> {
         let mut token = self.t.next();
 
