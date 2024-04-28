@@ -2,6 +2,8 @@
 //! https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
 
 use crate::browser::Browser;
+use crate::renderer::dom::activation_behavior::get_activation_behavior;
+use crate::renderer::dom::activation_behavior::ActivationBehavior;
 use crate::renderer::dom::event::Event;
 use crate::renderer::dom::event::EventListener;
 use crate::renderer::dom::event::EventListenerCallback;
@@ -29,12 +31,17 @@ pub struct Node {
     /// https://dom.spec.whatwg.org/#eventtarget-event-listener-list
     events: Vec<EventListener>,
     /// https://dom.spec.whatwg.org/#eventtarget-activation-behavior
-    activation_behavior: Option<EventListenerCallback>,
+    activation_behavior: Option<ActivationBehavior>,
 }
 
 ///dom.spec.whatwg.org/#interface-node
 impl Node {
     pub fn new(kind: NodeKind) -> Self {
+        let activation_behavior = match kind {
+            NodeKind::Element(ref e) => get_activation_behavior(e),
+            _ => None,
+        };
+
         Self {
             kind,
             parent: None,
@@ -43,12 +50,19 @@ impl Node {
             previous_sibling: None,
             next_sibling: None,
             events: Vec::new(),
-            activation_behavior: None,
+            activation_behavior,
         }
     }
 
     pub fn kind(&self) -> NodeKind {
         self.kind.clone()
+    }
+
+    pub fn get_element(&self) -> Option<Element> {
+        match self.kind {
+            NodeKind::Document | NodeKind::Text(_) => None,
+            NodeKind::Element(ref e) => Some(e.clone()),
+        }
     }
 
     pub fn element_kind(&self) -> Option<ElementKind> {
@@ -132,12 +146,14 @@ impl EventTarget for Node {
 
         // "11. If activationTarget is non-null, then:"
         if let Some(target) = activation_target {
-            if let Some(activation_behavior) = target.activation_behavior {
+            if let (Some(activation_behavior), Some(element)) =
+                (target.activation_behavior, target.get_element())
+            {
                 // "11.1. If event’s canceled flag is unset, then run activationTarget’s activation behavior
                 // with event."
                 // "11.2. Otherwise, if activationTarget has legacy-canceled-activation behavior, then run
                 // activationTarget’s legacy-canceled-activation behavior."
-                activation_behavior(event);
+                activation_behavior(element, event);
             }
         }
         true
@@ -189,6 +205,16 @@ impl Element {
 
     pub fn attributes(&self) -> Vec<Attribute> {
         self.attributes.clone()
+    }
+
+    /// Returns a value for an attribute `name`.
+    pub fn get_attribute(&self, name: &str) -> Option<String> {
+        for attr in &self.attributes {
+            if &attr.name() == name {
+                return Some(attr.value());
+            }
+        }
+        None
     }
 
     /// return true if this element is a block element
