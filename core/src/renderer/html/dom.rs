@@ -22,14 +22,14 @@ use core::str::FromStr;
 #[derive(Debug, Clone)]
 /// https://html.spec.whatwg.org/multipage/nav-history-apis.html#window
 pub struct Window {
-    browser: Weak<RefCell<Browser>>,
+    _browser: Weak<RefCell<Browser>>,
     document: Rc<RefCell<Node>>,
 }
 
 impl Window {
     pub fn new(browser: Weak<RefCell<Browser>>) -> Self {
         Self {
-            browser,
+            _browser: browser,
             document: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
         }
     }
@@ -57,20 +57,15 @@ pub struct Node {
 ///dom.spec.whatwg.org/#interface-node
 impl Node {
     pub fn new(kind: NodeKind) -> Self {
-        let activation_behavior = match kind {
-            NodeKind::Element(ref e) => get_activation_behavior(e),
-            _ => None,
-        };
-
         Self {
-            kind,
+            kind: kind.clone(),
             parent: None,
             first_child: None,
             last_child: None,
             previous_sibling: None,
             next_sibling: None,
             events: Vec::new(),
-            activation_behavior,
+            activation_behavior: get_activation_behavior(&kind),
         }
     }
 
@@ -166,14 +161,12 @@ impl EventTarget for Node {
 
         // "11. If activationTarget is non-null, then:"
         if let Some(target) = activation_target {
-            if let (Some(activation_behavior), Some(element)) =
-                (target.activation_behavior, target.get_element())
-            {
+            if let Some(activation_behavior) = target.activation_behavior {
                 // "11.1. If event’s canceled flag is unset, then run activationTarget’s activation behavior
                 // with event."
                 // "11.2. Otherwise, if activationTarget has legacy-canceled-activation behavior, then run
                 // activationTarget’s legacy-canceled-activation behavior."
-                activation_behavior(element, event);
+                activation_behavior(Rc::new(RefCell::new(self.clone())), event);
             }
         }
         true
