@@ -3,7 +3,7 @@
 extern crate alloc;
 
 use alloc::format;
-use alloc::rc::Weak;
+use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec;
@@ -57,7 +57,7 @@ static _CHAR_HEIGHT: i64 = 16;
 
 #[derive(Clone, Debug)]
 pub struct WasabiUI {
-    browser: Weak<RefCell<Browser>>,
+    browser: Rc<RefCell<Browser>>,
     input_url: String,
     window: Window,
     // The (x, y) position to render a next display item.
@@ -65,9 +65,9 @@ pub struct WasabiUI {
 }
 
 impl WasabiUI {
-    pub fn new() -> Self {
+    pub fn new(browser: Rc<RefCell<Browser>>) -> Self {
         Self {
-            browser: Weak::new(),
+            browser,
             input_url: String::new(),
             window: Window::new(
                 "SaBA".to_string(),
@@ -94,11 +94,7 @@ impl WasabiUI {
         Ok(())
     }
 
-    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser>>) {
-        self.browser = browser;
-    }
-
-    pub fn browser(&self) -> Weak<RefCell<Browser>> {
+    pub fn browser(&self) -> Rc<RefCell<Browser>> {
         self.browser.clone()
     }
 
@@ -282,23 +278,14 @@ impl WasabiUI {
     ) -> Result<(), Error> {
         match handle_url(destination) {
             Ok(response) => {
-                let page = match self.browser().upgrade() {
-                    Some(browser) => {
-                        // clean up Browser struct
-                        {
-                            browser.borrow_mut().clear_display_items();
-                        }
-                        {
-                            browser.borrow_mut().clear_logs();
-                        }
+                // clean up Browser struct
+                {
+                    let mut b = self.browser.borrow_mut();
+                    b.clear_display_items();
+                    b.clear_logs();
+                }
 
-                        browser.borrow().page()
-                    }
-                    None => {
-                        return Err(Error::Other("associated browser is not found".to_string()))
-                    }
-                };
-
+                let page = self.browser.borrow().page();
                 page.borrow_mut().receive_response(response);
             }
             Err(e) => {
@@ -309,15 +296,7 @@ impl WasabiUI {
     }
 
     fn update_ui(&mut self) -> Result<(), Error> {
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => {
-                return Err(Error::Other(
-                    "failed to obtain a browser object".to_string(),
-                ))
-            }
-        };
-        let display_items = browser.borrow().display_items();
+        let display_items = self.browser.borrow().display_items();
 
         for item in display_items {
             match item {
@@ -391,16 +370,7 @@ impl WasabiUI {
                 } => {
                     print!("DisplayItem::Img src: {}\n", src);
 
-                    match self.browser().upgrade() {
-                        Some(browser) => {
-                            browser.borrow_mut().push_url_for_subresource(src);
-                        }
-                        None => {
-                            return Err(Error::Other(
-                                "failed to obtain a browser object".to_string(),
-                            ))
-                        }
-                    };
+                    self.browser.borrow_mut().push_url_for_subresource(src);
 
                     let data = include_bytes!("./test.bmp");
                     let bmp = match Bmp::<Rgb888>::from_slice(data) {
@@ -433,7 +403,7 @@ impl WasabiUI {
             }
         }
 
-        for log in browser.borrow().logs() {
+        for log in self.browser.borrow().logs() {
             print!("{}\n", log.to_string());
         }
 

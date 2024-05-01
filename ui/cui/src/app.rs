@@ -1,4 +1,4 @@
-use alloc::rc::Weak;
+use alloc::rc::Rc;
 use alloc::string::ToString;
 use core::cell::RefCell;
 use crossterm::{
@@ -45,23 +45,20 @@ impl Link {
 
 #[derive(Clone, Debug)]
 pub struct Tui {
-    browser: Weak<RefCell<Browser>>,
+    browser: Rc<RefCell<Browser>>,
     input_url: String,
     input_mode: InputMode,
     // A user can focus only a link now.
     focus: Option<Link>,
-    // The position that starts rendering a next display item.
-    //position: (f64, f64),
 }
 
 impl Tui {
-    pub fn new() -> Self {
+    pub fn new(browser: Rc<RefCell<Browser>>) -> Self {
         Self {
-            browser: Weak::new(),
+            browser,
             input_url: String::new(),
             input_mode: InputMode::Normal,
             focus: None,
-            //position: (0.0, 0.0),
         }
     }
 
@@ -92,7 +89,7 @@ impl Tui {
         match size() {
             Ok((cols, rows)) => {
                 console_debug(
-                    self.browser.clone(),
+                    Rc::downgrade(&self.browser),
                     format!("cols rows {:?} {:?}", cols, rows),
                 );
             }
@@ -126,20 +123,12 @@ impl Tui {
         }
     }
 
-    pub fn set_browser(&mut self, browser: Weak<RefCell<Browser>>) {
-        self.browser = browser;
-    }
-
-    pub fn browser(&self) -> Weak<RefCell<Browser>> {
+    pub fn browser(&self) -> Rc<RefCell<Browser>> {
         self.browser.clone()
     }
 
     fn move_focus_to_up(&mut self) {
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-        let display_items = browser.borrow().display_items();
+        let display_items = self.browser.borrow().display_items();
 
         let mut previous_link_item: Option<Link> = None;
         for item in display_items {
@@ -174,11 +163,7 @@ impl Tui {
     }
 
     fn move_focus_to_down(&mut self) {
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-        let display_items = browser.borrow().display_items();
+        let display_items = self.browser.borrow().display_items();
 
         let mut focus_item_found = false;
         for item in display_items {
@@ -218,27 +203,18 @@ impl Tui {
     ) -> Result<(), Error> {
         match handle_url(destination) {
             Ok(response) => {
-                let page = match self.browser().upgrade() {
-                    Some(browser) => {
-                        // clean up Browser struct
-                        {
-                            browser.borrow_mut().clear_display_items();
-                        }
-                        {
-                            browser.borrow_mut().clear_logs();
-                        }
+                // clean up Browser struct
+                {
+                    let mut b = self.browser.borrow_mut();
+                    b.clear_display_items();
+                    b.clear_logs();
+                }
 
-                        browser.borrow().page()
-                    }
-                    None => {
-                        return Err(Error::Other("associated browser is not found".to_string()))
-                    }
-                };
-
+                let page = self.browser.borrow().page();
                 page.borrow_mut().receive_response(response);
             }
             Err(e) => {
-                console_error(self.browser.clone(), format!("{:?}", e));
+                console_error(Rc::downgrade(&self.browser), format!("{:?}", e));
                 return Err(e);
             }
         }
@@ -247,11 +223,6 @@ impl Tui {
 
     /*
     fn push_key_event(&mut self, key_code: KeyCode) {
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-
         // https://docs.rs/crossterm/latest/crossterm/event/enum.KeyCode.html
         let key = match key_code {
             KeyCode::Char(c) => c.to_string(),
@@ -423,11 +394,7 @@ impl Tui {
             }
         }
 
-        let browser = match self.browser().upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-        let display_items = browser.borrow().display_items();
+        let display_items = self.browser.borrow().display_items();
 
         /*
         let content_area = Layout::default()
@@ -510,7 +477,8 @@ impl Tui {
             .wrap(Wrap { trim: true });
         frame.render_widget(contents, chunks[2]);
 
-        let logs: Vec<ListItem> = browser
+        let logs: Vec<ListItem> = self
+            .browser
             .borrow()
             .logs()
             .iter()

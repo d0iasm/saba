@@ -82,12 +82,11 @@ fn handle_url(url: String) -> Result<HttpResponse, Error> {
 }
 
 fn main() -> u64 {
-    // initialize the UI object
-    let ui = Rc::new(RefCell::new(WasabiUI::new()));
-
     // initialize the main browesr struct
     let browser = Browser::new();
-    ui.borrow_mut().set_browser(Rc::downgrade(&browser));
+
+    // initialize the UI object
+    let ui = Rc::new(RefCell::new(WasabiUI::new(browser)));
 
     match ui.borrow_mut().start(handle_url) {
         Ok(_) => {}
