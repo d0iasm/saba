@@ -5,6 +5,7 @@
 
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
+use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::CssToken;
 use crate::renderer::html::dom::*;
@@ -12,8 +13,6 @@ use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
-use crate::utils::*;
-use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -120,8 +119,8 @@ impl LayoutObject {
                     if let ComponentValue::Keyword(value) = &declaration.value {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
-                            Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(_e) => {
+                                //console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::white()
                             }
                         };
@@ -134,8 +133,8 @@ impl LayoutObject {
                     {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
-                            Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(_e) => {
+                                //console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::white()
                             }
                         };
@@ -147,8 +146,8 @@ impl LayoutObject {
                     if let ComponentValue::Keyword(value) = &declaration.value {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
-                            Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(_e) => {
+                                //console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::black()
                             }
                         };
@@ -160,8 +159,8 @@ impl LayoutObject {
                     {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
-                            Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(_e) => {
+                                //console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::black()
                             }
                         };
@@ -216,10 +215,14 @@ impl LayoutObject {
                     }
                 }
                 // TODO: support padding
-                _ => console_warning(
+                _ => {
+                    /*
+                    console_warning(
                     self.browser.clone(),
                     format!("css property {} is not supported yet", declaration.property),
-                ),
+                    );
+                    */
+                }
             }
         }
     }
@@ -312,15 +315,19 @@ impl LayoutObject {
     }
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2377
-    pub fn paint(&mut self) {
+    pub fn paint(&mut self) -> Option<DisplayItem> {
         if self.style.display() == DisplayType::DisplayNone {
-            return;
+            return None;
         }
 
         match self.kind() {
             LayoutObjectKind::Block => {
                 if let NodeKind::Element(_e) = self.node_kind() {
-                    add_rect_display_item(self)
+                    return Some(DisplayItem::Rect {
+                        style: self.style(),
+                        layout_point: self.point(),
+                        layout_size: self.size(),
+                    });
                 }
             }
             LayoutObjectKind::Inline => {
@@ -332,7 +339,7 @@ impl LayoutObject {
                         if let Some(text_node) = text_node {
                             match text_node.borrow().node_kind() {
                                 NodeKind::Text(text) => link_text = text,
-                                _ => return,
+                                _ => return None,
                             }
                         }
 
@@ -343,16 +350,23 @@ impl LayoutObject {
                             }
                         }
 
-                        add_link_display_item(self, href, link_text);
-
                         // remove the first child from the tree to avoid operating it twice
                         self.first_child = None;
-                        return;
+                        return Some(DisplayItem::Link {
+                            text: link_text,
+                            destination: href,
+                            style: self.style(),
+                            layout_point: self.point(),
+                        });
                     }
                     if e.kind() == ElementKind::IMG {
                         for attr in &e.attributes() {
                             if attr.name() == "src" {
-                                add_img_display_item(self, attr.value());
+                                return Some(DisplayItem::Img {
+                                    src: attr.value(),
+                                    style: self.style(),
+                                    layout_point: self.point(),
+                                });
                             }
                         }
                     }
@@ -360,9 +374,15 @@ impl LayoutObject {
             }
             LayoutObjectKind::Text => {
                 if let NodeKind::Text(t) = self.node_kind() {
-                    add_text_display_item(self, t)
+                    return Some(DisplayItem::Text {
+                        text: t,
+                        style: self.style(),
+                        layout_point: self.point(),
+                    });
                 }
             }
         }
+
+        None
     }
 }

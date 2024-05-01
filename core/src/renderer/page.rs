@@ -5,7 +5,10 @@
 
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
+use crate::display_item::DisplayItem;
 use crate::http::HttpResponse;
+use crate::log::Log;
+use crate::log::LogLevel;
 use crate::renderer::css::cssom::CssParser;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::token::CssTokenizer;
@@ -48,6 +51,8 @@ pub struct Page {
     style: Option<StyleSheet>,
     layout_view: Option<LayoutView>,
     subresources: Vec<Subresource>,
+    display_items: Vec<DisplayItem>,
+    logs: Vec<Log>,
     modified: bool,
 }
 
@@ -66,18 +71,14 @@ impl Page {
             style: None,
             layout_view: None,
             subresources: Vec::new(),
+            display_items: Vec::new(),
+            logs: Vec::new(),
             modified: false,
         }
     }
 
     pub fn receive_response(&mut self, response: HttpResponse) {
-        let browser = match self.browser.upgrade() {
-            Some(browser) => browser,
-            None => return,
-        };
-        browser
-            .borrow_mut()
-            .console_debug("receive_response start".to_string());
+        self.console_debug("receive_response start".to_string());
 
         self.set_window(response.body());
         self.set_style();
@@ -198,10 +199,38 @@ impl Page {
         String::new()
     }
 
+    pub fn display_items(&self) -> Vec<DisplayItem> {
+        self.display_items.clone()
+    }
+
+    pub fn clear_display_items(&mut self) {
+        self.display_items = Vec::new();
+    }
+
+    pub fn logs(&self) -> Vec<Log> {
+        self.logs.clone()
+    }
+
+    pub fn clear_logs(&mut self) {
+        self.logs = Vec::new();
+    }
+
+    pub fn console_debug(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Debug, log));
+    }
+
+    pub fn console_warning(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Warning, log));
+    }
+
+    pub fn console_error(&mut self, log: String) {
+        self.logs.push(Log::new(LogLevel::Error, log));
+    }
+
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=907
-    fn paint_tree(&self) {
+    fn paint_tree(&mut self) {
         if let Some(layout_view) = &self.layout_view {
-            layout_view.paint();
+            self.display_items = layout_view.paint();
         }
     }
 }

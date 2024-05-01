@@ -8,8 +8,6 @@
 
 use crate::browser::Browser;
 use crate::renderer::css::token::*;
-use crate::utils::*;
-use alloc::format;
 use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::string::ToString;
@@ -182,14 +180,14 @@ pub enum ComponentValue {
 
 #[derive(Debug, Clone)]
 pub struct CssParser {
-    browser: Weak<RefCell<Browser>>,
+    _browser: Weak<RefCell<Browser>>,
     t: Peekable<CssTokenizer>,
 }
 
 impl CssParser {
     pub fn new(browser: Weak<RefCell<Browser>>, t: CssTokenizer) -> Self {
         Self {
-            browser,
+            _browser: browser,
             t: t.peekable(),
         }
     }
@@ -257,10 +255,12 @@ impl CssParser {
                 Selector::UnknownSelector
             }
             _ => {
+                /*
                 console_warning(
                     self.browser.clone(),
                     format!("unexpected token {:?}", token),
                 );
+                */
                 self.t.next();
                 Selector::UnknownSelector
             }
@@ -335,10 +335,12 @@ impl CssParser {
                     }
                 }
                 _ => {
+                    /*
                     console_warning(
                         self.browser.clone(),
                         format!("unexpected token {:?}", token),
                     );
+                    */
                     self.t.next();
                 }
             }
@@ -364,10 +366,12 @@ impl CssParser {
                     return Some(rule);
                 }
                 _ => {
+                    /*
                     console_warning(
                         self.browser.clone(),
                         format!("consume_at_rule anything else: {:?}", token),
                     );
+                    */
                     // TODO: set prelude to AtRule
                 }
             }

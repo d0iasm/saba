@@ -3,6 +3,7 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h
 
 use crate::browser::Browser;
+use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::*;
 use crate::renderer::dom::api::get_target_element_node;
 use crate::renderer::html::dom::{ElementKind, Node, NodeKind};
@@ -10,6 +11,7 @@ use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use alloc::rc::{Rc, Weak};
+use alloc::vec::Vec;
 use core::cell::RefCell;
 
 fn create_layout_object(
@@ -197,23 +199,33 @@ impl LayoutView {
         self.root.clone()
     }
 
-    fn paint_node(&self, node: &Option<Rc<RefCell<LayoutObject>>>) {
+    fn paint_node(
+        &self,
+        node: &Option<Rc<RefCell<LayoutObject>>>,
+        display_items: &mut Vec<DisplayItem>,
+    ) {
         match node {
             Some(n) => {
-                n.borrow_mut().paint();
+                if let Some(item) = n.borrow_mut().paint() {
+                    display_items.push(item);
+                }
 
                 let first_child = n.borrow().first_child();
-                self.paint_node(&first_child);
+                self.paint_node(&first_child, display_items);
 
                 let next_sibling = n.borrow().next_sibling();
-                self.paint_node(&next_sibling);
+                self.paint_node(&next_sibling, display_items);
             }
             None => (),
         }
     }
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=155
-    pub fn paint(&self) {
-        self.paint_node(&self.root);
+    pub fn paint(&self) -> Vec<DisplayItem> {
+        let mut display_items = Vec::new();
+
+        self.paint_node(&self.root, &mut display_items);
+
+        display_items
     }
 }

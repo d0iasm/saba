@@ -128,7 +128,8 @@ impl Tui {
     }
 
     fn move_focus_to_up(&mut self) {
-        let display_items = self.browser.borrow().display_items();
+        let page = self.browser.borrow().current_page();
+        let display_items = page.borrow().display_items();
 
         let mut previous_link_item: Option<Link> = None;
         for item in display_items {
@@ -163,7 +164,8 @@ impl Tui {
     }
 
     fn move_focus_to_down(&mut self) {
-        let display_items = self.browser.borrow().display_items();
+        let page = self.browser.borrow().current_page();
+        let display_items = page.borrow().display_items();
 
         let mut focus_item_found = false;
         for item in display_items {
@@ -203,14 +205,10 @@ impl Tui {
     ) -> Result<(), Error> {
         match handle_url(destination) {
             Ok(response) => {
-                // clean up Browser struct
-                {
-                    let mut b = self.browser.borrow_mut();
-                    b.clear_display_items();
-                    b.clear_logs();
-                }
+                let page = self.browser.borrow().current_page();
+                page.borrow_mut().clear_display_items();
+                page.borrow_mut().clear_logs();
 
-                let page = self.browser.borrow().page();
                 page.borrow_mut().receive_response(response);
             }
             Err(e) => {
@@ -394,7 +392,8 @@ impl Tui {
             }
         }
 
-        let display_items = self.browser.borrow().display_items();
+        let page = self.browser.borrow().current_page();
+        let display_items = page.borrow().display_items();
 
         /*
         let content_area = Layout::default()
@@ -477,8 +476,8 @@ impl Tui {
             .wrap(Wrap { trim: true });
         frame.render_widget(contents, chunks[2]);
 
-        let logs: Vec<ListItem> = self
-            .browser
+        let page = self.browser.borrow().current_page();
+        let logs: Vec<ListItem> = page
             .borrow()
             .logs()
             .iter()

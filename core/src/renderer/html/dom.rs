@@ -11,7 +11,6 @@ use crate::renderer::dom::event::EventTarget;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
 use crate::renderer::page::Page;
-use crate::utils::*;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
@@ -24,7 +23,7 @@ use core::str::FromStr;
 /// https://html.spec.whatwg.org/multipage/nav-history-apis.html#window
 pub struct Window {
     _browser: Weak<RefCell<Browser>>,
-    page: Weak<RefCell<Page>>,
+    _page: Weak<RefCell<Page>>,
     document: Rc<RefCell<Node>>,
 }
 
@@ -32,7 +31,7 @@ impl Window {
     pub fn new(browser: Weak<RefCell<Browser>>) -> Self {
         let window = Self {
             _browser: browser,
-            page: Weak::new(),
+            _page: Weak::new(),
             document: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
         };
 
@@ -393,7 +392,7 @@ pub enum InsertionMode {
 
 #[derive(Debug, Clone)]
 pub struct HtmlParser {
-    browser: Weak<RefCell<Browser>>,
+    _browser: Weak<RefCell<Browser>>,
     window: Rc<RefCell<Window>>,
     mode: InsertionMode,
     t: HtmlTokenizer,
@@ -406,7 +405,7 @@ pub struct HtmlParser {
 impl HtmlParser {
     pub fn new(browser: Weak<RefCell<Browser>>, t: HtmlTokenizer) -> Self {
         Self {
-            browser: browser.clone(),
+            _browser: browser.clone(),
             window: Rc::new(RefCell::new(Window::new(browser))),
             mode: InsertionMode::Initial,
             t,
@@ -853,10 +852,12 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
+                                    /*
                                     console_warning(
                                         self.browser.clone(),
                                         format!("unknown tag {:?}", tag),
                                     );
+                                    */
                                     token = self.t.next();
                                 }
                             }
@@ -940,10 +941,12 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
+                                    /*
                                     console_warning(
                                         self.browser.clone(),
                                         format!("unknown tag {:?}", tag),
                                     );
+                                    */
                                     token = self.t.next();
                                 }
                             }
