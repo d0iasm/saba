@@ -27,7 +27,7 @@ use core::cell::RefCell;
 pub struct Page {
     browser: Weak<RefCell<Browser>>,
     url: Option<String>,
-    dom_root: Option<Rc<RefCell<Node>>>,
+    window: Option<Window>,
     style: Option<StyleSheet>,
     layout_view: Option<LayoutView>,
     modified: bool,
@@ -44,7 +44,7 @@ impl Page {
         Self {
             browser: Weak::new(),
             url: None,
-            dom_root: None,
+            window: None,
             style: None,
             layout_view: None,
             modified: false,
@@ -60,14 +60,14 @@ impl Page {
             .borrow_mut()
             .console_debug("receive_response start".to_string());
 
-        self.set_dom_root(response.body());
+        self.set_window(response.body());
         self.set_style();
 
         self.execute_js();
 
         while self.modified {
-            let dom = match self.dom_root.clone() {
-                Some(dom) => dom,
+            let dom = match &self.window {
+                Some(window) => window.document(),
                 None => {
                     self.set_layout_view();
                     return;
@@ -76,7 +76,7 @@ impl Page {
 
             let modified_html = dom_to_html(&Some(dom));
 
-            self.set_dom_root(modified_html);
+            self.set_window(modified_html);
             self.set_style();
 
             self.modified = false;
@@ -97,16 +97,16 @@ impl Page {
         self.browser = browser;
     }
 
-    fn set_dom_root(&mut self, html: String) {
+    fn set_window(&mut self, html: String) {
         let html_tokenizer = HtmlTokenizer::new(html);
 
-        let dom_root = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
-        self.dom_root = Some(dom_root);
+        let window = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
+        self.window = Some(window);
     }
 
     fn set_style(&mut self) {
-        let dom = match self.dom_root.clone() {
-            Some(dom) => dom,
+        let dom = match &self.window {
+            Some(window) => window.document(),
             None => return,
         };
 
@@ -117,8 +117,8 @@ impl Page {
     }
 
     fn set_layout_view(&mut self) {
-        let dom = match self.dom_root.clone() {
-            Some(dom) => dom,
+        let dom = match &self.window {
+            Some(window) => window.document(),
             None => return,
         };
 
@@ -132,8 +132,8 @@ impl Page {
     }
 
     fn execute_js(&mut self) {
-        let dom = match self.dom_root.clone() {
-            Some(dom) => dom,
+        let dom = match &self.window {
+            Some(window) => window.document(),
             None => return,
         };
 
@@ -155,7 +155,10 @@ impl Page {
     }
 
     pub fn dom_root(&self) -> Option<Rc<RefCell<Node>>> {
-        self.dom_root.clone()
+        match &self.window {
+            Some(window) => Some(window.document()),
+            None => None,
+        }
     }
 
     pub fn style(&self) -> Option<StyleSheet> {

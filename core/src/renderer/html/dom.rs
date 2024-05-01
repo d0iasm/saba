@@ -20,6 +20,26 @@ use core::fmt::{Display, Formatter};
 use core::str::FromStr;
 
 #[derive(Debug, Clone)]
+/// https://html.spec.whatwg.org/multipage/nav-history-apis.html#window
+pub struct Window {
+    browser: Weak<RefCell<Browser>>,
+    document: Rc<RefCell<Node>>,
+}
+
+impl Window {
+    pub fn new(browser: Weak<RefCell<Browser>>) -> Self {
+        Self {
+            browser,
+            document: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
+        }
+    }
+
+    pub fn document(&self) -> Rc<RefCell<Node>> {
+        self.document.clone()
+    }
+}
+
+#[derive(Debug, Clone)]
 /// https://dom.spec.whatwg.org/#interface-node
 pub struct Node {
     kind: NodeKind,
@@ -349,7 +369,7 @@ pub enum InsertionMode {
 #[derive(Debug, Clone)]
 pub struct HtmlParser {
     browser: Weak<RefCell<Browser>>,
-    root: Rc<RefCell<Node>>,
+    root: Window,
     mode: InsertionMode,
     t: HtmlTokenizer,
     /// https://html.spec.whatwg.org/multipage/parsing.html#the-stack-of-open-elements
@@ -361,8 +381,8 @@ pub struct HtmlParser {
 impl HtmlParser {
     pub fn new(browser: Weak<RefCell<Browser>>, t: HtmlTokenizer) -> Self {
         Self {
-            browser,
-            root: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
+            browser: browser.clone(),
+            root: Window::new(browser),
             mode: InsertionMode::Initial,
             t,
             stack_of_open_elements: Vec::new(),
@@ -388,7 +408,7 @@ impl HtmlParser {
     fn insert_element(&mut self, tag: &str, attributes: Vec<Attribute>) {
         let current = match self.stack_of_open_elements.last() {
             Some(n) => n,
-            None => &self.root,
+            None => &self.root.document,
         };
 
         let node = Rc::new(RefCell::new(self.create_element(tag, attributes)));
@@ -425,7 +445,7 @@ impl HtmlParser {
     fn insert_char(&mut self, c: char) {
         let current = match self.stack_of_open_elements.last() {
             Some(n) => n,
-            None => &self.root,
+            None => &self.root.document,
         };
 
         // When the current node is Text, add a character to the current node.
@@ -503,7 +523,7 @@ impl HtmlParser {
     }
 
     /// https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
-    pub fn construct_tree(&mut self) -> Rc<RefCell<Node>> {
+    pub fn construct_tree(&mut self) -> Window {
         let mut token = self.t.next();
 
         while token.is_some() {
