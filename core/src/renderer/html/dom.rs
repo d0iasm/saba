@@ -10,6 +10,7 @@ use crate::renderer::dom::event::EventListenerCallback;
 use crate::renderer::dom::event::EventTarget;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
+use crate::renderer::page::Page;
 use crate::utils::*;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
@@ -23,6 +24,7 @@ use core::str::FromStr;
 /// https://html.spec.whatwg.org/multipage/nav-history-apis.html#window
 pub struct Window {
     _browser: Weak<RefCell<Browser>>,
+    page: Weak<RefCell<Page>>,
     document: Rc<RefCell<Node>>,
 }
 
@@ -30,11 +32,11 @@ impl Window {
     pub fn new(browser: Weak<RefCell<Browser>>) -> Self {
         let window = Self {
             _browser: browser,
+            page: Weak::new(),
             document: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
         };
 
-        window.document.borrow_mut().window =
-            Some(Rc::downgrade(&Rc::new(RefCell::new(window.clone()))));
+        window.document.borrow_mut().window = Rc::downgrade(&Rc::new(RefCell::new(window.clone())));
 
         window
     }
@@ -48,11 +50,11 @@ impl Window {
 /// https://dom.spec.whatwg.org/#interface-node
 pub struct Node {
     kind: NodeKind,
-    window: Option<Weak<RefCell<Window>>>,
-    parent: Option<Weak<RefCell<Node>>>,
+    window: Weak<RefCell<Window>>,
+    parent: Weak<RefCell<Node>>,
     first_child: Option<Rc<RefCell<Node>>>,
-    last_child: Option<Weak<RefCell<Node>>>,
-    previous_sibling: Option<Weak<RefCell<Node>>>,
+    last_child: Weak<RefCell<Node>>,
+    previous_sibling: Weak<RefCell<Node>>,
     next_sibling: Option<Rc<RefCell<Node>>>,
     /// https://dom.spec.whatwg.org/#eventtarget-event-listener-list
     events: Vec<EventListener>,
@@ -65,11 +67,11 @@ impl Node {
     pub fn new(kind: NodeKind) -> Self {
         Self {
             kind: kind.clone(),
-            window: None,
-            parent: None,
+            window: Weak::new(),
+            parent: Weak::new(),
             first_child: None,
-            last_child: None,
-            previous_sibling: None,
+            last_child: Weak::new(),
+            previous_sibling: Weak::new(),
             next_sibling: None,
             events: Vec::new(),
             activation_behavior: get_activation_behavior(&kind),
@@ -80,30 +82,28 @@ impl Node {
         self.kind.clone()
     }
 
-    pub fn get_window(&self) -> Option<Weak<RefCell<Window>>> {
-        if self.window.is_some() {
+    pub fn get_window(&self) -> Weak<RefCell<Window>> {
+        if self.window.upgrade().is_some() {
             return self.window.clone();
         }
 
-        let mut current = match self.previous_sibling() {
+        let mut current = match self.previous_sibling().upgrade() {
             Some(n) => n,
-            None => match self.parent() {
+            None => match self.parent().upgrade() {
                 Some(n) => n,
                 None => panic!("either sibling or parent should exist"),
             },
         };
 
         loop {
-            if let Some(node) = current.upgrade() {
-                if node.borrow().window.is_some() {
-                    return node.borrow().window.clone();
-                }
-
-                current = match node.borrow().parent() {
-                    Some(n) => n,
-                    None => panic!("parent should exist"),
-                };
+            if current.borrow().window.upgrade().is_some() {
+                return current.borrow().window.clone();
             }
+
+            current = match current.clone().borrow().parent().upgrade() {
+                Some(n) => n,
+                None => panic!("parent should exist"),
+            };
         }
     }
 
@@ -125,16 +125,16 @@ impl Node {
         self.first_child = first_child;
     }
 
-    pub fn parent(&self) -> Option<Weak<RefCell<Node>>> {
-        self.parent.as_ref().cloned()
+    pub fn parent(&self) -> Weak<RefCell<Node>> {
+        self.parent.clone()
     }
 
     pub fn first_child(&self) -> Option<Rc<RefCell<Node>>> {
         self.first_child.as_ref().cloned()
     }
 
-    pub fn previous_sibling(&self) -> Option<Weak<RefCell<Node>>> {
-        self.previous_sibling.as_ref().cloned()
+    pub fn previous_sibling(&self) -> Weak<RefCell<Node>> {
+        self.previous_sibling.clone()
     }
 
     pub fn next_sibling(&self) -> Option<Rc<RefCell<Node>>> {
@@ -456,13 +456,13 @@ impl HtmlParser {
 
             last_sibiling.unwrap().borrow_mut().next_sibling = Some(node.clone());
             node.borrow_mut().previous_sibling =
-                Some(Rc::downgrade(&current.borrow().first_child().unwrap()));
+                Rc::downgrade(&current.borrow().first_child().unwrap());
         } else {
             current.borrow_mut().first_child = Some(node.clone());
         }
 
-        current.borrow_mut().last_child = Some(Rc::downgrade(&node));
-        node.borrow_mut().parent = Some(Rc::downgrade(current));
+        current.borrow_mut().last_child = Rc::downgrade(&node);
+        node.borrow_mut().parent = Rc::downgrade(current);
 
         self.stack_of_open_elements.push(node);
     }
@@ -496,13 +496,13 @@ impl HtmlParser {
                 .borrow_mut()
                 .next_sibling = Some(node.clone());
             node.borrow_mut().previous_sibling =
-                Some(Rc::downgrade(&current.borrow().first_child().unwrap()));
+                Rc::downgrade(&current.borrow().first_child().unwrap());
         } else {
             current.borrow_mut().first_child = Some(node.clone());
         }
 
-        current.borrow_mut().last_child = Some(Rc::downgrade(&node));
-        node.borrow_mut().parent = Some(Rc::downgrade(current));
+        current.borrow_mut().last_child = Rc::downgrade(&node);
+        node.borrow_mut().parent = Rc::downgrade(current);
 
         self.stack_of_open_elements.push(node);
     }

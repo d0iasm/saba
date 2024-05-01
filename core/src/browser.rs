@@ -29,6 +29,8 @@ impl Browser {
         browser
     }
 
+    pub fn start_navigation(&self) {}
+
     pub fn push_url_for_subresource(&mut self, src: String) {
         self.page.borrow_mut().push_url_for_subresource(src);
     }
