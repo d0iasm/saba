@@ -7,25 +7,11 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 
 #[derive(Debug, Clone)]
-struct Subresource {
-    src: String,
-    // TODO: update a type of resource
-    resource: u16,
-}
-
-impl Subresource {
-    fn new(src: String) -> Self {
-        Self { src, resource: 0 }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct Browser {
     // TODO: support multiple tabs/pages. This browser currently supports only one page.
     page: Rc<RefCell<Page>>,
     display_items: Vec<DisplayItem>,
     logs: Vec<Log>,
-    subresources: Vec<Subresource>,
 }
 
 impl Browser {
@@ -36,7 +22,6 @@ impl Browser {
             page: page.clone(),
             display_items: Vec::new(),
             logs: Vec::new(),
-            subresources: Vec::new(),
         }));
 
         page.borrow_mut().set_browser(Rc::downgrade(&browser));
@@ -44,21 +29,12 @@ impl Browser {
         browser
     }
 
+    pub fn push_url_for_subresource(&mut self, src: String) {
+        self.page.borrow_mut().push_url_for_subresource(src);
+    }
+
     pub fn push_display_item(&mut self, item: DisplayItem) {
         self.display_items.push(item);
-    }
-
-    pub fn push_url_for_subresource(&mut self, src: String) {
-        self.subresources.push(Subresource::new(src));
-    }
-
-    pub fn subresource(&self, src: String) -> u16 {
-        for s in &self.subresources {
-            if s.src == src {
-                return s.resource;
-            }
-        }
-        0
     }
 
     pub fn console_debug(&mut self, log: String) {

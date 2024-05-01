@@ -19,6 +19,7 @@ pub fn get_activation_behavior(node_kind: &NodeKind) -> Option<ActivationBehavio
             match e.kind() {
                 ElementKind::A => {
                     // Return an activation behavior if the element is <a> and it has "href" attribute.
+                    // https://html.spec.whatwg.org/multipage/links.html#links-created-by-a-and-area-elements
                     if let Some(_href) = e.get_attribute("href") {
                         return Some(follow_hyperlink);
                     }
@@ -45,5 +46,5 @@ fn follow_hyperlink(node: Rc<RefCell<Node>>, _event: Event) {
         None => return,
     };
 
-    // navigate to the href.
+    // navigate
 }

@@ -6,30 +6,48 @@
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
 use crate::http::HttpResponse;
+use crate::renderer::css::cssom::CssParser;
 use crate::renderer::css::cssom::StyleSheet;
-use crate::renderer::css::cssom::*;
-use crate::renderer::css::token::*;
+use crate::renderer::css::token::CssTokenizer;
 use crate::renderer::dom::api::{get_js_content, get_style_content};
+use crate::renderer::html::dom::HtmlParser;
 use crate::renderer::html::dom::Node;
-use crate::renderer::html::dom::*;
+use crate::renderer::html::dom::Window;
 use crate::renderer::html::html_builder::dom_to_html;
-use crate::renderer::html::token::*;
+use crate::renderer::html::token::HtmlTokenizer;
 use crate::renderer::js::ast::JsParser;
 use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::layout_view::LayoutView;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
+use alloc::vec::Vec;
 use core::cell::RefCell;
 
-/// Represents a page. It only supports a main frame.
+#[derive(Debug, Clone)]
+struct Subresource {
+    src: String,
+    resource: String,
+}
+
+impl Subresource {
+    fn new(src: String) -> Self {
+        Self {
+            src,
+            resource: String::new(),
+        }
+    }
+}
+
+/// Represents a page.
 #[derive(Debug, Clone)]
 pub struct Page {
     browser: Weak<RefCell<Browser>>,
     url: Option<String>,
-    window: Option<Window>,
+    window: Option<Rc<RefCell<Window>>>,
     style: Option<StyleSheet>,
     layout_view: Option<LayoutView>,
+    subresources: Vec<Subresource>,
     modified: bool,
 }
 
@@ -47,6 +65,7 @@ impl Page {
             window: None,
             style: None,
             layout_view: None,
+            subresources: Vec::new(),
             modified: false,
         }
     }
@@ -67,7 +86,7 @@ impl Page {
 
         while self.modified {
             let dom = match &self.window {
-                Some(window) => window.document(),
+                Some(window) => window.borrow().document(),
                 None => {
                     self.set_layout_view();
                     return;
@@ -106,7 +125,7 @@ impl Page {
 
     fn set_style(&mut self) {
         let dom = match &self.window {
-            Some(window) => window.document(),
+            Some(window) => window.borrow().document(),
             None => return,
         };
 
@@ -118,7 +137,7 @@ impl Page {
 
     fn set_layout_view(&mut self) {
         let dom = match &self.window {
-            Some(window) => window.document(),
+            Some(window) => window.borrow().document(),
             None => return,
         };
 
@@ -133,7 +152,7 @@ impl Page {
 
     fn execute_js(&mut self) {
         let dom = match &self.window {
-            Some(window) => window.document(),
+            Some(window) => window.borrow().document(),
             None => return,
         };
 
@@ -156,13 +175,27 @@ impl Page {
 
     pub fn dom_root(&self) -> Option<Rc<RefCell<Node>>> {
         match &self.window {
-            Some(window) => Some(window.document()),
+            Some(window) => Some(window.borrow().document()),
             None => None,
         }
     }
 
     pub fn style(&self) -> Option<StyleSheet> {
         self.style.clone()
+    }
+
+    pub fn push_url_for_subresource(&mut self, src: String) {
+        // TODO: send a request to url and get a resource.
+        self.subresources.push(Subresource::new(src));
+    }
+
+    pub fn subresource(&self, src: String) -> String {
+        for s in &self.subresources {
+            if s.src == src {
+                return s.resource.clone();
+            }
+        }
+        String::new()
     }
 
     /*

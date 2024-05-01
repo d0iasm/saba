@@ -394,7 +394,7 @@ pub enum InsertionMode {
 #[derive(Debug, Clone)]
 pub struct HtmlParser {
     browser: Weak<RefCell<Browser>>,
-    window: Window,
+    window: Rc<RefCell<Window>>,
     mode: InsertionMode,
     t: HtmlTokenizer,
     /// https://html.spec.whatwg.org/multipage/parsing.html#the-stack-of-open-elements
@@ -407,7 +407,7 @@ impl HtmlParser {
     pub fn new(browser: Weak<RefCell<Browser>>, t: HtmlTokenizer) -> Self {
         Self {
             browser: browser.clone(),
-            window: Window::new(browser),
+            window: Rc::new(RefCell::new(Window::new(browser))),
             mode: InsertionMode::Initial,
             t,
             stack_of_open_elements: Vec::new(),
@@ -431,9 +431,10 @@ impl HtmlParser {
     /// a node. Put the new node in the stack of open elements.
     /// https://html.spec.whatwg.org/multipage/parsing.html#insert-a-foreign-element
     fn insert_element(&mut self, tag: &str, attributes: Vec<Attribute>) {
+        let window = self.window.borrow();
         let current = match self.stack_of_open_elements.last() {
             Some(n) => n,
-            None => &self.window.document,
+            None => &window.document,
         };
 
         let node = Rc::new(RefCell::new(self.create_element(tag, attributes)));
@@ -468,9 +469,10 @@ impl HtmlParser {
 
     /// https://html.spec.whatwg.org/multipage/parsing.html#insert-a-character
     fn insert_char(&mut self, c: char) {
+        let window = self.window.borrow();
         let current = match self.stack_of_open_elements.last() {
             Some(n) => n,
-            None => &self.window.document,
+            None => &window.document,
         };
 
         // When the current node is Text, add a character to the current node.
@@ -548,7 +550,7 @@ impl HtmlParser {
     }
 
     /// https://html.spec.whatwg.org/multipage/parsing.html#tree-construction
-    pub fn construct_tree(&mut self) -> Window {
+    pub fn construct_tree(&mut self) -> Rc<RefCell<Window>> {
         let mut token = self.t.next();
 
         while token.is_some() {
