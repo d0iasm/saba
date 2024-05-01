@@ -28,10 +28,15 @@ pub struct Window {
 
 impl Window {
     pub fn new(browser: Weak<RefCell<Browser>>) -> Self {
-        Self {
+        let window = Self {
             _browser: browser,
             document: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
-        }
+        };
+
+        window.document.borrow_mut().window =
+            Some(Rc::downgrade(&Rc::new(RefCell::new(window.clone()))));
+
+        window
     }
 
     pub fn document(&self) -> Rc<RefCell<Node>> {
@@ -43,6 +48,7 @@ impl Window {
 /// https://dom.spec.whatwg.org/#interface-node
 pub struct Node {
     kind: NodeKind,
+    window: Option<Weak<RefCell<Window>>>,
     parent: Option<Weak<RefCell<Node>>>,
     first_child: Option<Rc<RefCell<Node>>>,
     last_child: Option<Weak<RefCell<Node>>>,
@@ -59,6 +65,7 @@ impl Node {
     pub fn new(kind: NodeKind) -> Self {
         Self {
             kind: kind.clone(),
+            window: None,
             parent: None,
             first_child: None,
             last_child: None,
@@ -71,6 +78,33 @@ impl Node {
 
     pub fn kind(&self) -> NodeKind {
         self.kind.clone()
+    }
+
+    pub fn get_window(&self) -> Option<Weak<RefCell<Window>>> {
+        if self.window.is_some() {
+            return self.window.clone();
+        }
+
+        let mut current = match self.previous_sibling() {
+            Some(n) => n,
+            None => match self.parent() {
+                Some(n) => n,
+                None => panic!("either sibling or parent should exist"),
+            },
+        };
+
+        loop {
+            if let Some(node) = current.upgrade() {
+                if node.borrow().window.is_some() {
+                    return node.borrow().window.clone();
+                }
+
+                current = match node.borrow().parent() {
+                    Some(n) => n,
+                    None => panic!("parent should exist"),
+                };
+            }
+        }
     }
 
     pub fn get_element(&self) -> Option<Element> {
@@ -91,16 +125,14 @@ impl Node {
         self.first_child = first_child;
     }
 
+    pub fn parent(&self) -> Option<Weak<RefCell<Node>>> {
+        self.parent.as_ref().cloned()
+    }
+
     pub fn first_child(&self) -> Option<Rc<RefCell<Node>>> {
         self.first_child.as_ref().cloned()
     }
 
-    #[allow(dead_code)]
-    pub fn last_child(&self) -> Option<Weak<RefCell<Node>>> {
-        self.last_child.as_ref().cloned()
-    }
-
-    #[allow(dead_code)]
     pub fn previous_sibling(&self) -> Option<Weak<RefCell<Node>>> {
         self.previous_sibling.as_ref().cloned()
     }
@@ -362,7 +394,7 @@ pub enum InsertionMode {
 #[derive(Debug, Clone)]
 pub struct HtmlParser {
     browser: Weak<RefCell<Browser>>,
-    root: Window,
+    window: Window,
     mode: InsertionMode,
     t: HtmlTokenizer,
     /// https://html.spec.whatwg.org/multipage/parsing.html#the-stack-of-open-elements
@@ -375,7 +407,7 @@ impl HtmlParser {
     pub fn new(browser: Weak<RefCell<Browser>>, t: HtmlTokenizer) -> Self {
         Self {
             browser: browser.clone(),
-            root: Window::new(browser),
+            window: Window::new(browser),
             mode: InsertionMode::Initial,
             t,
             stack_of_open_elements: Vec::new(),
@@ -401,7 +433,7 @@ impl HtmlParser {
     fn insert_element(&mut self, tag: &str, attributes: Vec<Attribute>) {
         let current = match self.stack_of_open_elements.last() {
             Some(n) => n,
-            None => &self.root.document,
+            None => &self.window.document,
         };
 
         let node = Rc::new(RefCell::new(self.create_element(tag, attributes)));
@@ -438,7 +470,7 @@ impl HtmlParser {
     fn insert_char(&mut self, c: char) {
         let current = match self.stack_of_open_elements.last() {
             Some(n) => n,
-            None => &self.root.document,
+            None => &self.window.document,
         };
 
         // When the current node is Text, add a character to the current node.
@@ -562,7 +594,7 @@ impl HtmlParser {
                             }
                         }
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                     }
                     token = self.t.next();
@@ -592,7 +624,7 @@ impl HtmlParser {
                             }
                         }
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                         _ => {}
                     }
@@ -643,7 +675,7 @@ impl HtmlParser {
                             }
                         }
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                     }
                     token = self.t.next();
@@ -674,7 +706,7 @@ impl HtmlParser {
                             }
                         }
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                         _ => {}
                     }
@@ -924,7 +956,7 @@ impl HtmlParser {
                             continue;
                         }
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                     }
                 } // end of InsertionMode::InBody
@@ -933,7 +965,7 @@ impl HtmlParser {
                 InsertionMode::Text => {
                     match token {
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                         Some(HtmlToken::EndTag {
                             ref tag,
@@ -984,7 +1016,7 @@ impl HtmlParser {
                             }
                         }
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                         _ => {}
                     }
@@ -1013,7 +1045,7 @@ impl HtmlParser {
                             }
                         }
                         Some(HtmlToken::Eof) | None => {
-                            return self.root.clone();
+                            return self.window.clone();
                         }
                         _ => {}
                     }
@@ -1023,6 +1055,6 @@ impl HtmlParser {
             } // end of match self.mode {}
         } // end of while token.is_some {}
 
-        self.root.clone()
+        self.window.clone()
     }
 }
