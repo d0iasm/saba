@@ -1,4 +1,5 @@
 use crate::display_item::DisplayItem;
+use crate::http::HttpResponse;
 use crate::log::{Log, LogLevel};
 use crate::renderer::page::Page;
 use alloc::rc::Rc;
@@ -29,7 +30,8 @@ impl Browser {
         browser
     }
 
-    pub fn start_navigation(&self) {}
+    // Called when a browser is clicked.
+    pub fn clicked(&self, position: (i64, i64)) {}
 
     pub fn push_url_for_subresource(&mut self, src: String) {
         self.page.borrow_mut().push_url_for_subresource(src);

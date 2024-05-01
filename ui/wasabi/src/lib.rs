@@ -248,7 +248,10 @@ impl WasabiUI {
                     // enter key
                     self.clear_content_area()?;
 
-                    let _ = self.start_navigation(handle_url, "http://example.com".to_string());
+                    let _ = self.start_navigation_from_toolbar(
+                        handle_url,
+                        "http://example.com".to_string(),
+                    );
                     self.update_ui()?;
 
                     self.clear_address_bar()?;
@@ -271,7 +274,7 @@ impl WasabiUI {
         }
     }
 
-    fn start_navigation(
+    fn start_navigation_from_toolbar(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
         destination: String,
