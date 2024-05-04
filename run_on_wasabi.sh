@@ -34,7 +34,7 @@ then
   echo $OS_PATH" exists"
   echo "pulling new changes..."
   cd $OS_PATH
-  #git pull
+  git pull
 else
   echo $OS_PATH" doesn't exist"
   echo "cloning wasabi project..."
