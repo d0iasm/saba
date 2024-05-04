@@ -281,11 +281,10 @@ impl WasabiUI {
     ) -> Result<(), Error> {
         match handle_url(destination) {
             Ok(response) => {
-                let page = self.browser.borrow().current_page();
-                page.borrow_mut().clear_display_items();
-                page.borrow_mut().clear_logs();
+                self.browser.borrow_mut().clear_display_items();
+                self.browser.borrow_mut().clear_logs();
 
-                page.borrow_mut().receive_response(response);
+                self.browser.borrow_mut().receive_response(response);
             }
             Err(e) => {
                 return Err(e);
@@ -295,8 +294,7 @@ impl WasabiUI {
     }
 
     fn update_ui(&mut self) -> Result<(), Error> {
-        let page = self.browser.borrow().current_page();
-        let display_items = page.borrow().display_items();
+        let display_items = self.browser.borrow().current_page().display_items();
 
         for item in display_items {
             match item {
@@ -370,8 +368,7 @@ impl WasabiUI {
                 } => {
                     print!("DisplayItem::Img src: {}\n", src);
 
-                    let page = self.browser.borrow().current_page();
-                    page.borrow_mut().push_url_for_subresource(src);
+                    self.browser.borrow_mut().push_url_for_subresource(src);
 
                     let data = include_bytes!("./test.bmp");
                     let bmp = match Bmp::<Rgb888>::from_slice(data) {
@@ -404,8 +401,7 @@ impl WasabiUI {
             }
         }
 
-        let page = self.browser.borrow().current_page();
-        for log in page.borrow().logs() {
+        for log in self.browser.borrow().current_page().logs() {
             print!("{}\n", log.to_string());
         }
 

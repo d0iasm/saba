@@ -13,6 +13,8 @@ use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
+use crate::utils::console_error;
+use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -119,8 +121,8 @@ impl LayoutObject {
                     if let ComponentValue::Keyword(value) = &declaration.value {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
-                            Err(_e) => {
-                                //console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::white()
                             }
                         };
@@ -133,8 +135,8 @@ impl LayoutObject {
                     {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
-                            Err(_e) => {
-                                //console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::white()
                             }
                         };
@@ -146,8 +148,8 @@ impl LayoutObject {
                     if let ComponentValue::Keyword(value) = &declaration.value {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
-                            Err(_e) => {
-                                //console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::black()
                             }
                         };
@@ -159,8 +161,8 @@ impl LayoutObject {
                     {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
-                            Err(_e) => {
-                                //console_error(self.browser.clone(), format!("{:?}", e));
+                            Err(e) => {
+                                console_error(self.browser.clone(), format!("{:?}", e));
                                 Color::black()
                             }
                         };

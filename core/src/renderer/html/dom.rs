@@ -11,6 +11,7 @@ use crate::renderer::dom::event::EventTarget;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
 use crate::renderer::page::Page;
+use crate::utils::console_warning;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
@@ -392,7 +393,7 @@ pub enum InsertionMode {
 
 #[derive(Debug, Clone)]
 pub struct HtmlParser {
-    _browser: Weak<RefCell<Browser>>,
+    browser: Weak<RefCell<Browser>>,
     window: Rc<RefCell<Window>>,
     mode: InsertionMode,
     t: HtmlTokenizer,
@@ -405,7 +406,7 @@ pub struct HtmlParser {
 impl HtmlParser {
     pub fn new(browser: Weak<RefCell<Browser>>, t: HtmlTokenizer) -> Self {
         Self {
-            _browser: browser.clone(),
+            browser: browser.clone(),
             window: Rc::new(RefCell::new(Window::new(browser))),
             mode: InsertionMode::Initial,
             t,
@@ -852,12 +853,10 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
-                                    /*
                                     console_warning(
                                         self.browser.clone(),
                                         format!("unknown tag {:?}", tag),
                                     );
-                                    */
                                     token = self.t.next();
                                 }
                             }
@@ -941,12 +940,10 @@ impl HtmlParser {
                                     continue;
                                 }
                                 _ => {
-                                    /*
                                     console_warning(
                                         self.browser.clone(),
                                         format!("unknown tag {:?}", tag),
                                     );
-                                    */
                                     token = self.t.next();
                                 }
                             }

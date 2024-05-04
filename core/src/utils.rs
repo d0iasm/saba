@@ -3,31 +3,23 @@ use alloc::rc::Weak;
 use alloc::string::String;
 use core::cell::RefCell;
 
+// disable console features because already borrowed error happens.
 pub fn console_debug(browser: Weak<RefCell<Browser>>, log: String) {
-    let page = match browser.upgrade() {
-        Some(browser) => browser.borrow().current_page(),
-        None => return,
-    };
-
-    page.borrow_mut().console_debug(log);
+    if let Some(browser) = browser.upgrade() {
+        //browser.borrow_mut().console_debug(log);
+    }
 }
 
 pub fn console_warning(browser: Weak<RefCell<Browser>>, log: String) {
-    let page = match browser.upgrade() {
-        Some(browser) => browser.borrow().current_page(),
-        None => return,
-    };
-
-    page.borrow_mut().console_warning(log);
+    if let Some(browser) = browser.upgrade() {
+        //browser.borrow_mut().console_warning(log);
+    }
 }
 
 pub fn console_error(browser: Weak<RefCell<Browser>>, log: String) {
-    let page = match browser.upgrade() {
-        Some(browser) => browser.borrow().current_page(),
-        None => return,
-    };
-
-    page.borrow_mut().console_error(log);
+    if let Some(browser) = browser.upgrade() {
+        //browser.borrow_mut().console_error(log);
+    }
 }
 
 /*
