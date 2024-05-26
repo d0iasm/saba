@@ -68,7 +68,7 @@ then
   echo "app/$APP_NAME already exists in Cargo.toml"
   mv Cargo.toml.original Cargo.toml
 else
-  sed "s/members = \[/members = \[\n    \"app\/$APP_NAME\",/" Cargo.toml.original >| Cargo.toml
+  sed "s/^members = \[/members = \[\n    \"app\/$APP_NAME\",/" Cargo.toml.original >| Cargo.toml
 fi
 
 make
