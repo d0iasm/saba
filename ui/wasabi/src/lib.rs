@@ -281,10 +281,11 @@ impl WasabiUI {
     ) -> Result<(), Error> {
         match handle_url(destination) {
             Ok(response) => {
-                self.browser.borrow_mut().clear_display_items();
                 self.browser.borrow_mut().clear_logs();
 
-                self.browser.borrow_mut().receive_response(response);
+                let page = self.browser.borrow().current_page();
+                page.borrow_mut().clear_display_items();
+                page.borrow_mut().receive_response(response);
             }
             Err(e) => {
                 return Err(e);
@@ -294,7 +295,12 @@ impl WasabiUI {
     }
 
     fn update_ui(&mut self) -> Result<(), Error> {
-        let display_items = self.browser.borrow().current_page().display_items();
+        let display_items = self
+            .browser
+            .borrow()
+            .current_page()
+            .borrow()
+            .display_items();
 
         for item in display_items {
             match item {
@@ -401,7 +407,7 @@ impl WasabiUI {
             }
         }
 
-        for log in self.browser.borrow().current_page().logs() {
+        for log in self.browser.borrow().logs() {
             print!("{}\n", log.to_string());
         }
 

@@ -1,6 +1,7 @@
 //! The main browser struct to manage pages.
 
-use crate::http::HttpResponse;
+use crate::log::Log;
+use crate::log::LogLevel;
 use crate::renderer::page::Page;
 use alloc::rc::Rc;
 use alloc::string::String;
@@ -11,7 +12,8 @@ use core::cell::RefCell;
 pub struct Browser {
     // TODO: support multiple tabs/pages. This browser currently supports only one page.
     active_page_index: usize,
-    page: Vec<Page>,
+    page: Vec<Rc<RefCell<Page>>>,
+    logs: Vec<Log>,
 }
 
 impl Browser {
@@ -21,10 +23,11 @@ impl Browser {
         let browser = Rc::new(RefCell::new(Self {
             active_page_index: 0,
             page: Vec::new(),
+            logs: Vec::new(),
         }));
 
         page.set_browser(Rc::downgrade(&browser));
-        browser.borrow_mut().page.push(page);
+        browser.borrow_mut().page.push(Rc::new(RefCell::new(page)));
 
         browser
     }
@@ -32,35 +35,33 @@ impl Browser {
     // Called when a browser is clicked.
     pub fn clicked(&self, _position: (i64, i64)) {}
 
-    pub fn receive_response(&mut self, response: HttpResponse) {
-        self.page[self.active_page_index].receive_response(response);
+    pub fn current_page(&self) -> Rc<RefCell<Page>> {
+        self.page[self.active_page_index].clone()
     }
 
     pub fn push_url_for_subresource(&mut self, src: String) {
-        self.page[self.active_page_index].push_url_for_subresource(src);
+        self.page[self.active_page_index]
+            .borrow_mut()
+            .push_url_for_subresource(src);
     }
 
-    pub fn clear_display_items(&mut self) {
-        self.page[self.active_page_index].clear_display_items();
+    pub fn logs(&self) -> Vec<Log> {
+        self.logs.clone()
     }
 
     pub fn clear_logs(&mut self) {
-        self.page[self.active_page_index].clear_logs();
+        self.logs = Vec::new();
     }
 
     pub fn console_debug(&mut self, log: String) {
-        self.page[self.active_page_index].console_debug(log);
+        self.logs.push(Log::new(LogLevel::Debug, log));
     }
 
     pub fn console_warning(&mut self, log: String) {
-        self.page[self.active_page_index].console_warning(log);
+        self.logs.push(Log::new(LogLevel::Warning, log));
     }
 
     pub fn console_error(&mut self, log: String) {
-        self.page[self.active_page_index].console_error(log);
-    }
-
-    pub fn current_page(&self) -> &Page {
-        &self.page[self.active_page_index]
+        self.logs.push(Log::new(LogLevel::Error, log));
     }
 }
