@@ -270,8 +270,6 @@ impl WasabiUI {
                         );
                         self.update_ui()?;
 
-                        self.clear_address_bar()?;
-                        self.input_url = String::new();
                         self.input_mode = InputMode::Normal;
                     } else if c == 0x7F as char || c == 0x08 as char {
                         // delete key
@@ -317,6 +315,8 @@ impl WasabiUI {
                 if relative_pos.1 < TOOLBAR_HEIGHT + TITLE_BAR_HEIGHT
                     && relative_pos.1 >= TITLE_BAR_HEIGHT
                 {
+                    self.clear_address_bar()?;
+                    self.input_url = String::new();
                     self.input_mode = InputMode::Editing;
                     println!("button clicked in toolbar: {button:?} {position:?}");
                     return Ok(());
