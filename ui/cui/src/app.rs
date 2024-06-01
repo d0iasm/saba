@@ -89,7 +89,7 @@ impl Tui {
         match size() {
             Ok((cols, rows)) => {
                 console_debug(
-                    Rc::downgrade(&self.browser),
+                    &Rc::downgrade(&self.browser),
                     format!("cols rows {:?} {:?}", cols, rows),
                 );
             }
@@ -128,7 +128,12 @@ impl Tui {
     }
 
     fn move_focus_to_up(&mut self) {
-        let display_items = self.browser.borrow().current_page().display_items();
+        let display_items = self
+            .browser
+            .borrow()
+            .current_page()
+            .borrow()
+            .display_items();
 
         let mut previous_link_item: Option<Link> = None;
         for item in display_items {
@@ -163,7 +168,12 @@ impl Tui {
     }
 
     fn move_focus_to_down(&mut self) {
-        let display_items = self.browser.borrow().current_page().display_items();
+        let display_items = self
+            .browser
+            .borrow()
+            .current_page()
+            .borrow()
+            .display_items();
 
         let mut focus_item_found = false;
         for item in display_items {
@@ -203,13 +213,14 @@ impl Tui {
     ) -> Result<(), Error> {
         match handle_url(destination) {
             Ok(response) => {
-                self.browser.borrow_mut().clear_display_items();
                 self.browser.borrow_mut().clear_logs();
 
-                self.browser.borrow_mut().receive_response(response);
+                let page = self.browser.borrow().current_page();
+                page.borrow_mut().clear_display_items();
+                page.borrow_mut().receive_response(response);
             }
             Err(e) => {
-                console_error(Rc::downgrade(&self.browser), format!("{:?}", e));
+                console_error(&Rc::downgrade(&self.browser), format!("{:?}", e));
                 return Err(e);
             }
         }
@@ -223,7 +234,7 @@ impl Tui {
             KeyCode::Char(c) => c.to_string(),
             _ => {
                 // TODO: propagate backspace key to browser?
-                console_debug(self.browser.clone(), format!("{:?} is pressed", key_code));
+                console_debug(&self.browser, format!("{:?} is pressed", key_code));
                 return;
             }
         };
@@ -389,7 +400,12 @@ impl Tui {
             }
         }
 
-        let display_items = self.browser.borrow().current_page().display_items();
+        let display_items = self
+            .browser
+            .borrow()
+            .current_page()
+            .borrow()
+            .display_items();
 
         /*
         let content_area = Layout::default()
@@ -475,7 +491,6 @@ impl Tui {
         let logs: Vec<ListItem> = self
             .browser
             .borrow()
-            .current_page()
             .logs()
             .iter()
             .enumerate()

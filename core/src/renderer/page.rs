@@ -74,6 +74,10 @@ impl Page {
         }
     }
 
+    /// Called when this page is clicked.
+    pub fn clicked(&self, _position: (i64, i64)) {}
+
+    /// Called when HTTP response is received.
     pub fn receive_response(&mut self, response: HttpResponse) {
         console_debug(&self.browser, "receive_response start".to_string());
 

@@ -32,9 +32,6 @@ impl Browser {
         browser
     }
 
-    // Called when a browser is clicked.
-    pub fn clicked(&self, _position: (i64, i64)) {}
-
     pub fn current_page(&self) -> Rc<RefCell<Page>> {
         self.page[self.active_page_index].clone()
     }
