@@ -257,10 +257,7 @@ impl CssParser {
                 Selector::UnknownSelector
             }
             _ => {
-                console_warning(
-                    self.browser.clone(),
-                    format!("unexpected token {:?}", token),
-                );
+                console_warning(&self.browser, format!("unexpected token {:?}", token));
                 self.t.next();
                 Selector::UnknownSelector
             }
@@ -335,10 +332,7 @@ impl CssParser {
                     }
                 }
                 _ => {
-                    console_warning(
-                        self.browser.clone(),
-                        format!("unexpected token {:?}", token),
-                    );
+                    console_warning(&self.browser, format!("unexpected token {:?}", token));
                     self.t.next();
                 }
             }
@@ -365,7 +359,7 @@ impl CssParser {
                 }
                 _ => {
                     console_warning(
-                        self.browser.clone(),
+                        &self.browser,
                         format!("consume_at_rule anything else: {:?}", token),
                     );
                     // TODO: set prelude to AtRule

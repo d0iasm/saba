@@ -854,7 +854,7 @@ impl HtmlParser {
                                 }
                                 _ => {
                                     console_warning(
-                                        self.browser.clone(),
+                                        &self.browser,
                                         format!("unknown tag {:?}", tag),
                                     );
                                     token = self.t.next();
@@ -941,7 +941,7 @@ impl HtmlParser {
                                 }
                                 _ => {
                                     console_warning(
-                                        self.browser.clone(),
+                                        &self.browser,
                                         format!("unknown tag {:?}", tag),
                                     );
                                     token = self.t.next();

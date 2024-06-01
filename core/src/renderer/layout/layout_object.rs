@@ -122,7 +122,7 @@ impl LayoutObject {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
                             Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                                console_error(&self.browser, format!("{:?}", e));
                                 Color::white()
                             }
                         };
@@ -136,7 +136,7 @@ impl LayoutObject {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
                             Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                                console_error(&self.browser, format!("{:?}", e));
                                 Color::white()
                             }
                         };
@@ -149,7 +149,7 @@ impl LayoutObject {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
                             Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                                console_error(&self.browser, format!("{:?}", e));
                                 Color::black()
                             }
                         };
@@ -162,7 +162,7 @@ impl LayoutObject {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
                             Err(e) => {
-                                console_error(self.browser.clone(), format!("{:?}", e));
+                                console_error(&self.browser, format!("{:?}", e));
                                 Color::black()
                             }
                         };
@@ -220,7 +220,7 @@ impl LayoutObject {
                 _ => {
                     /*
                     console_warning(
-                    self.browser.clone(),
+                    &self.browser,
                     format!("css property {} is not supported yet", declaration.property),
                     );
                     */

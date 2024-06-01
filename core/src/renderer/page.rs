@@ -75,7 +75,7 @@ impl Page {
     }
 
     pub fn receive_response(&mut self, response: HttpResponse) {
-        console_debug(self.browser.clone(), "receive_response start".to_string());
+        console_debug(&self.browser, "receive_response start".to_string());
 
         self.set_window(response.body());
         self.set_style();

@@ -5,19 +5,19 @@ use core::cell::RefCell;
 
 // disable console features because already borrowed error happens.
 // TODO: move logs to global mutable object.
-pub fn console_debug(browser: Weak<RefCell<Browser>>, log: String) {
+pub fn console_debug(browser: &Weak<RefCell<Browser>>, log: String) {
     if let Some(browser) = browser.upgrade() {
         browser.borrow_mut().console_debug(log);
     }
 }
 
-pub fn console_warning(browser: Weak<RefCell<Browser>>, log: String) {
+pub fn console_warning(browser: &Weak<RefCell<Browser>>, log: String) {
     if let Some(browser) = browser.upgrade() {
         browser.borrow_mut().console_warning(log);
     }
 }
 
-pub fn console_error(browser: Weak<RefCell<Browser>>, log: String) {
+pub fn console_error(browser: &Weak<RefCell<Browser>>, log: String) {
     if let Some(browser) = browser.upgrade() {
         browser.borrow_mut().console_error(log);
     }
