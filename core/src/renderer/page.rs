@@ -175,10 +175,9 @@ impl Page {
     }
 
     pub fn dom_root(&self) -> Option<Rc<RefCell<Node>>> {
-        match &self.window {
-            Some(window) => Some(window.borrow().document()),
-            None => None,
-        }
+        self.window
+            .as_ref()
+            .map(|window| window.borrow().document())
     }
 
     pub fn style(&self) -> Option<StyleSheet> {

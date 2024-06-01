@@ -15,7 +15,7 @@ pub type ActivationBehavior = fn(node: Rc<RefCell<Node>>, e: Event);
 
 pub fn get_activation_behavior(node_kind: &NodeKind) -> Option<ActivationBehavior> {
     match node_kind {
-        NodeKind::Document | NodeKind::Text(_) => return None,
+        NodeKind::Document | NodeKind::Text(_) => None,
         NodeKind::Element(e) => {
             match e.kind() {
                 ElementKind::A => {
@@ -24,9 +24,9 @@ pub fn get_activation_behavior(node_kind: &NodeKind) -> Option<ActivationBehavio
                     if let Some(_href) = e.get_attribute("href") {
                         return Some(follow_hyperlink);
                     }
-                    return None;
+                    None
                 }
-                _ => return None,
+                _ => None,
             }
         }
     }

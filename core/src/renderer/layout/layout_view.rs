@@ -167,7 +167,6 @@ impl LayoutView {
     }
 
     fn layout_node(
-        &self,
         node: &Option<Rc<RefCell<LayoutObject>>>,
         parent_style: &ComputedStyle,
         parent_point: &LayoutPoint,
@@ -177,10 +176,10 @@ impl LayoutView {
                 n.borrow_mut().update_layout(parent_style, parent_point);
 
                 let first_child = n.borrow().first_child();
-                self.layout_node(&first_child, &n.borrow().style(), &n.borrow().point());
+                Self::layout_node(&first_child, &n.borrow().style(), &n.borrow().point());
 
                 let next_sibling = n.borrow().next_sibling();
-                self.layout_node(&next_sibling, &n.borrow().style(), &n.borrow().point());
+                Self::layout_node(&next_sibling, &n.borrow().style(), &n.borrow().point());
             }
             None => (),
         }
@@ -192,18 +191,14 @@ impl LayoutView {
         let mut fake_style = ComputedStyle::new();
         fake_style.defaulting(&fake_node);
         let fake_point = LayoutPoint::new(0.0, 0.0);
-        self.layout_node(&self.root, &fake_style, &fake_point);
+        Self::layout_node(&self.root, &fake_style, &fake_point);
     }
 
     pub fn root(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.root.clone()
     }
 
-    fn paint_node(
-        &self,
-        node: &Option<Rc<RefCell<LayoutObject>>>,
-        display_items: &mut Vec<DisplayItem>,
-    ) {
+    fn paint_node(node: &Option<Rc<RefCell<LayoutObject>>>, display_items: &mut Vec<DisplayItem>) {
         match node {
             Some(n) => {
                 if let Some(item) = n.borrow_mut().paint() {
@@ -211,10 +206,10 @@ impl LayoutView {
                 }
 
                 let first_child = n.borrow().first_child();
-                self.paint_node(&first_child, display_items);
+                Self::paint_node(&first_child, display_items);
 
                 let next_sibling = n.borrow().next_sibling();
-                self.paint_node(&next_sibling, display_items);
+                Self::paint_node(&next_sibling, display_items);
             }
             None => (),
         }
@@ -224,7 +219,7 @@ impl LayoutView {
     pub fn paint(&self) -> Vec<DisplayItem> {
         let mut display_items = Vec::new();
 
-        self.paint_node(&self.root, &mut display_items);
+        Self::paint_node(&self.root, &mut display_items);
 
         display_items
     }

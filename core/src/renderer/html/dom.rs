@@ -255,7 +255,7 @@ impl Element {
     /// Returns a value for an attribute `name`.
     pub fn get_attribute(&self, name: &str) -> Option<String> {
         for attr in &self.attributes {
-            if &attr.name() == name {
+            if attr.name() == name {
                 return Some(attr.value());
             }
         }
