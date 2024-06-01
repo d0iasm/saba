@@ -256,7 +256,7 @@ impl WasabiUI {
 
                     self.clear_address_bar()?;
                     self.input_url = String::new();
-                } else if c == 0x7F as char {
+                } else if c == 0x7F as char || c == 0x08 as char {
                     // delete key
                     self.input_url.pop();
                     self.update_address_bar()?;
@@ -408,7 +408,9 @@ impl WasabiUI {
         Ok(())
     }
 
-    fn update_address_bar(&self) -> Result<(), Error> {
+    fn update_address_bar(&mut self) -> Result<(), Error> {
+        self.clear_address_bar()?;
+
         // draw URL string
         if self
             .window

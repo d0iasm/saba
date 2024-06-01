@@ -7,19 +7,19 @@ use core::cell::RefCell;
 // TODO: move logs to global mutable object.
 pub fn console_debug(browser: Weak<RefCell<Browser>>, log: String) {
     if let Some(browser) = browser.upgrade() {
-        //browser.borrow_mut().console_debug(log);
+        browser.borrow_mut().console_debug(log);
     }
 }
 
 pub fn console_warning(browser: Weak<RefCell<Browser>>, log: String) {
     if let Some(browser) = browser.upgrade() {
-        //browser.borrow_mut().console_warning(log);
+        browser.borrow_mut().console_warning(log);
     }
 }
 
 pub fn console_error(browser: Weak<RefCell<Browser>>, log: String) {
     if let Some(browser) = browser.upgrade() {
-        //browser.borrow_mut().console_error(log);
+        browser.borrow_mut().console_error(log);
     }
 }
 

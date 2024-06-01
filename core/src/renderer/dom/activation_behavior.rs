@@ -1,7 +1,8 @@
-///! This is a helper module for activation behaviors.
-///! Activation behaviors are used as a default behavior on certain event targets.
-///! e.g., <a> and <area> elements, in response to synthetic MouseEvent events whose type attribute is click.
-///! https://dom.spec.whatwg.org/#eventtarget-activation-behavior
+//! This is a helper module for activation behaviors.
+//! Activation behaviors are used as a default behavior on certain event targets.
+//! e.g., <a> and <area> elements, in response to synthetic MouseEvent events whose type attribute is click.
+//! https://dom.spec.whatwg.org/#eventtarget-activation-behavior
+
 use crate::renderer::dom::event::Event;
 use crate::renderer::html::dom::ElementKind;
 use crate::renderer::html::dom::Node;
@@ -9,7 +10,7 @@ use crate::renderer::html::dom::NodeKind;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 
-///! https://dom.spec.whatwg.org/#eventtarget-activation-behavior
+/// https://dom.spec.whatwg.org/#eventtarget-activation-behavior
 pub type ActivationBehavior = fn(node: Rc<RefCell<Node>>, e: Event);
 
 pub fn get_activation_behavior(node_kind: &NodeKind) -> Option<ActivationBehavior> {
