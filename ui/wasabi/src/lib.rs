@@ -37,6 +37,9 @@ static GREY: u32 = 0x808080;
 static DARKGREY: u32 = 0x5a5a5a;
 static BLACK: u32 = 0x000000;
 
+static WINDOW_INIT_X_POS: i64 = 30;
+static WINDOW_INIT_Y_POS: i64 = 50;
+
 //static WINDOW_WIDTH: i64 = 1024;
 //static WINDOW_HEIGHT: i64 = 768;
 static WINDOW_WIDTH: i64 = 600;
@@ -55,10 +58,17 @@ static ADDRESSBAR_HEIGHT: i64 = 20;
 static CHAR_WIDTH: i64 = 8;
 static _CHAR_HEIGHT: i64 = 16;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum InputMode {
+    Normal,
+    Editing,
+}
+
 #[derive(Clone, Debug)]
 pub struct WasabiUI {
     browser: Rc<RefCell<Browser>>,
     input_url: String,
+    input_mode: InputMode,
     window: Window,
     // The (x, y) position to render a next display item.
     position: (i64, i64),
@@ -69,11 +79,12 @@ impl WasabiUI {
         Self {
             browser,
             input_url: String::new(),
+            input_mode: InputMode::Normal,
             window: Window::new(
                 "SaBA".to_string(),
                 WHITE,
-                30,
-                50,
+                WINDOW_INIT_X_POS,
+                WINDOW_INIT_Y_POS,
                 WINDOW_WIDTH,
                 WINDOW_HEIGHT,
             )
@@ -238,39 +249,99 @@ impl WasabiUI {
         Ok(())
     }
 
+    fn handle_key_input(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+    ) -> Result<(), Error> {
+        match self.input_mode {
+            InputMode::Normal => {
+                // ignore a key when input_mode is Normal.
+                let _ = Api::read_key();
+            }
+            InputMode::Editing => {
+                if let Some(c) = Api::read_key() {
+                    if c == 0xA as char || c == '\n' {
+                        // enter key
+                        self.clear_content_area()?;
+
+                        let _ = self.start_navigation_from_toolbar(
+                            handle_url,
+                            "http://example.com".to_string(),
+                        );
+                        self.update_ui()?;
+
+                        self.clear_address_bar()?;
+                        self.input_url = String::new();
+                        self.input_mode = InputMode::Normal;
+                    } else if c == 0x7F as char || c == 0x08 as char {
+                        // delete key
+                        self.input_url.pop();
+                        self.update_address_bar()?;
+                    } else {
+                        self.input_url.push(c);
+                        self.update_address_bar()?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn handle_mouse_input(&mut self) -> Result<(), Error> {
+        if let Some(MouseEvent { button, position }) = Api::get_mouse_cursor_info() {
+            if button.l() || button.c() || button.r() {
+                let relative_pos = (
+                    position.x - WINDOW_INIT_X_POS,
+                    position.y - WINDOW_INIT_Y_POS,
+                );
+
+                // Ignore when click outside the window.
+                if relative_pos.0 < 0
+                    || relative_pos.0 > WINDOW_WIDTH
+                    || relative_pos.1 < 0
+                    || relative_pos.1 > WINDOW_HEIGHT
+                {
+                    println!("button clicked OUTSIDE window: {button:?} {position:?}");
+
+                    return Ok(());
+                }
+
+                // Click inside the title bar.
+                if relative_pos.1 < TITLE_BAR_HEIGHT {
+                    println!("button clicked in title bar: {button:?} {position:?}");
+                    self.input_mode = InputMode::Normal;
+                    return Ok(());
+                }
+
+                if relative_pos.1 < TOOLBAR_HEIGHT + TITLE_BAR_HEIGHT
+                    && relative_pos.1 >= TITLE_BAR_HEIGHT
+                {
+                    self.input_mode = InputMode::Editing;
+                    println!("button clicked in toolbar: {button:?} {position:?}");
+                    return Ok(());
+                }
+
+                self.browser
+                    .borrow()
+                    .current_page()
+                    .borrow_mut()
+                    .clicked(relative_pos);
+                self.input_mode = InputMode::Normal;
+                println!("button clicked: {button:?} {position:?}");
+            }
+        }
+
+        Ok(())
+    }
+
     fn run_app(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
         loop {
-            if let Some(c) = Api::read_key() {
-                if c == 0xA as char || c == '\n' {
-                    // enter key
-                    self.clear_content_area()?;
-
-                    let _ = self.start_navigation_from_toolbar(
-                        handle_url,
-                        "http://example.com".to_string(),
-                    );
-                    self.update_ui()?;
-
-                    self.clear_address_bar()?;
-                    self.input_url = String::new();
-                } else if c == 0x7F as char || c == 0x08 as char {
-                    // delete key
-                    self.input_url.pop();
-                    self.update_address_bar()?;
-                } else {
-                    self.input_url.push(c);
-                    self.update_address_bar()?;
-                }
-            }
-
-            if let Some(MouseEvent { button, position }) = Api::get_mouse_cursor_info() {
-                if button.l() || button.c() || button.r() {
-                    println!("button clicked: {button:?} {position:?}");
-                }
-            }
+            self.handle_key_input(handle_url)?;
+            self.handle_mouse_input()?;
         }
     }
 
