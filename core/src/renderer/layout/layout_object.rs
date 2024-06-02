@@ -73,10 +73,6 @@ impl LayoutObject {
         }
     }
 
-    pub fn browser(&self) -> Weak<RefCell<Browser>> {
-        self.browser.clone()
-    }
-
     pub fn node(&self) -> Rc<RefCell<Node>> {
         self.node.clone()
     }

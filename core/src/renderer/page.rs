@@ -12,7 +12,6 @@ use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::token::CssTokenizer;
 use crate::renderer::dom::api::{get_js_content, get_style_content};
 use crate::renderer::html::dom::HtmlParser;
-use crate::renderer::html::dom::Node;
 use crate::renderer::html::dom::Window;
 use crate::renderer::html::html_builder::dom_to_html;
 use crate::renderer::html::token::HtmlTokenizer;
@@ -173,16 +172,6 @@ impl Page {
         runtime.execute(&ast);
 
         self.modified = runtime.dom_modified();
-    }
-
-    pub fn dom_root(&self) -> Option<Rc<RefCell<Node>>> {
-        self.window
-            .as_ref()
-            .map(|window| window.borrow().document())
-    }
-
-    pub fn style(&self) -> Option<StyleSheet> {
-        self.style.clone()
     }
 
     pub fn push_url_for_subresource(&mut self, src: String) {

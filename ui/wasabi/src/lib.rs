@@ -20,43 +20,13 @@ use noli::window::StringSize;
 use noli::window::Window;
 use saba_core::{
     browser::Browser,
+    constants::*,
     display_item::DisplayItem,
     error::Error,
     http::HttpResponse,
     renderer::layout::computed_style::{FontSize, TextDecoration},
 };
 use tinybmp::{Bmp, RawBmp};
-
-static WHITE: u32 = 0xffffff;
-static _RED: u32 = 0xff0000;
-static _GREEN: u32 = 0x00ff00;
-static _BLUE: u32 = 0x0000ff;
-static _DARKBLUE: u32 = 0x00008b;
-static LIGHTGREY: u32 = 0xd3d3d3;
-static GREY: u32 = 0x808080;
-static DARKGREY: u32 = 0x5a5a5a;
-static BLACK: u32 = 0x000000;
-
-static WINDOW_INIT_X_POS: i64 = 30;
-static WINDOW_INIT_Y_POS: i64 = 50;
-
-//static WINDOW_WIDTH: i64 = 1024;
-//static WINDOW_HEIGHT: i64 = 768;
-static WINDOW_WIDTH: i64 = 600;
-static WINDOW_HEIGHT: i64 = 400;
-static WINDOW_PADDING: i64 = 5;
-
-// defined in noli/src/window.rs
-static TITLE_BAR_HEIGHT: i64 = 24;
-
-static CONTENT_AREA_WIDTH: i64 = WINDOW_WIDTH;
-static CONTENT_AREA_HEIGHT: i64 = WINDOW_HEIGHT - TITLE_BAR_HEIGHT - TOOLBAR_HEIGHT;
-
-static TOOLBAR_HEIGHT: i64 = 26;
-static ADDRESSBAR_HEIGHT: i64 = 20;
-
-static CHAR_WIDTH: i64 = 8;
-static _CHAR_HEIGHT: i64 = 16;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum InputMode {

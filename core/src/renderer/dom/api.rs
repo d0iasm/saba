@@ -34,6 +34,7 @@ pub fn get_element_by_id(
     }
 }
 
+// TODO: return an array of Node instead of one Node.
 pub fn get_target_element_node(
     node: Option<Rc<RefCell<Node>>>,
     element_kind: ElementKind,

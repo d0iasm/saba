@@ -1,6 +1,9 @@
+//! The CSS border box rect for this box.
+//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_box.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=2401
+
 #[derive(Debug, Clone, PartialEq)]
 /// The start point (x, y) of the layout object.
-/// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_box.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=2401
+/// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/platform/geometry/layout_point.h
 pub struct LayoutPoint {
     x: f64,
     y: f64,
