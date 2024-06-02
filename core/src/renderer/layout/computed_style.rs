@@ -2,7 +2,9 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/style/computed_style.h
 //! https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Cascade_and_inheritance
 
-use crate::renderer::html::parser::{ElementKind, Node, NodeKind};
+use crate::renderer::dom::node::ElementKind;
+use crate::renderer::dom::node::Node;
+use crate::renderer::dom::node::NodeKind;
 use crate::renderer::layout::color::*;
 use alloc::rc::Rc;
 use core::cell::RefCell;

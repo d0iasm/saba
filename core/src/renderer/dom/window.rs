@@ -2,8 +2,8 @@
 //! https://html.spec.whatwg.org/multipage/nav-history-apis.html#window
 
 use crate::browser::Browser;
-use crate::renderer::html::parser::Node;
-use crate::renderer::html::parser::NodeKind;
+use crate::renderer::dom::node::Node;
+use crate::renderer::dom::node::NodeKind;
 use crate::renderer::page::Page;
 use alloc::rc::Rc;
 use alloc::rc::Weak;

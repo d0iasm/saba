@@ -2,7 +2,7 @@
 //! DOM Living Standard: https://dom.spec.whatwg.org/#events
 //! UI Events W3C Working Draft: https://www.w3.org/TR/uievents/
 
-use crate::renderer::html::parser::NodeKind;
+use crate::renderer::dom::node::NodeKind;
 use alloc::boxed::Box;
 use alloc::string::String;
 

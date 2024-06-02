@@ -6,9 +6,13 @@
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
 use crate::display_item::DisplayItem;
-use crate::renderer::css::cssom::*;
+use crate::renderer::css::cssom::ComponentValue;
+use crate::renderer::css::cssom::Declaration;
+use crate::renderer::css::cssom::Selector;
 use crate::renderer::css::token::CssToken;
-use crate::renderer::html::parser::*;
+use crate::renderer::dom::node::ElementKind;
+use crate::renderer::dom::node::Node;
+use crate::renderer::dom::node::NodeKind;
 use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_point::LayoutPoint;

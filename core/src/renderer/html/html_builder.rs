@@ -1,7 +1,8 @@
 //! This is a helper function to construct HTML string from DOM tree.
 
 use crate::alloc::string::ToString;
-use crate::renderer::html::parser::{Node, NodeKind};
+use crate::renderer::dom::node::Node;
+use crate::renderer::dom::node::NodeKind;
 use alloc::rc::Rc;
 use alloc::string::String;
 use core::cell::RefCell;

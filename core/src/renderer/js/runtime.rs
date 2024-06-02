@@ -1,6 +1,6 @@
 use crate::renderer::dom::api::get_element_by_id;
-use crate::renderer::html::parser::Node as DomNode;
-use crate::renderer::html::parser::NodeKind as DomNodeKind;
+use crate::renderer::dom::node::Node as DomNode;
+use crate::renderer::dom::node::NodeKind as DomNodeKind;
 use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
 use alloc::format;

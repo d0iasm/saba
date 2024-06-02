@@ -1,4 +1,7 @@
-use crate::renderer::html::parser::{Element, ElementKind, Node, NodeKind};
+use crate::renderer::dom::node::Element;
+use crate::renderer::dom::node::ElementKind;
+use crate::renderer::dom::node::Node;
+use crate::renderer::dom::node::NodeKind;
 use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::string::ToString;
