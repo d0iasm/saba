@@ -1,4 +1,4 @@
-//! Constant variables.
+//! Constant variables for UI.
 
 pub static WHITE: u32 = 0xffffff;
 pub static _RED: u32 = 0xff0000;

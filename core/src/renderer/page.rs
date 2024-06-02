@@ -1,7 +1,9 @@
 //! This is corresponding to a page.
 //!
-//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/
-//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame_view.h
+//! In Chromium, a page can contain multiple frames (iframe, etc.), but this browser has one frame per page. This module implements a subset of Page and Frame.
+//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/page/page.h
+//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/frame.h
+//! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/local_frame.h
 
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
@@ -11,8 +13,8 @@ use crate::renderer::css::cssom::CssParser;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::token::CssTokenizer;
 use crate::renderer::dom::api::{get_js_content, get_style_content};
+use crate::renderer::dom::window::Window;
 use crate::renderer::html::dom::HtmlParser;
-use crate::renderer::html::dom::Window;
 use crate::renderer::html::html_builder::dom_to_html;
 use crate::renderer::html::token::HtmlTokenizer;
 use crate::renderer::js::ast::JsParser;
@@ -45,6 +47,7 @@ impl Subresource {
 pub struct Page {
     browser: Weak<RefCell<Browser>>,
     url: Option<String>,
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/frame.h;drc=ac83a5a2d3c04763d86ce16d92f3904cc9566d3a;bpv=1;bpt=1;l=505
     window: Option<Rc<RefCell<Window>>>,
     style: Option<StyleSheet>,
     layout_view: Option<LayoutView>,

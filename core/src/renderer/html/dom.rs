@@ -8,9 +8,9 @@ use crate::renderer::dom::event::Event;
 use crate::renderer::dom::event::EventListener;
 use crate::renderer::dom::event::EventListenerCallback;
 use crate::renderer::dom::event::EventTarget;
+use crate::renderer::dom::window::Window;
 use crate::renderer::html::attribute::Attribute;
 use crate::renderer::html::token::{HtmlToken, HtmlTokenizer, State};
-use crate::renderer::page::Page;
 use crate::utils::console_warning;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
@@ -19,32 +19,6 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::fmt::{Display, Formatter};
 use core::str::FromStr;
-
-#[derive(Debug, Clone)]
-/// https://html.spec.whatwg.org/multipage/nav-history-apis.html#window
-pub struct Window {
-    _browser: Weak<RefCell<Browser>>,
-    _page: Weak<RefCell<Page>>,
-    document: Rc<RefCell<Node>>,
-}
-
-impl Window {
-    pub fn new(browser: Weak<RefCell<Browser>>) -> Self {
-        let window = Self {
-            _browser: browser,
-            _page: Weak::new(),
-            document: Rc::new(RefCell::new(Node::new(NodeKind::Document))),
-        };
-
-        window.document.borrow_mut().window = Rc::downgrade(&Rc::new(RefCell::new(window.clone())));
-
-        window
-    }
-
-    pub fn document(&self) -> Rc<RefCell<Node>> {
-        self.document.clone()
-    }
-}
 
 #[derive(Debug, Clone)]
 /// https://dom.spec.whatwg.org/#interface-node
@@ -80,6 +54,10 @@ impl Node {
 
     pub fn kind(&self) -> NodeKind {
         self.kind.clone()
+    }
+
+    pub fn set_window(&mut self, window: Weak<RefCell<Window>>) {
+        self.window = window;
     }
 
     pub fn get_window(&self) -> Weak<RefCell<Window>> {
