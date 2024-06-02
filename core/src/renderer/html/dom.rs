@@ -411,8 +411,8 @@ impl HtmlParser {
     fn insert_element(&mut self, tag: &str, attributes: Vec<Attribute>) {
         let window = self.window.borrow();
         let current = match self.stack_of_open_elements.last() {
-            Some(n) => n,
-            None => &window.document,
+            Some(n) => n.clone(),
+            None => window.document(),
         };
 
         let node = Rc::new(RefCell::new(self.create_element(tag, attributes)));
@@ -440,7 +440,7 @@ impl HtmlParser {
         }
 
         current.borrow_mut().last_child = Rc::downgrade(&node);
-        node.borrow_mut().parent = Rc::downgrade(current);
+        node.borrow_mut().parent = Rc::downgrade(&current);
 
         self.stack_of_open_elements.push(node);
     }
@@ -449,8 +449,8 @@ impl HtmlParser {
     fn insert_char(&mut self, c: char) {
         let window = self.window.borrow();
         let current = match self.stack_of_open_elements.last() {
-            Some(n) => n,
-            None => &window.document,
+            Some(n) => n.clone(),
+            None => window.document(),
         };
 
         // When the current node is Text, add a character to the current node.
@@ -480,7 +480,7 @@ impl HtmlParser {
         }
 
         current.borrow_mut().last_child = Rc::downgrade(&node);
-        node.borrow_mut().parent = Rc::downgrade(current);
+        node.borrow_mut().parent = Rc::downgrade(&current);
 
         self.stack_of_open_elements.push(node);
     }

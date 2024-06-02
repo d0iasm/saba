@@ -16,7 +16,7 @@ use core::cell::RefCell;
 pub struct Window {
     _browser: Weak<RefCell<Browser>>,
     _page: Weak<RefCell<Page>>,
-    pub document: Rc<RefCell<Node>>,
+    document: Rc<RefCell<Node>>,
 }
 
 impl Window {
