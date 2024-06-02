@@ -1,4 +1,4 @@
 pub mod attribute;
-pub mod dom;
 pub mod html_builder;
+pub mod parser;
 pub mod token;

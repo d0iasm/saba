@@ -4,9 +4,9 @@
 //! https://dom.spec.whatwg.org/#eventtarget-activation-behavior
 
 use crate::renderer::dom::event::Event;
-use crate::renderer::html::dom::ElementKind;
-use crate::renderer::html::dom::Node;
-use crate::renderer::html::dom::NodeKind;
+use crate::renderer::html::parser::ElementKind;
+use crate::renderer::html::parser::Node;
+use crate::renderer::html::parser::NodeKind;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 

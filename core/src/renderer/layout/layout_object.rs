@@ -8,7 +8,7 @@ use crate::browser::Browser;
 use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::*;
 use crate::renderer::css::token::CssToken;
-use crate::renderer::html::dom::*;
+use crate::renderer::html::parser::*;
 use crate::renderer::layout::color::*;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_point::LayoutPoint;

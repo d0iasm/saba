@@ -6,7 +6,7 @@ use crate::browser::Browser;
 use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::*;
 use crate::renderer::dom::api::get_target_element_node;
-use crate::renderer::html::dom::{ElementKind, Node, NodeKind};
+use crate::renderer::html::parser::{ElementKind, Node, NodeKind};
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::renderer::layout::layout_point::LayoutPoint;
