@@ -524,13 +524,12 @@ impl JsRuntime {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::renderer::html::dom::NodeKind;
     use crate::renderer::js::ast::JsParser;
     use crate::renderer::js::token::JsLexer;
 
     #[test]
     fn test_num() {
-        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
         let input = "42".to_string();
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
@@ -548,7 +547,7 @@ mod tests {
 
     #[test]
     fn test_add_nums() {
-        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
         let input = "1 + 2".to_string();
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
@@ -566,7 +565,7 @@ mod tests {
 
     #[test]
     fn test_assign_variable() {
-        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
         let input = "var foo=42;".to_string();
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
@@ -583,7 +582,7 @@ mod tests {
     }
     #[test]
     fn test_add_variable_and_num() {
-        let dom = Rc::new(RefCell::new(DomNode::new(NodeKind::Document)));
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
         let input = "var foo=42; foo+1".to_string();
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
