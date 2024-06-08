@@ -5,6 +5,9 @@
 
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
+use crate::constants::CHAR_HEIGHT;
+use crate::constants::CHAR_WIDTH;
+use crate::constants::CONTENT_AREA_WIDTH;
 use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::ComponentValue;
 use crate::renderer::css::cssom::Declaration;
@@ -102,11 +105,11 @@ impl LayoutObject {
     }
 
     pub fn point(&self) -> LayoutPoint {
-        self.point.clone()
+        self.point
     }
 
     pub fn size(&self) -> LayoutSize {
-        self.size.clone()
+        self.size
     }
 
     /// https://www.w3.org/TR/css-cascade-4/#cascading
@@ -244,45 +247,62 @@ impl LayoutObject {
         }
     }
 
-    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2398
-    pub fn update_layout(&mut self, parent_style: &ComputedStyle, parent_point: &LayoutPoint) {
-        match parent_style.display() {
-            DisplayType::Inline => {
-                match self.style.display() {
-                    DisplayType::Block => {
-                        // TODO: set point property
-                        self.point.set_x(self.style.margin().left());
-                        self.point
-                            .set_y(self.style.margin().top() + parent_style.height());
-                    }
-                    DisplayType::Inline => {
-                        self.point.set_x(parent_point.x() + parent_style.width());
-                        self.point.set_y(parent_point.y());
-                    }
-                    DisplayType::DisplayNone => {}
-                }
-            }
-            DisplayType::Block => {
-                match self.style.display() {
-                    DisplayType::Block => {
-                        self.point.set_x(self.style.margin().left());
-                        self.point.set_y(
-                            parent_point.y()
-                                + parent_style.height()
-                                + parent_style.margin().bottom()
-                                + self.style.margin().top(),
-                        );
-                    }
-                    DisplayType::Inline => {
-                        // TODO: set point property
-                        self.point.set_x(0.0);
-                        self.point.set_y(parent_style.height());
-                    }
-                    DisplayType::DisplayNone => {}
-                }
-            }
-            DisplayType::DisplayNone => {}
+    /// Returns the size of this element including margins, paddings, etc.
+    fn compute_size(&self, parent_size: &LayoutSize) -> LayoutSize {
+        let mut size = LayoutSize::new(0.0, 0.0);
+        let mut is_height_set = false;
+        let mut is_width_set = false;
+
+        if self.style.height() != 0.0 {
+            is_height_set = true;
+            size.set_height(self.style.height());
         }
+        if self.style.width() != 0.0 {
+            is_width_set = true;
+            size.set_width(self.style.width());
+        }
+
+        if is_height_set && is_width_set {
+            return size;
+        }
+
+        match self.kind() {
+            LayoutObjectKind::Block => {
+                // For a block element, consider the parent's width.
+                // TODO: add content_size to LayoutSize?
+                size.set_width(
+                    parent_size.width() - self.style.padding_left() - self.style.padding_right(),
+                );
+            }
+            LayoutObjectKind::Inline => {}
+            LayoutObjectKind::Text => {
+                if let NodeKind::Text(t) = self.node_kind() {
+                    // TODO: consider H1, H2 height and width.
+                    let width = CHAR_WIDTH as f64 * t.len() as f64;
+                    size.set_width(width);
+
+                    // TODO: consider multiple lines.
+                    //let line_num = (CONTENT_AREA_WIDTH as f64 / width).floor() as u64;
+                    let line_num = 1;
+                    size.set_height((CHAR_HEIGHT * line_num) as f64);
+                }
+            }
+        }
+
+        size
+    }
+
+    /// Returns the position of this element.
+    fn compute_position(&self, parent_point: &LayoutPoint) -> LayoutPoint {
+        let mut point = LayoutPoint::new(0.0, 0.0);
+
+        point
+    }
+
+    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2398
+    pub fn update_layout(&mut self, parent_size: &LayoutSize, parent_point: &LayoutPoint) {
+        self.size = self.compute_size(parent_size);
+        self.point = self.compute_position(parent_point);
     }
 
     pub fn is_node_selected(&self, selector: &Selector) -> bool {
@@ -322,7 +342,7 @@ impl LayoutObject {
             return None;
         }
 
-        match self.kind() {
+        match self.kind {
             LayoutObjectKind::Block => {
                 if let NodeKind::Element(_e) = self.node_kind() {
                     return Some(DisplayItem::Rect {

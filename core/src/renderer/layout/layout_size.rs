@@ -3,7 +3,7 @@
 
 /// The size of this layout object.
 /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/geometry/physical_size.h
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct LayoutSize {
     width: f64,
     height: f64,

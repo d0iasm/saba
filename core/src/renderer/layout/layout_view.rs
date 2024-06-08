@@ -3,15 +3,16 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_view.h
 
 use crate::browser::Browser;
+use crate::constants::CONTENT_AREA_WIDTH;
 use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::dom::api::get_target_element_node;
 use crate::renderer::dom::node::ElementKind;
 use crate::renderer::dom::node::Node;
-use crate::renderer::dom::node::NodeKind;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::renderer::layout::layout_point::LayoutPoint;
+use crate::renderer::layout::layout_size::LayoutSize;
 use alloc::rc::{Rc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefCell;
@@ -170,18 +171,18 @@ impl LayoutView {
 
     fn layout_node(
         node: &Option<Rc<RefCell<LayoutObject>>>,
-        parent_style: &ComputedStyle,
+        parent_size: &LayoutSize,
         parent_point: &LayoutPoint,
     ) {
         match node {
             Some(n) => {
-                n.borrow_mut().update_layout(parent_style, parent_point);
-
                 let first_child = n.borrow().first_child();
-                Self::layout_node(&first_child, &n.borrow().style(), &n.borrow().point());
+                Self::layout_node(&first_child, &n.borrow().size(), &n.borrow().point());
 
                 let next_sibling = n.borrow().next_sibling();
-                Self::layout_node(&next_sibling, &n.borrow().style(), &n.borrow().point());
+                Self::layout_node(&next_sibling, &n.borrow().size(), &n.borrow().point());
+
+                n.borrow_mut().update_layout(parent_size, parent_point);
             }
             None => (),
         }
@@ -189,11 +190,11 @@ impl LayoutView {
 
     /// Calculate the layout point.
     fn update_layout(&mut self) {
-        let fake_node = Rc::new(RefCell::new(Node::new(NodeKind::Document)));
-        let mut fake_style = ComputedStyle::new();
-        fake_style.defaulting(&fake_node);
-        let fake_point = LayoutPoint::new(0.0, 0.0);
-        Self::layout_node(&self.root, &fake_style, &fake_point);
+        Self::layout_node(
+            &self.root,
+            &LayoutSize::new(CONTENT_AREA_WIDTH as f64, 0.0),
+            &LayoutPoint::new(0.0, 0.0),
+        );
     }
 
     pub fn root(&self) -> Option<Rc<RefCell<LayoutObject>>> {

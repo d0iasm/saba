@@ -22,11 +22,12 @@ pub static WINDOW_PADDING: i64 = 5;
 // defined in noli/src/window.rs
 pub static TITLE_BAR_HEIGHT: i64 = 24;
 
-pub static CONTENT_AREA_WIDTH: i64 = WINDOW_WIDTH;
-pub static CONTENT_AREA_HEIGHT: i64 = WINDOW_HEIGHT - TITLE_BAR_HEIGHT - TOOLBAR_HEIGHT;
+pub static CONTENT_AREA_WIDTH: i64 = WINDOW_WIDTH - WINDOW_PADDING * 2;
+pub static CONTENT_AREA_HEIGHT: i64 =
+    WINDOW_HEIGHT - TITLE_BAR_HEIGHT - TOOLBAR_HEIGHT - WINDOW_PADDING * 2;
 
 pub static TOOLBAR_HEIGHT: i64 = 26;
 pub static ADDRESSBAR_HEIGHT: i64 = 20;
 
 pub static CHAR_WIDTH: i64 = 8;
-pub static _CHAR_HEIGHT: i64 = 16;
+pub static CHAR_HEIGHT: i64 = 16;
