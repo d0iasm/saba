@@ -22,6 +22,7 @@ use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::layout_view::LayoutView;
 use crate::utils::console_debug;
+use crate::utils::convert_layout_tree_to_string;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -141,6 +142,11 @@ impl Page {
         };
 
         let layout_view = LayoutView::new(self.browser.clone(), dom, &style);
+
+        // for debug.
+        let debug = convert_layout_tree_to_string(&layout_view.root());
+        console_debug(&self.browser, debug);
+
         self.layout_view = Some(layout_view);
     }
 

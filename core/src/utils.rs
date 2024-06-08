@@ -42,6 +42,7 @@ fn convert_dom_to_string_internal(
         Some(n) => {
             result.push_str(&"  ".repeat(depth));
             result.push_str(&format!("{:?}", n.borrow().kind()));
+            result.push('\n');
             convert_dom_to_string_internal(&n.borrow().first_child(), depth + 1, result);
             convert_dom_to_string_internal(&n.borrow().next_sibling(), depth, result);
         }
@@ -64,7 +65,14 @@ fn convert_layout_tree_to_string_internal(
     match node {
         Some(n) => {
             result.push_str(&"  ".repeat(depth));
-            result.push_str(&format!("{:?} {:?}", n.borrow().kind(), n.borrow().style()));
+            //result.push_str(&format!("{:?} {:?}", n.borrow().kind(), n.borrow().style()));
+            result.push_str(&format!(
+                "{:?} {:?} {:?}",
+                n.borrow().kind(),
+                n.borrow().size(),
+                n.borrow().point()
+            ));
+            result.push('\n');
             convert_layout_tree_to_string_internal(&n.borrow().first_child(), depth + 1, result);
             convert_layout_tree_to_string_internal(&n.borrow().next_sibling(), depth, result);
         }
@@ -77,6 +85,7 @@ pub fn convert_ast_to_string(program: &Program) -> String {
     let mut result = String::new();
     for node in program.body() {
         result.push_str(&format!("{:?}", node));
+        result.push('\n');
     }
     result
 }
