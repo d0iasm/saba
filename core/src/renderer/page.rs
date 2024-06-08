@@ -83,24 +83,19 @@ impl Page {
     pub fn receive_response(&mut self, response: HttpResponse) {
         console_debug(&self.browser, "receive_response start".to_string());
 
-        self.set_frame(response.body());
-        self.set_style();
+        self.create_frame(response.body());
 
         self.execute_js();
 
         while self.modified {
             let dom = match &self.frame {
                 Some(frame) => frame.borrow().document(),
-                None => {
-                    self.set_layout_view();
-                    return;
-                }
+                None => panic!("frame should exist"),
             };
 
             let modified_html = dom_to_html(&Some(dom));
 
-            self.set_frame(modified_html);
-            self.set_style();
+            self.create_frame(modified_html);
 
             self.modified = false;
 
@@ -120,22 +115,17 @@ impl Page {
         self.browser = browser;
     }
 
-    fn set_frame(&mut self, html: String) {
+    fn create_frame(&mut self, html: String) {
         let html_tokenizer = HtmlTokenizer::new(html);
 
         let frame = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
-        self.frame = Some(frame);
-    }
-
-    fn set_style(&mut self) {
-        let dom = match &self.frame {
-            Some(frame) => frame.borrow().document(),
-            None => return,
-        };
+        let dom = frame.borrow().document();
 
         let style = get_style_content(dom);
         let css_tokenizer = CssTokenizer::new(style);
         let cssom = CssParser::new(self.browser.clone(), css_tokenizer).parse_stylesheet();
+
+        self.frame = Some(frame);
         self.style = Some(cssom);
     }
 
