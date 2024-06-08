@@ -48,7 +48,7 @@ pub struct Page {
     browser: Weak<RefCell<Browser>>,
     url: Option<String>,
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/frame.h;drc=ac83a5a2d3c04763d86ce16d92f3904cc9566d3a;bpv=1;bpt=1;l=505
-    window: Option<Rc<RefCell<Window>>>,
+    frame: Option<Rc<RefCell<Window>>>,
     style: Option<StyleSheet>,
     layout_view: Option<LayoutView>,
     subresources: Vec<Subresource>,
@@ -67,7 +67,7 @@ impl Page {
         Self {
             browser: Weak::new(),
             url: None,
-            window: None,
+            frame: None,
             style: None,
             layout_view: None,
             subresources: Vec::new(),
@@ -83,14 +83,14 @@ impl Page {
     pub fn receive_response(&mut self, response: HttpResponse) {
         console_debug(&self.browser, "receive_response start".to_string());
 
-        self.set_window(response.body());
+        self.set_frame(response.body());
         self.set_style();
 
         self.execute_js();
 
         while self.modified {
-            let dom = match &self.window {
-                Some(window) => window.borrow().document(),
+            let dom = match &self.frame {
+                Some(frame) => frame.borrow().document(),
                 None => {
                     self.set_layout_view();
                     return;
@@ -99,7 +99,7 @@ impl Page {
 
             let modified_html = dom_to_html(&Some(dom));
 
-            self.set_window(modified_html);
+            self.set_frame(modified_html);
             self.set_style();
 
             self.modified = false;
@@ -120,16 +120,16 @@ impl Page {
         self.browser = browser;
     }
 
-    fn set_window(&mut self, html: String) {
+    fn set_frame(&mut self, html: String) {
         let html_tokenizer = HtmlTokenizer::new(html);
 
-        let window = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
-        self.window = Some(window);
+        let frame = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
+        self.frame = Some(frame);
     }
 
     fn set_style(&mut self) {
-        let dom = match &self.window {
-            Some(window) => window.borrow().document(),
+        let dom = match &self.frame {
+            Some(frame) => frame.borrow().document(),
             None => return,
         };
 
@@ -140,8 +140,8 @@ impl Page {
     }
 
     fn set_layout_view(&mut self) {
-        let dom = match &self.window {
-            Some(window) => window.borrow().document(),
+        let dom = match &self.frame {
+            Some(frame) => frame.borrow().document(),
             None => return,
         };
 
@@ -155,8 +155,8 @@ impl Page {
     }
 
     fn execute_js(&mut self) {
-        let dom = match &self.window {
-            Some(window) => window.borrow().document(),
+        let dom = match &self.frame {
+            Some(frame) => frame.borrow().document(),
             None => return,
         };
 

@@ -17,6 +17,7 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::str::FromStr;
 
+/// https://html.spec.whatwg.org/multipage/parsing.html#original-insertion-mode
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum InsertionMode {
     Initial,
