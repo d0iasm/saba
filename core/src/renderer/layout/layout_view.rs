@@ -192,8 +192,8 @@ impl LayoutView {
     fn update_layout(&mut self) {
         Self::layout_node(
             &self.root,
-            &LayoutSize::new(CONTENT_AREA_WIDTH as f64, 0.0),
-            &LayoutPoint::new(0.0, 0.0),
+            &LayoutSize::new(CONTENT_AREA_WIDTH, 0),
+            &LayoutPoint::new(0, 0),
         );
     }
 

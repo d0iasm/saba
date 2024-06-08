@@ -75,8 +75,8 @@ impl LayoutObject {
             first_child: None,
             next_sibling: None,
             style: ComputedStyle::new(),
-            point: LayoutPoint::new(0.0, 0.0),
-            size: LayoutSize::new(0.0, 0.0),
+            point: LayoutPoint::new(0, 0),
+            size: LayoutSize::new(0, 0),
         }
     }
 
@@ -174,13 +174,15 @@ impl LayoutObject {
                 }
                 "height" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.size.set_height(value);
+                        // TODO: remove this? because layout() updates size and style.
+                        self.size.set_height(value as i64);
                         self.style.set_height(value);
                     }
                 }
                 "width" => {
                     if let ComponentValue::Number(value) = declaration.value {
-                        self.size.set_width(value);
+                        // TODO: remove this? because layout() updates size and style.
+                        self.size.set_width(value as i64);
                         self.style.set_width(value);
                     }
                 }
@@ -249,17 +251,17 @@ impl LayoutObject {
 
     /// Returns the size of this element including margins, paddings, etc.
     fn compute_size(&self, parent_size: &LayoutSize) -> LayoutSize {
-        let mut size = LayoutSize::new(0.0, 0.0);
+        let mut size = LayoutSize::new(0, 0);
         let mut is_height_set = false;
         let mut is_width_set = false;
 
         if self.style.height() != 0.0 {
             is_height_set = true;
-            size.set_height(self.style.height());
+            size.set_height(self.style.height() as i64);
         }
         if self.style.width() != 0.0 {
             is_width_set = true;
-            size.set_width(self.style.width());
+            size.set_width(self.style.width() as i64);
         }
 
         if is_height_set && is_width_set {
@@ -271,20 +273,22 @@ impl LayoutObject {
                 // For a block element, consider the parent's width.
                 // TODO: add content_size to LayoutSize?
                 size.set_width(
-                    parent_size.width() - self.style.padding_left() - self.style.padding_right(),
+                    parent_size.width()
+                        - self.style.padding_left() as i64
+                        - self.style.padding_right() as i64,
                 );
             }
             LayoutObjectKind::Inline => {}
             LayoutObjectKind::Text => {
                 if let NodeKind::Text(t) = self.node_kind() {
                     // TODO: consider H1, H2 height and width.
-                    let width = CHAR_WIDTH as f64 * t.len() as f64;
+                    let width = CHAR_WIDTH * t.len() as i64;
                     size.set_width(width);
 
                     // TODO: consider multiple lines.
-                    //let line_num = (CONTENT_AREA_WIDTH as f64 / width).floor() as u64;
+                    //let line_num = (CONTENT_AREA_WIDTH / width).floor() as u64;
                     let line_num = 1;
-                    size.set_height((CHAR_HEIGHT * line_num) as f64);
+                    size.set_height((CHAR_HEIGHT * line_num) as i64);
                 }
             }
         }
@@ -294,7 +298,7 @@ impl LayoutObject {
 
     /// Returns the position of this element.
     fn compute_position(&self, parent_point: &LayoutPoint) -> LayoutPoint {
-        let mut point = LayoutPoint::new(0.0, 0.0);
+        let mut point = LayoutPoint::new(0, 0);
 
         point
     }

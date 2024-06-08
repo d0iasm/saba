@@ -5,28 +5,28 @@
 /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/geometry/physical_size.h
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct LayoutSize {
-    width: f64,
-    height: f64,
+    width: i64,
+    height: i64,
 }
 
 impl LayoutSize {
-    pub fn new(width: f64, height: f64) -> Self {
+    pub fn new(width: i64, height: i64) -> Self {
         Self { width, height }
     }
 
-    pub fn width(&self) -> f64 {
+    pub fn width(&self) -> i64 {
         self.width
     }
 
-    pub fn height(&self) -> f64 {
+    pub fn height(&self) -> i64 {
         self.height
     }
 
-    pub fn set_width(&mut self, width: f64) {
+    pub fn set_width(&mut self, width: i64) {
         self.width = width;
     }
 
-    pub fn set_height(&mut self, height: f64) {
+    pub fn set_height(&mut self, height: i64) {
         self.height = height;
     }
 }
