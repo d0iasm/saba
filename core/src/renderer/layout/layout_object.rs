@@ -283,12 +283,20 @@ impl LayoutObject {
                 if let NodeKind::Text(t) = self.node_kind() {
                     // TODO: consider H1, H2 height and width.
                     let width = CHAR_WIDTH * t.len() as i64;
-                    size.set_width(width);
-
-                    // TODO: consider multiple lines.
-                    //let line_num = (CONTENT_AREA_WIDTH / width).floor() as u64;
-                    let line_num = 1;
-                    size.set_height((CHAR_HEIGHT * line_num) as i64);
+                    if width > CONTENT_AREA_WIDTH {
+                        // The text is multiple lines.
+                        size.set_width(CONTENT_AREA_WIDTH);
+                        let line_num = if width.wrapping_rem(CONTENT_AREA_WIDTH) == 0 {
+                            width.wrapping_div(CONTENT_AREA_WIDTH)
+                        } else {
+                            width.wrapping_div(CONTENT_AREA_WIDTH) + 1
+                        };
+                        size.set_height(CHAR_HEIGHT * line_num as i64);
+                    } else {
+                        // The text is signle line.
+                        size.set_width(width);
+                        size.set_height(CHAR_HEIGHT);
+                    }
                 }
             }
         }
