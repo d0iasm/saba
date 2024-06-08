@@ -28,7 +28,7 @@ pub fn console_error(browser: &Weak<RefCell<Browser>>, log: String) {
 
 /// for debug
 pub fn convert_dom_to_string(root: &Option<Rc<RefCell<Node>>>) -> String {
-    let mut result = String::new();
+    let mut result = String::from("\n");
     convert_dom_to_string_internal(root, 0, &mut result);
     result
 }
@@ -52,7 +52,7 @@ fn convert_dom_to_string_internal(
 
 /// for debug
 pub fn convert_layout_tree_to_string(node: &Option<Rc<RefCell<LayoutObject>>>) -> String {
-    let mut result = String::new();
+    let mut result = String::from("\n");
     convert_layout_tree_to_string_internal(node, 0, &mut result);
     result
 }
@@ -67,10 +67,11 @@ fn convert_layout_tree_to_string_internal(
             result.push_str(&"  ".repeat(depth));
             //result.push_str(&format!("{:?} {:?}", n.borrow().kind(), n.borrow().style()));
             result.push_str(&format!(
-                "{:?} {:?} {:?}",
+                "{:?} {:?} {:?} {:?}",
                 n.borrow().kind(),
                 n.borrow().size(),
-                n.borrow().point()
+                n.borrow().point(),
+                n.borrow().node_kind(),
             ));
             result.push('\n');
             convert_layout_tree_to_string_internal(&n.borrow().first_child(), depth + 1, result);

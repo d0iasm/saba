@@ -277,8 +277,53 @@ impl LayoutObject {
                         - self.style.padding_left() as i64
                         - self.style.padding_right() as i64,
                 );
+
+                // For height, sum up the height of all children directly under this element.
+                let mut height = 0;
+                let mut child = self.first_child();
+                while child.is_some() {
+                    height += child
+                        .clone()
+                        .expect("first child should exist")
+                        .borrow()
+                        .size
+                        .height();
+
+                    child = child
+                        .expect("first child should exist")
+                        .borrow()
+                        .next_sibling();
+                }
+                size.set_height(height);
             }
-            LayoutObjectKind::Inline => {}
+            LayoutObjectKind::Inline => {
+                // Sum up the width and height of all children directly under this element.
+                let mut width = 0;
+                let mut height = 0;
+                let mut child = self.first_child();
+                while child.is_some() {
+                    width += child
+                        .clone()
+                        .expect("first child should exist")
+                        .borrow()
+                        .size
+                        .width();
+                    height += child
+                        .clone()
+                        .expect("first child should exist")
+                        .borrow()
+                        .size
+                        .height();
+
+                    child = child
+                        .expect("first child should exist")
+                        .borrow()
+                        .next_sibling();
+                }
+
+                size.set_width(width);
+                size.set_height(height);
+            }
             LayoutObjectKind::Text => {
                 if let NodeKind::Text(t) = self.node_kind() {
                     // TODO: consider H1, H2 height and width.

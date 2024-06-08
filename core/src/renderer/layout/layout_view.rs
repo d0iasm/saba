@@ -176,12 +176,16 @@ impl LayoutView {
     ) {
         match node {
             Some(n) => {
+                // for block elements, we should layout the size before calling children.
+                //n.borrow_mut().update_layout(parent_size, parent_point);
+
                 let first_child = n.borrow().first_child();
                 Self::layout_node(&first_child, &n.borrow().size(), &n.borrow().point());
 
                 let next_sibling = n.borrow().next_sibling();
                 Self::layout_node(&next_sibling, &n.borrow().size(), &n.borrow().point());
 
+                // for inline elements, we should layout the size after calling children.
                 n.borrow_mut().update_layout(parent_size, parent_point);
             }
             None => (),
