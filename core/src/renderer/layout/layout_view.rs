@@ -11,6 +11,7 @@ use crate::renderer::dom::node::ElementKind;
 use crate::renderer::dom::node::Node;
 use crate::renderer::layout::computed_style::*;
 use crate::renderer::layout::layout_object::LayoutObject;
+use crate::renderer::layout::layout_object::LayoutObjectKind;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
 use alloc::rc::{Rc, Weak};
@@ -176,8 +177,10 @@ impl LayoutView {
     ) {
         match node {
             Some(n) => {
-                // for block elements, we should layout the size before calling children.
-                //n.borrow_mut().update_layout(parent_size, parent_point);
+                // For block elements, we should layout the size before calling children.
+                if n.borrow().kind() == LayoutObjectKind::Block {
+                    n.borrow_mut().update_layout(parent_size, parent_point);
+                }
 
                 let first_child = n.borrow().first_child();
                 Self::layout_node(&first_child, &n.borrow().size(), &n.borrow().point());
@@ -185,7 +188,8 @@ impl LayoutView {
                 let next_sibling = n.borrow().next_sibling();
                 Self::layout_node(&next_sibling, &n.borrow().size(), &n.borrow().point());
 
-                // for inline elements, we should layout the size after calling children.
+                // TODO: optimize this code because we call update_layout() twice.
+                // For inline, text elements and the height of block elements, we should layout the size after calling children.
                 n.borrow_mut().update_layout(parent_size, parent_point);
             }
             None => (),
