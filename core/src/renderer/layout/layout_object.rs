@@ -326,8 +326,12 @@ impl LayoutObject {
             }
             LayoutObjectKind::Text => {
                 if let NodeKind::Text(t) = self.node_kind() {
-                    // TODO: consider H1, H2 height and width.
-                    let width = CHAR_WIDTH * t.len() as i64;
+                    let ratio = match self.style.font_size() {
+                        FontSize::Medium => 1,
+                        FontSize::XLarge => 2,
+                        FontSize::XXLarge => 3,
+                    };
+                    let width = CHAR_WIDTH * ratio * t.len() as i64;
                     if width > CONTENT_AREA_WIDTH {
                         // The text is multiple lines.
                         size.set_width(CONTENT_AREA_WIDTH);
@@ -336,11 +340,11 @@ impl LayoutObject {
                         } else {
                             width.wrapping_div(CONTENT_AREA_WIDTH) + 1
                         };
-                        size.set_height(CHAR_HEIGHT * line_num);
+                        size.set_height(CHAR_HEIGHT * ratio * line_num);
                     } else {
                         // The text is signle line.
                         size.set_width(width);
-                        size.set_height(CHAR_HEIGHT);
+                        size.set_height(CHAR_HEIGHT * ratio);
                     }
                 }
             }
@@ -350,8 +354,18 @@ impl LayoutObject {
     }
 
     /// Returns the position of this element.
-    fn compute_position(&self, parent_point: &LayoutPoint) -> LayoutPoint {
+    fn compute_position(
+        &self,
+        parent_size: &LayoutSize,
+        parent_point: &LayoutPoint,
+    ) -> LayoutPoint {
         let mut point = LayoutPoint::new(0, 0);
+
+        match self.kind() {
+            LayoutObjectKind::Block => point.set_y(parent_size.height() + parent_point.y()),
+            LayoutObjectKind::Inline => {}
+            LayoutObjectKind::Text => {}
+        }
 
         point
     }
@@ -359,7 +373,7 @@ impl LayoutObject {
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2398
     pub fn update_layout(&mut self, parent_size: &LayoutSize, parent_point: &LayoutPoint) {
         self.size = self.compute_size(parent_size);
-        self.point = self.compute_position(parent_point);
+        self.point = self.compute_position(parent_size, parent_point);
     }
 
     pub fn is_node_selected(&self, selector: &Selector) -> bool {
