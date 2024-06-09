@@ -364,7 +364,7 @@ impl HtmlParser {
                     match token {
                         Some(HtmlToken::StartTag {
                             ref tag,
-                            self_closing: _,
+                            self_closing,
                             ref attributes,
                         }) => {
                             match tag.as_str() {
@@ -489,8 +489,10 @@ impl HtmlParser {
 
                                     // Set the frameset-ok flag to "not ok".
 
-                                    // TODO: handle self-closing flag.
                                     self.insert_element(tag, attributes.to_vec());
+                                    if self_closing {
+                                        self.stack_of_open_elements.pop();
+                                    }
                                     token = self.t.next();
                                     continue;
                                 }

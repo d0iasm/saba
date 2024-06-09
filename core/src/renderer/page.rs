@@ -22,6 +22,7 @@ use crate::renderer::js::runtime::JsRuntime;
 use crate::renderer::js::token::JsLexer;
 use crate::renderer::layout::layout_view::LayoutView;
 use crate::utils::console_debug;
+use crate::utils::convert_dom_to_string;
 use crate::utils::convert_layout_tree_to_string;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
@@ -121,6 +122,10 @@ impl Page {
 
         let frame = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
         let dom = frame.borrow().document();
+
+        // for debug.
+        let debug = convert_dom_to_string(&Some(dom.clone()));
+        console_debug(&self.browser, debug);
 
         let style = get_style_content(dom);
         let css_tokenizer = CssTokenizer::new(style);
