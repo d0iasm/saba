@@ -103,13 +103,10 @@ impl Page {
                     None => panic!("child node should exist"),
                 };
 
-                match c.borrow().node().borrow().kind() {
-                    NodeKind::Element(e) => {
-                        if e.kind() == ElementKind::A {
-                            return e.get_attribute("href");
-                        }
+                if let NodeKind::Element(e) = c.borrow().node().borrow().kind() {
+                    if e.kind() == ElementKind::A {
+                        return e.get_attribute("href");
                     }
-                    _ => {}
                 }
 
                 if c.borrow().first_child().is_some() {
