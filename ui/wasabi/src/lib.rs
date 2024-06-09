@@ -232,13 +232,10 @@ impl WasabiUI {
                 if let Some(c) = Api::read_key() {
                     if c == 0xA as char || c == '\n' {
                         // enter key
-                        self.clear_content_area()?;
-
                         let _ = self.start_navigation_from_toolbar(
                             handle_url,
                             "http://example.com".to_string(),
                         );
-                        self.update_ui()?;
 
                         self.input_mode = InputMode::Normal;
                     } else if c == 0x7F as char || c == 0x08 as char {
@@ -256,7 +253,10 @@ impl WasabiUI {
         Ok(())
     }
 
-    fn handle_mouse_input(&mut self) -> Result<(), Error> {
+    fn handle_mouse_input(
+        &mut self,
+        handle_url: fn(String) -> Result<HttpResponse, Error>,
+    ) -> Result<(), Error> {
         if let Some(MouseEvent { button, position }) = Api::get_mouse_cursor_info() {
             if button.l() || button.c() || button.r() {
                 let relative_pos = (
@@ -292,20 +292,25 @@ impl WasabiUI {
                     return Ok(());
                 }
 
+                self.input_mode = InputMode::Normal;
+
                 let position_in_content_area = (
                     relative_pos.0,
                     relative_pos.1 - TITLE_BAR_HEIGHT - TOOLBAR_HEIGHT,
                 );
                 let page = self.browser.borrow().current_page();
-                page.borrow_mut().clicked(position_in_content_area);
+                let next_destination = page.borrow_mut().clicked(position_in_content_area);
 
-                self.input_mode = InputMode::Normal;
-                println!("button clicked: {button:?} {position:?} {position_in_content_area:?}");
-
+                // clear logs.
                 for log in self.browser.borrow().logs() {
                     print!("{}\n", log.to_string());
                 }
                 self.browser.borrow_mut().clear_logs();
+
+                if let Some(url) = next_destination {
+                    // navigate to the next url.
+                    let _ = self.start_navigation_from_toolbar(handle_url, url);
+                }
             }
         }
 
@@ -318,7 +323,7 @@ impl WasabiUI {
     ) -> Result<(), Error> {
         loop {
             self.handle_key_input(handle_url)?;
-            self.handle_mouse_input()?;
+            self.handle_mouse_input(handle_url)?;
         }
     }
 
@@ -327,6 +332,8 @@ impl WasabiUI {
         handle_url: fn(String) -> Result<HttpResponse, Error>,
         destination: String,
     ) -> Result<(), Error> {
+        self.clear_content_area()?;
+
         match handle_url(destination) {
             Ok(response) => {
                 self.browser.borrow_mut().clear_logs();
@@ -339,6 +346,9 @@ impl WasabiUI {
                 return Err(e);
             }
         }
+
+        self.update_ui()?;
+
         Ok(())
     }
 

@@ -17,7 +17,9 @@ use saba_core::url::HtmlUrl;
 use ui_wasabi::WasabiUI;
 
 fn handle_url(url: String) -> Result<HttpResponse, Error> {
-    println!("handle_url");
+    println!("handle_url: {:?}", url);
+    // remove this temporary URL for debugging.
+    let url = "http://example.com";
 
     // parse url
     let parsed_url = match HtmlUrl::new(url.to_string()).parse() {

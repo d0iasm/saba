@@ -13,6 +13,8 @@ use crate::renderer::css::cssom::CssParser;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::token::CssTokenizer;
 use crate::renderer::dom::api::{get_js_content, get_style_content};
+use crate::renderer::dom::node::ElementKind;
+use crate::renderer::dom::node::NodeKind;
 use crate::renderer::dom::window::Window;
 use crate::renderer::html::html_builder::dom_to_html;
 use crate::renderer::html::parser::HtmlParser;
@@ -80,10 +82,10 @@ impl Page {
     }
 
     /// Called when this page is clicked.
-    pub fn clicked(&self, position: (i64, i64)) {
+    pub fn clicked(&self, position: (i64, i64)) -> Option<String> {
         let view = match &self.layout_view {
             Some(v) => v,
-            None => return,
+            None => return None,
         };
 
         if let Some(n) = view.find_node_by_position(position) {
@@ -91,9 +93,40 @@ impl Page {
                 &self.browser,
                 format!("cliecked node {:?}", n.borrow().node_kind()),
             );
-        } else {
-            console_debug(&self.browser, "clicked but node not found".to_string());
+
+            // TODO: Ideally, navigate a link from the renderer intead of returning a link string by this
+            // function.
+            let mut child = n.borrow().first_child();
+            while child.is_some() {
+                let c = match child {
+                    Some(ref c) => c.clone(),
+                    None => panic!("child node should exist"),
+                };
+
+                match c.borrow().node().borrow().kind() {
+                    NodeKind::Element(e) => {
+                        if e.kind() == ElementKind::A {
+                            return e.get_attribute("href");
+                        }
+                    }
+                    _ => {}
+                }
+
+                if c.borrow().first_child().is_some() {
+                    child = c.borrow().first_child();
+                    continue;
+                }
+                if c.borrow().next_sibling().is_some() {
+                    child = c.borrow().next_sibling();
+                    continue;
+                }
+
+                return None;
+            }
         }
+
+        console_debug(&self.browser, "clicked but node not found".to_string());
+        None
     }
 
     /// Called when HTTP response is received.
