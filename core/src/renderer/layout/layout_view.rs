@@ -264,6 +264,11 @@ impl LayoutView {
     ) -> Option<Rc<RefCell<LayoutObject>>> {
         match node {
             Some(n) => {
+                // currently, position is currectly calculated only for block elements.
+                if n.borrow().kind() != LayoutObjectKind::Block {
+                    return None;
+                }
+
                 let first_child = n.borrow().first_child();
                 let result1 = Self::find_node_by_position_internal(&first_child, position);
                 if result1.is_some() {
@@ -279,7 +284,7 @@ impl LayoutView {
                 if n.borrow().point().x() <= position.0
                     && position.0 <= (n.borrow().point().x() + n.borrow().size().width())
                     && n.borrow().point().y() <= position.1
-                    && position.1 <= n.borrow().point().y() + n.borrow().size().height()
+                    && position.1 <= (n.borrow().point().y() + n.borrow().size().height())
                 {
                     return Some(n.clone());
                 }

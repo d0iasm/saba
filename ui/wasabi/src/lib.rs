@@ -292,11 +292,15 @@ impl WasabiUI {
                     return Ok(());
                 }
 
+                let position_in_content_area = (
+                    relative_pos.0,
+                    relative_pos.1 - TITLE_BAR_HEIGHT - TOOLBAR_HEIGHT,
+                );
                 let page = self.browser.borrow().current_page();
-                page.borrow_mut().clicked(relative_pos);
+                page.borrow_mut().clicked(position_in_content_area);
 
                 self.input_mode = InputMode::Normal;
-                println!("button clicked: {button:?} {position:?} {relative_pos:?}");
+                println!("button clicked: {button:?} {position:?} {position_in_content_area:?}");
 
                 for log in self.browser.borrow().logs() {
                     print!("{}\n", log.to_string());
@@ -369,7 +373,7 @@ impl WasabiUI {
                             style.text_decoration() == TextDecoration::Underline,
                         )
                         .unwrap();
-                    self.position.1 += 20;
+                    self.position.1 += CHAR_HEIGHT_WITH_PADDING;
                 }
                 DisplayItem::Text {
                     text,
@@ -405,9 +409,9 @@ impl WasabiUI {
                             .unwrap();
 
                         match string_size {
-                            StringSize::Medium => self.position.1 += 20,
-                            StringSize::Large => self.position.1 += 40,
-                            StringSize::XLarge => self.position.1 += 60,
+                            StringSize::Medium => self.position.1 += CHAR_HEIGHT_WITH_PADDING,
+                            StringSize::Large => self.position.1 += CHAR_HEIGHT_WITH_PADDING * 2,
+                            StringSize::XLarge => self.position.1 += CHAR_HEIGHT_WITH_PADDING * 3,
                         }
                     }
                 }

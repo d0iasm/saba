@@ -27,9 +27,9 @@ static FAKE_RESPONSE_BODY: &str = r#"
 <body>
 <div>
     <h1>Example Domain Response</h1>
-    <p>This domain is for use in illustrative examples in documents. You may use this
+    <p class="first">This domain is for use in illustrative examples in documents. You may use this
     domain in literature without prior coordination or asking for permission.</p>
-    <p><a href="https://www.iana.org/domains/example">More information...</a></p>
+    <p class="second"><a href="https://www.iana.org/domains/example">More information...</a></p>
     <img src="https://placehold.co/600x400"/>
     <img src="https://dummyimage.com/300"/>
 </div>

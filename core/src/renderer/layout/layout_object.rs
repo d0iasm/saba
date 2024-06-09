@@ -5,7 +5,7 @@
 
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
-use crate::constants::CHAR_HEIGHT;
+use crate::constants::CHAR_HEIGHT_WITH_PADDING;
 use crate::constants::CHAR_WIDTH;
 use crate::constants::CONTENT_AREA_WIDTH;
 use crate::display_item::DisplayItem;
@@ -329,11 +329,11 @@ impl LayoutObject {
                         } else {
                             width.wrapping_div(CONTENT_AREA_WIDTH) + 1
                         };
-                        size.set_height(CHAR_HEIGHT * ratio * line_num);
+                        size.set_height(CHAR_HEIGHT_WITH_PADDING * ratio * line_num);
                     } else {
                         // The text is signle line.
                         size.set_width(width);
-                        size.set_height(CHAR_HEIGHT * ratio);
+                        size.set_height(CHAR_HEIGHT_WITH_PADDING * ratio);
                     }
                 }
             }
