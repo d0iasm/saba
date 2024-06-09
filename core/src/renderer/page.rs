@@ -24,6 +24,7 @@ use crate::renderer::layout::layout_view::LayoutView;
 use crate::utils::console_debug;
 use crate::utils::convert_dom_to_string;
 use crate::utils::convert_layout_tree_to_string;
+use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -79,7 +80,21 @@ impl Page {
     }
 
     /// Called when this page is clicked.
-    pub fn clicked(&self, _position: (i64, i64)) {}
+    pub fn clicked(&self, position: (i64, i64)) {
+        let view = match &self.layout_view {
+            Some(v) => v,
+            None => return,
+        };
+
+        if let Some(n) = view.find_node_by_position(position) {
+            console_debug(
+                &self.browser,
+                format!("cliecked node {:?}", n.borrow().node_kind()),
+            );
+        } else {
+            console_debug(&self.browser, "clicked but node not found".to_string());
+        }
+    }
 
     /// Called when HTTP response is received.
     pub fn receive_response(&mut self, response: HttpResponse) {

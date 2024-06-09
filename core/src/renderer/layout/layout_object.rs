@@ -357,28 +357,11 @@ impl LayoutObject {
         match self.kind() {
             LayoutObjectKind::Block => {
                 if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
-                    console_error(
-                        &self.browser,
-                        format!(
-                            "sibiling exists {:?} {:?} {:?}",
-                            pos,
-                            size,
-                            self.node_kind()
-                        ),
-                    );
                     // TODO: consider padding of the previous sibiling.
                     point.set_y(
                         point.y() + pos.y() + size.height() + self.style.margin_top() as i64,
                     );
                 } else {
-                    console_error(
-                        &self.browser,
-                        format!(
-                            "no sibiglin parent {:?} {:?}",
-                            parent_point,
-                            self.node_kind()
-                        ),
-                    );
                     point.set_y(parent_point.y());
                 }
             }

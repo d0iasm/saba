@@ -292,13 +292,16 @@ impl WasabiUI {
                     return Ok(());
                 }
 
-                self.browser
-                    .borrow()
-                    .current_page()
-                    .borrow_mut()
-                    .clicked(relative_pos);
+                let page = self.browser.borrow().current_page();
+                page.borrow_mut().clicked(relative_pos);
+
                 self.input_mode = InputMode::Normal;
-                println!("button clicked: {button:?} {position:?}");
+                println!("button clicked: {button:?} {position:?} {relative_pos:?}");
+
+                for log in self.browser.borrow().logs() {
+                    print!("{}\n", log.to_string());
+                }
+                self.browser.borrow_mut().clear_logs();
             }
         }
 
@@ -451,6 +454,7 @@ impl WasabiUI {
         for log in self.browser.borrow().logs() {
             print!("{}\n", log.to_string());
         }
+        self.browser.borrow_mut().clear_logs();
 
         Ok(())
     }
