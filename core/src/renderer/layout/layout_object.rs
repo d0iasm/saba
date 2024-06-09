@@ -282,17 +282,14 @@ impl LayoutObject {
                 let mut height = 0;
                 let mut child = self.first_child();
                 while child.is_some() {
-                    height += child
-                        .clone()
-                        .expect("first child should exist")
-                        .borrow()
-                        .size
-                        .height();
+                    let c = match child {
+                        Some(c) => c,
+                        None => panic!("first child should exist"),
+                    };
 
-                    child = child
-                        .expect("first child should exist")
-                        .borrow()
-                        .next_sibling();
+                    height += c.borrow().size.height();
+
+                    child = c.borrow().next_sibling();
                 }
                 size.set_height(height);
             }
@@ -302,23 +299,15 @@ impl LayoutObject {
                 let mut height = 0;
                 let mut child = self.first_child();
                 while child.is_some() {
-                    width += child
-                        .clone()
-                        .expect("first child should exist")
-                        .borrow()
-                        .size
-                        .width();
-                    height += child
-                        .clone()
-                        .expect("first child should exist")
-                        .borrow()
-                        .size
-                        .height();
+                    let c = match child {
+                        Some(c) => c,
+                        None => panic!("first child should exist"),
+                    };
 
-                    child = child
-                        .expect("first child should exist")
-                        .borrow()
-                        .next_sibling();
+                    width += c.borrow().size.width();
+                    height += c.borrow().size.height();
+
+                    child = c.borrow().next_sibling();
                 }
 
                 size.set_width(width);

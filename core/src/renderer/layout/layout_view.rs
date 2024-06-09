@@ -186,7 +186,7 @@ impl LayoutView {
                 Self::layout_node(&first_child, &n.borrow().size(), &n.borrow().point());
 
                 let next_sibling = n.borrow().next_sibling();
-                Self::layout_node(&next_sibling, &n.borrow().size(), &n.borrow().point());
+                Self::layout_node(&next_sibling, parent_size, parent_point);
 
                 // TODO: optimize this code because we call update_layout() twice.
                 // For inline, text elements and the height of block elements, we should layout the size after calling children.
