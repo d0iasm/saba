@@ -170,27 +170,52 @@ impl LayoutView {
         tree
     }
 
-    fn layout_node(
-        node: &Option<Rc<RefCell<LayoutObject>>>,
-        parent_size: &LayoutSize,
-        parent_point: &LayoutPoint,
-    ) {
+    fn calculate_node_size(node: &Option<Rc<RefCell<LayoutObject>>>, parent_size: LayoutSize) {
         match node {
             Some(n) => {
                 // For block elements, we should layout the size before calling children.
                 if n.borrow().kind() == LayoutObjectKind::Block {
-                    n.borrow_mut().update_layout(parent_size, parent_point);
+                    n.borrow_mut().compute_size(parent_size);
                 }
 
                 let first_child = n.borrow().first_child();
-                Self::layout_node(&first_child, &n.borrow().size(), &n.borrow().point());
+                Self::calculate_node_size(&first_child, n.borrow().size());
 
                 let next_sibling = n.borrow().next_sibling();
-                Self::layout_node(&next_sibling, parent_size, parent_point);
+                Self::calculate_node_size(&next_sibling, parent_size);
 
-                // TODO: optimize this code because we call update_layout() twice.
+                // TODO: optimize this code because we call compute_size() twice.
                 // For inline, text elements and the height of block elements, we should layout the size after calling children.
-                n.borrow_mut().update_layout(parent_size, parent_point);
+                n.borrow_mut().compute_size(parent_size);
+            }
+            None => (),
+        }
+    }
+
+    fn calculate_node_position(
+        node: &Option<Rc<RefCell<LayoutObject>>>,
+        parent_point: LayoutPoint,
+        previous_sibiling_point: Option<LayoutPoint>,
+        previous_sibiling_size: Option<LayoutSize>,
+    ) {
+        match node {
+            Some(n) => {
+                n.borrow_mut().compute_position(
+                    parent_point,
+                    previous_sibiling_point,
+                    previous_sibiling_size,
+                );
+
+                let first_child = n.borrow().first_child();
+                Self::calculate_node_position(&first_child, n.borrow().point(), None, None);
+
+                let next_sibling = n.borrow().next_sibling();
+                Self::calculate_node_position(
+                    &next_sibling,
+                    parent_point,
+                    Some(n.borrow().point()),
+                    Some(n.borrow().size()),
+                );
             }
             None => (),
         }
@@ -198,11 +223,9 @@ impl LayoutView {
 
     /// Calculate the layout point.
     fn update_layout(&mut self) {
-        Self::layout_node(
-            &self.root,
-            &LayoutSize::new(CONTENT_AREA_WIDTH, 0),
-            &LayoutPoint::new(0, 0),
-        );
+        Self::calculate_node_size(&self.root, LayoutSize::new(CONTENT_AREA_WIDTH, 0));
+
+        Self::calculate_node_position(&self.root, LayoutPoint::new(0, 0), None, None);
     }
 
     pub fn root(&self) -> Option<Rc<RefCell<LayoutObject>>> {

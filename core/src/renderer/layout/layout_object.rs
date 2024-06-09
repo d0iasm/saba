@@ -250,7 +250,7 @@ impl LayoutObject {
     }
 
     /// Returns the size of this element including margins, paddings, etc.
-    fn compute_size(&self, parent_size: &LayoutSize) -> LayoutSize {
+    pub fn compute_size(&mut self, parent_size: LayoutSize) {
         let mut size = LayoutSize::new(0, 0);
         let mut is_height_set = false;
         let mut is_width_set = false;
@@ -265,7 +265,7 @@ impl LayoutObject {
         }
 
         if is_height_set && is_width_set {
-            return size;
+            return;
         }
 
         match self.kind() {
@@ -339,30 +339,55 @@ impl LayoutObject {
             }
         }
 
-        size
+        self.size = size;
     }
 
     /// Returns the position of this element.
-    fn compute_position(
-        &self,
-        parent_size: &LayoutSize,
-        parent_point: &LayoutPoint,
-    ) -> LayoutPoint {
+    ///
+    /// The position is calculated based on the normal flow, which is the default value in the `position` property in CSS.
+    /// https://developer.mozilla.org/en-US/docs/Learn/CSS/CSS_layout/Normal_Flow
+    pub fn compute_position(
+        &mut self,
+        parent_point: LayoutPoint,
+        previous_sibiling_point: Option<LayoutPoint>,
+        previous_sibiling_size: Option<LayoutSize>,
+    ) {
         let mut point = LayoutPoint::new(0, 0);
 
         match self.kind() {
-            LayoutObjectKind::Block => point.set_y(parent_size.height() + parent_point.y()),
+            LayoutObjectKind::Block => {
+                if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
+                    console_error(
+                        &self.browser,
+                        format!(
+                            "sibiling exists {:?} {:?} {:?}",
+                            pos,
+                            size,
+                            self.node_kind()
+                        ),
+                    );
+                    // TODO: consider padding of the previous sibiling.
+                    point.set_y(
+                        point.y() + pos.y() + size.height() + self.style.margin_top() as i64,
+                    );
+                } else {
+                    console_error(
+                        &self.browser,
+                        format!(
+                            "no sibiglin parent {:?} {:?}",
+                            parent_point,
+                            self.node_kind()
+                        ),
+                    );
+                    point.set_y(parent_point.y());
+                }
+            }
+            // TODO: calculate the position for inline elements.
             LayoutObjectKind::Inline => {}
             LayoutObjectKind::Text => {}
         }
 
-        point
-    }
-
-    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2398
-    pub fn update_layout(&mut self, parent_size: &LayoutSize, parent_point: &LayoutPoint) {
-        self.size = self.compute_size(parent_size);
-        self.point = self.compute_position(parent_size, parent_point);
+        self.point = point;
     }
 
     pub fn is_node_selected(&self, selector: &Selector) -> bool {
