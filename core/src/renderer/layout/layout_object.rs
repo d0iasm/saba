@@ -336,7 +336,7 @@ impl LayoutObject {
                         } else {
                             width.wrapping_div(CONTENT_AREA_WIDTH) + 1
                         };
-                        size.set_height(CHAR_HEIGHT * line_num as i64);
+                        size.set_height(CHAR_HEIGHT * line_num);
                     } else {
                         // The text is signle line.
                         size.set_width(width);

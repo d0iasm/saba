@@ -46,7 +46,7 @@ fn convert_dom_to_string_internal(
             convert_dom_to_string_internal(&n.borrow().first_child(), depth + 1, result);
             convert_dom_to_string_internal(&n.borrow().next_sibling(), depth, result);
         }
-        None => return,
+        None => (),
     }
 }
 
@@ -77,7 +77,7 @@ fn convert_layout_tree_to_string_internal(
             convert_layout_tree_to_string_internal(&n.borrow().first_child(), depth + 1, result);
             convert_layout_tree_to_string_internal(&n.borrow().next_sibling(), depth, result);
         }
-        None => return,
+        None => (),
     }
 }
 
