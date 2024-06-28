@@ -232,10 +232,7 @@ impl WasabiUI {
                 if let Some(c) = Api::read_key() {
                     if c == 0xA as char || c == '\n' {
                         // enter key
-                        let _ = self.start_navigation_from_toolbar(
-                            handle_url,
-                            "http://example.com".to_string(),
-                        );
+                        let _ = self.start_navigation(handle_url, "http://example.com".to_string());
 
                         self.input_mode = InputMode::Normal;
                     } else if c == 0x7F as char || c == 0x08 as char {
@@ -309,7 +306,7 @@ impl WasabiUI {
 
                 if let Some(url) = next_destination {
                     // navigate to the next url.
-                    let _ = self.start_navigation_from_toolbar(handle_url, url);
+                    let _ = self.start_navigation(handle_url, url);
                 }
             }
         }
@@ -327,7 +324,7 @@ impl WasabiUI {
         }
     }
 
-    fn start_navigation_from_toolbar(
+    fn start_navigation(
         &mut self,
         handle_url: fn(String) -> Result<HttpResponse, Error>,
         destination: String,
