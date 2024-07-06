@@ -230,7 +230,7 @@ impl WasabiUI {
             }
             InputMode::Editing => {
                 if let Some(c) = Api::read_key() {
-                    if c == 0xA as char || c == '\n' {
+                    if c == 0x0A as char {
                         // enter key
                         let _ = self.start_navigation(handle_url, "http://example.com".to_string());
 
