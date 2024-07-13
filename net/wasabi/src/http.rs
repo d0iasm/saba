@@ -13,7 +13,6 @@ use alloc::string::ToString;
 use noli::net::lookup_host;
 use noli::net::SocketAddr;
 use noli::net::TcpStream;
-//use noli::print::hexdump;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
 
@@ -100,7 +99,10 @@ impl HttpClient {
         };
         let data = &buf[..bytes_read];
 
-        let raw_response = core::str::from_utf8(data).unwrap();
+        let raw_response = match core::str::from_utf8(data) {
+            Ok(r) => r,
+            Err(_) => return Err(Error::Network("Invalid UTF8 data".to_string())),
+        };
 
         //println!("raw_response: {:?}", raw_response);
 
