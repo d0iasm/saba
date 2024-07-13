@@ -58,7 +58,7 @@ impl WasabiUI {
                 WINDOW_WIDTH,
                 WINDOW_HEIGHT,
             )
-            .unwrap(),
+            .expect("failed to create a window"),
             position: (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
         }
     }
@@ -370,7 +370,8 @@ impl WasabiUI {
                     style,
                     layout_point: _,
                 } => {
-                    self.window
+                    if self
+                        .window
                         .draw_string(
                             style.color().code_u32(),
                             self.position.0,
@@ -379,7 +380,10 @@ impl WasabiUI {
                             StringSize::Medium,
                             style.text_decoration() == TextDecoration::Underline,
                         )
-                        .unwrap();
+                        .is_err()
+                    {
+                        return Err(Error::InvalidUI("failed to draw a string".to_string()));
+                    }
                     self.position.1 += CHAR_HEIGHT_WITH_PADDING;
                 }
                 DisplayItem::Text {
@@ -404,7 +408,8 @@ impl WasabiUI {
                     let lines = split_text(plain_text, char_width);
 
                     for line in lines {
-                        self.window
+                        if self
+                            .window
                             .draw_string(
                                 style.color().code_u32(),
                                 self.position.0,
@@ -413,7 +418,10 @@ impl WasabiUI {
                                 string_size.clone(),
                                 style.text_decoration() == TextDecoration::Underline,
                             )
-                            .unwrap();
+                            .is_err()
+                        {
+                            return Err(Error::InvalidUI("failed to draw a string".to_string()));
+                        }
 
                         match string_size {
                             StringSize::Medium => self.position.1 += CHAR_HEIGHT_WITH_PADDING,
