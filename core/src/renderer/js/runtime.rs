@@ -334,7 +334,7 @@ impl JsRuntime {
                                 // Currently, an assignment value should be a text like "foobar".
                                 if p == "innerHTML" {
                                     self.dom_modified = true;
-                                    object.borrow_mut().update_first_child(Some(Rc::new(
+                                    object.borrow_mut().set_first_child(Some(Rc::new(
                                         RefCell::new(DomNode::new(DomNodeKind::Text(
                                             right_value.to_string(),
                                         ))),

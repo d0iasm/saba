@@ -104,10 +104,6 @@ impl Node {
         }
     }
 
-    pub fn update_first_child(&mut self, first_child: Option<Rc<RefCell<Node>>>) {
-        self.first_child = first_child;
-    }
-
     pub fn set_parent(&mut self, parent: Weak<RefCell<Node>>) {
         self.parent = parent;
     }
