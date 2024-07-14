@@ -635,4 +635,45 @@ mod tests {
             assert_eq!(Some(e), tokenizer.next());
         }
     }
+
+    #[test]
+    fn test_self_closing_tag() {
+        let html = "<img />".to_string();
+        let mut tokenizer = HtmlTokenizer::new(html);
+        let expected = [HtmlToken::StartTag {
+            tag: "img".to_string(),
+            self_closing: true,
+            attributes: Vec::new(),
+        }];
+        for e in expected {
+            assert_eq!(Some(e), tokenizer.next());
+        }
+    }
+
+    #[test]
+    fn test_script_tag() {
+        let html = "<script>js code;</script>".to_string();
+        let mut tokenizer = HtmlTokenizer::new(html);
+        let expected = [
+            HtmlToken::StartTag {
+                tag: "script".to_string(),
+                self_closing: false,
+                attributes: Vec::new(),
+            },
+            HtmlToken::Char('j'),
+            HtmlToken::Char('s'),
+            HtmlToken::Char(' '),
+            HtmlToken::Char('c'),
+            HtmlToken::Char('o'),
+            HtmlToken::Char('d'),
+            HtmlToken::Char('e'),
+            HtmlToken::Char(';'),
+            HtmlToken::EndTag {
+                tag: "script".to_string(),
+            },
+        ];
+        for e in expected {
+            assert_eq!(Some(e), tokenizer.next());
+        }
+    }
 }

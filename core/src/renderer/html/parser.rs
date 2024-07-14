@@ -686,3 +686,21 @@ impl HtmlParser {
         self.window.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::alloc::string::ToString;
+    use alloc::vec;
+
+    #[test]
+    fn test_empty() {
+        let browser = Browser::new();
+        let html = "".to_string();
+        let t = HtmlTokenizer::new(html);
+        let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
+        let expected = Rc::new(RefCell::new(Window::new(Rc::downgrade(&browser))));
+
+        //assert_eq!(expected, window);
+    }
+}
