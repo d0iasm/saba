@@ -225,10 +225,7 @@ impl HtmlParser {
                                 continue;
                             }
                         }
-                        Some(HtmlToken::EndTag {
-                            ref tag,
-                            self_closing: _,
-                        }) => {
+                        Some(HtmlToken::EndTag { ref tag }) => {
                             // Any other end tag
                             // Parse error. Ignore the token.
                             if tag != "head" || tag != "body" || tag != "html" || tag != "br" {
@@ -307,10 +304,7 @@ impl HtmlParser {
                                 continue;
                             }
                         }
-                        Some(HtmlToken::EndTag {
-                            ref tag,
-                            self_closing: _,
-                        }) => {
+                        Some(HtmlToken::EndTag { ref tag }) => {
                             if tag == "head" {
                                 self.mode = InsertionMode::AfterHead;
                                 token = self.t.next();
@@ -505,10 +499,7 @@ impl HtmlParser {
                                 }
                             }
                         }
-                        Some(HtmlToken::EndTag {
-                            ref tag,
-                            self_closing: _,
-                        }) => {
+                        Some(HtmlToken::EndTag { ref tag }) => {
                             match tag.as_str() {
                                 // An end tag whose tag name is "body"
                                 "body" => {
@@ -613,10 +604,7 @@ impl HtmlParser {
                         Some(HtmlToken::Eof) | None => {
                             return self.window.clone();
                         }
-                        Some(HtmlToken::EndTag {
-                            ref tag,
-                            self_closing: _,
-                        }) => {
+                        Some(HtmlToken::EndTag { ref tag }) => {
                             if tag == "style" {
                                 self.pop_until(ElementKind::Style);
                                 self.mode = self.original_insertion_mode;
@@ -651,10 +639,7 @@ impl HtmlParser {
                             token = self.t.next();
                             continue;
                         }
-                        Some(HtmlToken::EndTag {
-                            ref tag,
-                            self_closing: _,
-                        }) => {
+                        Some(HtmlToken::EndTag { ref tag }) => {
                             if tag == "html" {
                                 self.mode = InsertionMode::AfterAfterBody;
                                 token = self.t.next();
@@ -680,10 +665,7 @@ impl HtmlParser {
                             token = self.t.next();
                             continue;
                         }
-                        Some(HtmlToken::EndTag {
-                            ref tag,
-                            self_closing: _,
-                        }) => {
+                        Some(HtmlToken::EndTag { ref tag }) => {
                             if tag == "html" {
                                 self.mode = InsertionMode::AfterAfterBody;
                                 token = self.t.next();

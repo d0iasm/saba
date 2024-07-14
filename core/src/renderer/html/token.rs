@@ -58,7 +58,6 @@ pub enum HtmlToken {
     // </foo>
     EndTag {
         tag: String,
-        self_closing: bool,
     },
     // "foo"
     Char(char),
@@ -103,7 +102,7 @@ impl HtmlTokenizer {
     }
 
     /// Creates a StartTag or EndTag token.
-    fn create_tag_open(&mut self, start_tag_token: bool) {
+    fn create_tag(&mut self, start_tag_token: bool) {
         if start_tag_token {
             self.latest_token = Some(HtmlToken::StartTag {
                 tag: String::new(),
@@ -111,10 +110,7 @@ impl HtmlTokenizer {
                 attributes: Vec::new(),
             });
         } else {
-            self.latest_token = Some(HtmlToken::EndTag {
-                tag: String::new(),
-                self_closing: false,
-            });
+            self.latest_token = Some(HtmlToken::EndTag { tag: String::new() });
         }
     }
 
@@ -129,10 +125,7 @@ impl HtmlTokenizer {
                     self_closing: _,
                     attributes: _,
                 }
-                | HtmlToken::EndTag {
-                    ref mut tag,
-                    self_closing: _,
-                } => tag.push(c),
+                | HtmlToken::EndTag { ref mut tag } => tag.push(c),
                 _ => panic!("`latest_token` should be either StartTag or EndTag"),
             }
         }
@@ -187,12 +180,8 @@ impl HtmlTokenizer {
                     tag: _,
                     ref mut self_closing,
                     attributes: _,
-                }
-                | HtmlToken::EndTag {
-                    tag: _,
-                    ref mut self_closing,
                 } => *self_closing = true,
-                _ => panic!("`latest_token` should be either StartTag or EndTag"),
+                _ => panic!("`latest_token` should be either StartTag"),
             }
         }
     }
@@ -257,7 +246,7 @@ impl Iterator for HtmlTokenizer {
                     if c.is_ascii_alphabetic() {
                         self.reconsume = true;
                         self.state = State::TagName;
-                        self.create_tag_open(true);
+                        self.create_tag(true);
                         continue;
                     }
 
@@ -278,7 +267,7 @@ impl Iterator for HtmlTokenizer {
                     if c.is_ascii_alphabetic() {
                         self.reconsume = true;
                         self.state = State::TagName;
-                        self.create_tag_open(false);
+                        self.create_tag(false);
                         continue;
                     }
                 }
@@ -480,11 +469,7 @@ impl Iterator for HtmlTokenizer {
                     // this is not aligned with the spec.
                     // check the temporary buffer
                     if c == '>' {
-                        if let Some(HtmlToken::EndTag {
-                            ref tag,
-                            self_closing: _,
-                        }) = self.latest_token.as_mut()
-                        {
+                        if let Some(HtmlToken::EndTag { ref tag }) = self.latest_token.as_mut() {
                             if tag == "script" {
                                 self.state = State::Data;
                                 return self.take_latest_token();
@@ -523,7 +508,7 @@ impl Iterator for HtmlTokenizer {
                     if c.is_ascii_alphabetic() {
                         self.reconsume = true;
                         self.state = State::ScriptDataEndTagName;
-                        self.create_tag_open(false);
+                        self.create_tag(false);
                         continue;
                     }
 
@@ -576,5 +561,34 @@ impl Iterator for HtmlTokenizer {
                 }
             } // end of `match self.state`
         } // end of `loop`
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let html = "".to_string();
+        let tokenizer = HtmlTokenizer::new(html);
+        assert!(tokenizer.next().is_none());
+    }
+
+    fn test_start_and_end_tag() {
+        let html = "<body></body>".to_string();
+        let tokenizer = HtmlTokenizer::new(html);
+        let expected = [
+            HtmlToken::StartTag {
+                tag: "body".to_string(),
+                self_closing: false,
+                attributes: [],
+            },
+            HtmlToken::EndTag {
+                tag: "body".to_string(),
+                self_closing: false,
+            },
+        ];
+        assert!(tokenizer.next().is_none());
     }
 }
