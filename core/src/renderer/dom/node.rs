@@ -36,6 +36,12 @@ pub struct Node {
     activation_behavior: Option<ActivationBehavior>,
 }
 
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
+}
+
 ///dom.spec.whatwg.org/#interface-node
 impl Node {
     pub fn new(kind: NodeKind) -> Self {

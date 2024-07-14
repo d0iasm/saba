@@ -166,7 +166,11 @@ impl HtmlParser {
 
     /// Pops nodes until a node with `element_kind` comes.
     fn pop_until(&mut self, element_kind: ElementKind) {
-        assert!(self.contain_in_stack(element_kind));
+        assert!(
+            self.contain_in_stack(element_kind),
+            "stack doesn't have an element {:?}",
+            element_kind,
+        );
 
         loop {
             let current = match self.stack_of_open_elements.pop() {
@@ -691,6 +695,7 @@ impl HtmlParser {
 mod tests {
     use super::*;
     use crate::alloc::string::ToString;
+    use alloc::vec;
 
     #[test]
     fn test_empty() {
@@ -698,8 +703,169 @@ mod tests {
         let html = "".to_string();
         let t = HtmlTokenizer::new(html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
-        let expected = NodeKind::Document;
+        let expected = Rc::new(RefCell::new(Node::new(NodeKind::Document)));
 
-        assert_eq!(expected, window.borrow().document().borrow().kind());
+        assert_eq!(expected, window.borrow().document());
+    }
+
+    #[test]
+    fn test_body() {
+        let browser = Browser::new();
+        let html = "<html><head></head><body></body></html>".to_string();
+        let t = HtmlTokenizer::new(html);
+        let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
+        let document = window.borrow().document();
+
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Document))),
+            document
+        );
+        let html = document
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of document");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "html",
+                Vec::new()
+            ))))),
+            html
+        );
+        let head = html
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of html");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "head",
+                Vec::new()
+            ))))),
+            head
+        );
+        let body = head
+            .borrow()
+            .next_sibling()
+            .expect("failed to get a next sibling of head");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "body",
+                Vec::new()
+            ))))),
+            body
+        );
+    }
+
+    #[test]
+    fn test_text() {
+        let browser = Browser::new();
+        let html = "<html><head></head><body>text</body></html>".to_string();
+        let t = HtmlTokenizer::new(html);
+        let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
+        let document = window.borrow().document();
+
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Document))),
+            document
+        );
+        let html = document
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of document");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "html",
+                Vec::new()
+            ))))),
+            html
+        );
+        let body = html
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of document")
+            .borrow()
+            .next_sibling()
+            .expect("failed to get a next sibling of head");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "body",
+                Vec::new()
+            ))))),
+            body
+        );
+        let text = body
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of document");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Text("text".to_string())))),
+            text
+        );
+    }
+
+    #[test]
+    fn test_multiple_nodes() {
+        let browser = Browser::new();
+        let html = "<html><head></head><body><p><a foo=bar>text</a></p></body></html>".to_string();
+        let t = HtmlTokenizer::new(html);
+        let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
+        let document = window.borrow().document();
+
+        let body = document
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of document")
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of document")
+            .borrow()
+            .next_sibling()
+            .expect("failed to get a next sibling of head");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "body",
+                Vec::new()
+            ))))),
+            body
+        );
+
+        let p = body
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of body");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "p",
+                Vec::new()
+            ))))),
+            p
+        );
+
+        let mut attr = Attribute::new();
+        attr.add_char('f', true);
+        attr.add_char('o', true);
+        attr.add_char('o', true);
+        attr.add_char('b', false);
+        attr.add_char('a', false);
+        attr.add_char('r', false);
+        let a = p
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of p");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "a",
+                vec![attr]
+            ))))),
+            a
+        );
+
+        let text = a
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of a");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Text("text".to_string())))),
+            text
+        );
     }
 }
