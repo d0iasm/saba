@@ -94,15 +94,22 @@ impl HtmlParser {
                 };
             }
 
-            last_sibiling.unwrap().borrow_mut().next_sibling = Some(node.clone());
-            node.borrow_mut().previous_sibling =
-                Rc::downgrade(&current.borrow().first_child().unwrap());
+            last_sibiling
+                .unwrap()
+                .borrow_mut()
+                .set_next_sibling(Some(node.clone()));
+            node.borrow_mut().set_previous_sibling(Rc::downgrade(
+                &current
+                    .borrow()
+                    .first_child()
+                    .expect("failed to get a first child"),
+            ))
         } else {
-            current.borrow_mut().first_child = Some(node.clone());
+            current.borrow_mut().set_first_child(Some(node.clone()));
         }
 
-        current.borrow_mut().last_child = Rc::downgrade(&node);
-        node.borrow_mut().parent = Rc::downgrade(&current);
+        current.borrow_mut().set_last_child(Rc::downgrade(&node));
+        node.borrow_mut().set_parent(Rc::downgrade(&current));
 
         self.stack_of_open_elements.push(node);
     }
@@ -136,15 +143,19 @@ impl HtmlParser {
                 .first_child()
                 .unwrap()
                 .borrow_mut()
-                .next_sibling = Some(node.clone());
-            node.borrow_mut().previous_sibling =
-                Rc::downgrade(&current.borrow().first_child().unwrap());
+                .set_next_sibling(Some(node.clone()));
+            node.borrow_mut().set_previous_sibling(Rc::downgrade(
+                &current
+                    .borrow()
+                    .first_child()
+                    .expect("failed to get a first child"),
+            ));
         } else {
-            current.borrow_mut().first_child = Some(node.clone());
+            current.borrow_mut().set_first_child(Some(node.clone()));
         }
 
-        current.borrow_mut().last_child = Rc::downgrade(&node);
-        node.borrow_mut().parent = Rc::downgrade(&current);
+        current.borrow_mut().set_last_child(Rc::downgrade(&node));
+        node.borrow_mut().set_parent(Rc::downgrade(&current));
 
         self.stack_of_open_elements.push(node);
     }
