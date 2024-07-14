@@ -691,7 +691,6 @@ impl HtmlParser {
 mod tests {
     use super::*;
     use crate::alloc::string::ToString;
-    use alloc::vec;
 
     #[test]
     fn test_empty() {
@@ -699,8 +698,8 @@ mod tests {
         let html = "".to_string();
         let t = HtmlTokenizer::new(html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
-        let expected = Rc::new(RefCell::new(Window::new(Rc::downgrade(&browser))));
+        let expected = NodeKind::Document;
 
-        //assert_eq!(expected, window);
+        assert_eq!(expected, window.borrow().document().borrow().kind());
     }
 }

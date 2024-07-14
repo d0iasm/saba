@@ -5,7 +5,7 @@ use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
 use alloc::string::String;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum DisplayItem {
     Rect {
         style: ComputedStyle,

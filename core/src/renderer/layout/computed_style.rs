@@ -9,7 +9,7 @@ use crate::renderer::layout::color::*;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ComputedStyle {
     background_color: Option<Color>,
     color: Option<Color>,
