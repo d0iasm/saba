@@ -213,7 +213,10 @@ impl HtmlParser {
         while token.is_some() {
             match self.mode {
                 // https://html.spec.whatwg.org/multipage/parsing.html#the-initial-insertion-mode
-                InsertionMode::Initial => self.mode = InsertionMode::BeforeHtml,
+                InsertionMode::Initial => {
+                    self.mode = InsertionMode::BeforeHtml;
+                    continue;
+                }
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#the-before-html-insertion-mode
                 InsertionMode::BeforeHtml => {
@@ -679,13 +682,6 @@ impl HtmlParser {
                             // mode.
                             token = self.t.next();
                             continue;
-                        }
-                        Some(HtmlToken::EndTag { ref tag }) => {
-                            if tag == "html" {
-                                self.mode = InsertionMode::AfterAfterBody;
-                                token = self.t.next();
-                                continue;
-                            }
                         }
                         Some(HtmlToken::Eof) | None => {
                             return self.window.clone();

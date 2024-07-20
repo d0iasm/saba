@@ -11,14 +11,13 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::string::ToString;
 use noli::net::lookup_host;
+use noli::net::IpV4Addr;
 use noli::net::SocketAddr;
 use noli::net::TcpStream;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
 
-static FAKE_RESPONSE_BODY: &str = r#"
-<!doctype html>
-<html>
+static FAKE_RESPONSE_BODY: &str = r#"<html>
 <head>
     <title>Example Domain Response</title>
     <meta charset="utf-8" />
@@ -44,10 +43,14 @@ impl HttpClient {
     }
 
     pub fn get(&self, host: String, port: u16, path: String) -> Result<HttpResponse, Error> {
+        /*
         let ips = match lookup_host(&"example.com") {
             Ok(ips) => ips,
             Err(_) => return Err(Error::Network("Failed to find IP addresses".to_string())),
         };
+        */
+        // TODO: Remove this temporary IP address.
+        let ips = [IpV4Addr::new([0, 0, 0, 0])];
 
         if ips.len() < 1 {
             return Err(Error::Network("Failed to find IP addresses".to_string()));
