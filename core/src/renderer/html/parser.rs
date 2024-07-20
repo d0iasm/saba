@@ -36,11 +36,11 @@ pub struct HtmlParser {
     browser: Weak<RefCell<Browser>>,
     window: Rc<RefCell<Window>>,
     mode: InsertionMode,
-    t: HtmlTokenizer,
-    /// https://html.spec.whatwg.org/multipage/parsing.html#the-stack-of-open-elements
-    stack_of_open_elements: Vec<Rc<RefCell<Node>>>,
     /// https://html.spec.whatwg.org/multipage/parsing.html#original-insertion-mode
     original_insertion_mode: InsertionMode,
+    /// https://html.spec.whatwg.org/multipage/parsing.html#the-stack-of-open-elements
+    stack_of_open_elements: Vec<Rc<RefCell<Node>>>,
+    t: HtmlTokenizer,
 }
 
 impl HtmlParser {
@@ -49,9 +49,9 @@ impl HtmlParser {
             browser: browser.clone(),
             window: Rc::new(RefCell::new(Window::new(browser))),
             mode: InsertionMode::Initial,
-            t,
-            stack_of_open_elements: Vec::new(),
             original_insertion_mode: InsertionMode::Initial,
+            stack_of_open_elements: Vec::new(),
+            t,
         }
     }
 
