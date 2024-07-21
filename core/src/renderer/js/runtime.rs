@@ -168,7 +168,6 @@ pub struct JsRuntime {
     dom_root: Option<Rc<RefCell<DomNode>>>,
     dom_modified: bool,
     url: String,
-    pub global_variables: Vec<(String, Option<RuntimeValue>)>,
     pub functions: Vec<Function>,
     pub env: Rc<RefCell<Environment>>,
 }
@@ -179,7 +178,6 @@ impl JsRuntime {
             dom_root: Some(dom_root),
             dom_modified: false,
             url,
-            global_variables: Vec::new(),
             functions: Vec::new(),
             env: Rc::new(RefCell::new(Environment::new(None))),
         }
@@ -294,7 +292,6 @@ impl JsRuntime {
                     if let Node::Identifier(id) = node.borrow() {
                         let init = self.eval(init, env.clone());
                         env.borrow_mut().add_variable(id.to_string(), init);
-                        //self.global_variables.insert(id.to_string(), init);
                     }
                 }
                 None
@@ -511,15 +508,6 @@ impl JsRuntime {
                 self.eval(&function.body.clone(), env.clone())
             }
             Node::Identifier(name) => {
-                /*
-                // find a value from global variables
-                for (var_name, var_value) in &self.global_variables {
-                    if name == var_name && var_value.is_some() {
-                        return var_value.clone();
-                    }
-                }
-                */
-
                 match env.borrow_mut().get_variable(name.to_string()) {
                     Some(v) => Some(v),
                     // first time to evaluate this identifier
@@ -643,6 +631,24 @@ mod tests {
         let ast = parser.parse_ast();
         let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
         let expected = [None, Some(RuntimeValue::Number(43))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_local_variable() {
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
+        let input = "var a=42; function foo() { var a=1; return a; } foo()+a".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let expected = [None, None, Some(RuntimeValue::Number(43))];
         let mut i = 0;
 
         for node in ast.body() {
