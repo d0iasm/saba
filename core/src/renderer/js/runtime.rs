@@ -11,6 +11,7 @@ use core::borrow::Borrow;
 use core::cell::RefCell;
 use core::fmt::{Display, Formatter};
 use core::ops::Add;
+use core::ops::Sub;
 
 #[derive(Debug, Clone)]
 /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types
@@ -76,6 +77,20 @@ impl Add<RuntimeValue> for RuntimeValue {
         }
 
         RuntimeValue::StringLiteral(self.to_string() + &rhs.to_string())
+    }
+}
+
+impl Sub<RuntimeValue> for RuntimeValue {
+    type Output = RuntimeValue;
+
+    fn sub(self, rhs: RuntimeValue) -> RuntimeValue {
+        // https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-number-subtract
+        if let (RuntimeValue::Number(left_num), RuntimeValue::Number(right_num)) = (&self, &rhs) {
+            return RuntimeValue::Number(left_num - right_num);
+        }
+
+        // NaN: Not a Number
+        RuntimeValue::Number(u64::MIN)
     }
 }
 
@@ -301,6 +316,8 @@ impl JsRuntime {
                 // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#sec-applystringornumericbinaryoperator
                 if operator == &'+' {
                     Some(left_value + right_value)
+                } else if operator == &'-' {
+                    Some(left_value - right_value)
                 } else {
                     None
                 }
@@ -580,10 +597,29 @@ mod tests {
             i += 1;
         }
     }
+
     #[test]
     fn test_add_variable_and_num() {
         let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
         let input = "var foo=42; foo+1".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let expected = [None, Some(RuntimeValue::Number(43))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_add_function_and_num() {
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
+        let input = "function foo() { return 42; } foo()+1".to_string();
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();

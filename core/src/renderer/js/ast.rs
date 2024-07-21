@@ -262,18 +262,9 @@ impl JsParser {
     /// PostfixExpression ::= LeftHandSideExpression ( PostfixOperator )?
     /// UnaryExpression ::= ( PostfixExpression | ( UnaryOperator UnaryExpression )+ )
     /// MultiplicativeExpression ::= UnaryExpression ( MultiplicativeOperator UnaryExpression )*
-    /// AdditiveExpression ::= MultiplicativeExpression ( AdditiveOperator MultiplicativeExpression )*
-    /// ShiftExpression ::= AdditiveExpression ( ShiftOperator AdditiveExpression )*
-    /// RelationalExpression ::= ShiftExpression ( RelationalOperator ShiftExpression )*
-    /// EqualityExpression  ::= RelationalExpression ( EqualityOperator RelationalExpression )*
-    /// BitwiseANDExpression ::= EqualityExpression ( BitwiseANDOperator EqualityExpression )*
-    /// BitwiseXORExpression ::= BitwiseANDExpression ( BitwiseXOROperator BitwiseANDExpression )*
-    /// BitwiseORExpression ::= BitwiseXORExpression ( BitwiseOROperator BitwiseXORExpression )*
-    /// LogicalANDExpression ::= BitwiseORExpression ( LogicalANDOperator BitwiseORExpression )*
-    /// LogicalORExpression ::= LogicalANDExpression ( LogicalOROperator LogicalANDExpression )*
     ///
-    /// ConditionalExpression ::= LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
-    fn conditional_expression(&mut self) -> Option<Rc<Node>> {
+    /// AdditiveExpression ::= MultiplicativeExpression ( AdditiveOperator MultiplicativeExpression )*
+    fn additive_expression(&mut self) -> Option<Rc<Node>> {
         let left = self.left_hand_side_expression();
 
         let t = match self.t.peek() {
@@ -304,12 +295,21 @@ impl JsParser {
         }
     }
 
+    /// ShiftExpression ::= AdditiveExpression ( ShiftOperator AdditiveExpression )*
+    /// RelationalExpression ::= ShiftExpression ( RelationalOperator ShiftExpression )*
+    /// EqualityExpression  ::= RelationalExpression ( EqualityOperator RelationalExpression )*
+    /// BitwiseANDExpression ::= EqualityExpression ( BitwiseANDOperator EqualityExpression )*
+    /// BitwiseXORExpression ::= BitwiseANDExpression ( BitwiseXOROperator BitwiseANDExpression )*
+    /// BitwiseORExpression ::= BitwiseXORExpression ( BitwiseOROperator BitwiseXORExpression )*
+    /// LogicalANDExpression ::= BitwiseORExpression ( LogicalANDOperator BitwiseORExpression )*
+    /// LogicalORExpression ::= LogicalANDExpression ( LogicalOROperator LogicalANDExpression )*
+    /// ConditionalExpression ::= LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
     /// ConditionalExpression ::= LogicalORExpression ( "?" AssignmentExpression ":" AssignmentExpression )?
     ///
     /// AssignmentExpression ::= ( LeftHandSideExpression AssignmentOperator AssignmentExpression
     ///                          | ConditionalExpression )
     fn assignment_expression(&mut self) -> Option<Rc<Node>> {
-        let expr = self.conditional_expression();
+        let expr = self.additive_expression();
 
         let t = match self.t.peek() {
             Some(token) => token,
@@ -490,7 +490,7 @@ impl JsParser {
         // consume '('
         match self.t.next() {
             Some(t) => match t {
-                Token::Punctuator(c) => assert!(c == '('),
+                Token::Punctuator(c) => assert!(c == '(', "expect ( but got {:?}", c),
                 _ => unimplemented!("function should have `(` but got {:?}", t),
             },
             None => unimplemented!("function should have `(` but got None"),
