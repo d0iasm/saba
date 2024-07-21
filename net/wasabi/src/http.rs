@@ -21,13 +21,21 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
 <head>
     <title>Example Domain Response</title>
     <meta charset="utf-8" />
+    <style>
+    #title {
+      color: red;
+    }
+    .first {
+      color: blue;
+    }
+    </style>
 </head>
 <body>
 <div>
-    <h1>Example Domain Response</h1>
+    <h1 id="title">Example Domain Response</h1>
     <p class="first">This domain is for use in illustrative examples in documents. You may use this
     domain in literature without prior coordination or asking for permission.</p>
-    <p class="second"><a href="https://www.iana.org/domains/example">More information...</a></p>
+    <p><a href="https://www.iana.org/domains/example">More information...</a></p>
     <img src="https://placehold.co/600x400"/>
     <img src="https://dummyimage.com/300"/>
 </div>

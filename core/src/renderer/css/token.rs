@@ -82,7 +82,7 @@ impl CssTokenizer {
             self.pos += 1;
             let c = self.input[self.pos];
             match c {
-                '"' => break,
+                '"' | '\'' => break,
                 _ => s.push(c),
             }
         }
