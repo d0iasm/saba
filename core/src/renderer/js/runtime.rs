@@ -168,8 +168,8 @@ pub struct JsRuntime {
     dom_root: Option<Rc<RefCell<DomNode>>>,
     dom_modified: bool,
     url: String,
-    pub functions: Vec<Function>,
-    pub env: Rc<RefCell<Environment>>,
+    functions: Vec<Function>,
+    env: Rc<RefCell<Environment>>,
 }
 
 impl JsRuntime {
