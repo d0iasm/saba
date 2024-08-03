@@ -11,9 +11,13 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::include_bytes;
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
+use noli::bitmap::bitmap_draw_rect;
+use noli::bitmap::Bitmap;
 use noli::prelude::SystemApi;
 use noli::print;
 use noli::println;
+use noli::rect::Rect;
+use noli::sheet::Sheet;
 use noli::sys::api::MouseEvent;
 use noli::sys::wasabi::Api;
 use noli::window::StringSize;
@@ -34,7 +38,7 @@ enum InputMode {
     Editing,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct WasabiUI {
     browser: Rc<RefCell<Browser>>,
     input_url: String,
@@ -42,10 +46,15 @@ pub struct WasabiUI {
     window: Window,
     // The (x, y) position to render a next display item.
     position: (i64, i64),
+    mouse_cursor: Sheet,
 }
 
 impl WasabiUI {
     pub fn new(browser: Rc<RefCell<Browser>>) -> Self {
+        let mut mouse_cursor = Sheet::new(Rect::new(0, 0, 20, 20).unwrap());
+        let bitmap = mouse_cursor.bitmap();
+        bitmap_draw_rect(bitmap, 0xff0000, 0, 0, 20, 20);
+
         Self {
             browser,
             input_url: String::new(),
@@ -60,6 +69,7 @@ impl WasabiUI {
             )
             .expect("failed to create a window"),
             position: (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
+            mouse_cursor,
         }
     }
 
@@ -79,13 +89,13 @@ impl WasabiUI {
         self.browser.clone()
     }
 
-    fn setup(&self) -> Result<(), Error> {
+    fn setup(&mut self) -> Result<(), Error> {
         self.setup_toolbar()?;
-
+        self.window.flush();
         Ok(())
     }
 
-    fn setup_toolbar(&self) -> Result<(), Error> {
+    fn setup_toolbar(&mut self) -> Result<(), Error> {
         if self
             .window
             .fill_rect(LIGHTGREY, 0, 0, WINDOW_WIDTH, TOOLBAR_HEIGHT)
@@ -255,6 +265,11 @@ impl WasabiUI {
         handle_url: fn(String) -> Result<HttpResponse, Error>,
     ) -> Result<(), Error> {
         if let Some(MouseEvent { button, position }) = Api::get_mouse_cursor_info() {
+            self.window.flush_area(self.mouse_cursor.rect());
+            self.mouse_cursor.set_position(position.x, position.y);
+            self.window.flush_area(self.mouse_cursor.rect());
+            self.mouse_cursor.flush();
+
             if button.l() || button.c() || button.r() {
                 let relative_pos = (
                     position.x - WINDOW_INIT_X_POS,
@@ -439,7 +454,7 @@ impl WasabiUI {
 
                     self.browser.borrow_mut().push_url_for_subresource(src);
 
-                    let data = include_bytes!("./test.bmp");
+                    let data = include_bytes!("./youtube.bmp");
                     let bmp = match Bmp::<Rgb888>::from_slice(data) {
                         Ok(bmp) => bmp,
                         Err(e) => {
@@ -474,6 +489,8 @@ impl WasabiUI {
             print!("{}\n", log.to_string());
         }
         self.browser.borrow_mut().clear_logs();
+
+        self.window.flush();
 
         Ok(())
     }
