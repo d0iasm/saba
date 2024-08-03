@@ -12,7 +12,6 @@ use core::cell::RefCell;
 use core::include_bytes;
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
 use noli::bitmap::bitmap_draw_rect;
-use noli::bitmap::Bitmap;
 use noli::prelude::SystemApi;
 use noli::print;
 use noli::println;
@@ -53,7 +52,7 @@ impl WasabiUI {
     pub fn new(browser: Rc<RefCell<Browser>>) -> Self {
         let mut mouse_cursor = Sheet::new(Rect::new(0, 0, 20, 20).unwrap());
         let bitmap = mouse_cursor.bitmap();
-        bitmap_draw_rect(bitmap, 0xff0000, 0, 0, 20, 20);
+        bitmap_draw_rect(bitmap, 0xff0000, 0, 0, 20, 20).expect("failed to draw a cursor");
 
         Self {
             browser,
@@ -108,7 +107,7 @@ impl WasabiUI {
 
         if self
             .window
-            .draw_line(GREY, 0, TOOLBAR_HEIGHT, WINDOW_WIDTH, TOOLBAR_HEIGHT)
+            .draw_line(GREY, 0, TOOLBAR_HEIGHT, WINDOW_WIDTH - 1, TOOLBAR_HEIGHT)
             .is_err()
         {
             return Err(Error::InvalidUI(
@@ -121,8 +120,8 @@ impl WasabiUI {
                 DARKGREY,
                 0,
                 TOOLBAR_HEIGHT + 1,
-                WINDOW_WIDTH,
-                TOOLBAR_HEIGHT,
+                WINDOW_WIDTH - 1,
+                TOOLBAR_HEIGHT + 1,
             )
             .is_err()
         {
@@ -512,9 +511,20 @@ impl WasabiUI {
             .is_err()
         {
             return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
+                "failed to update an address bar".to_string(),
             ));
         }
+
+        self.window.flush_area(
+            // This rect should be the absolute potision.
+            Rect::new(
+                WINDOW_INIT_X_POS,
+                WINDOW_INIT_Y_POS + TITLE_BAR_HEIGHT,
+                WINDOW_WIDTH,
+                TOOLBAR_HEIGHT,
+            )
+            .expect("failed to create a rect for the address bar"),
+        );
 
         Ok(())
     }
@@ -527,7 +537,7 @@ impl WasabiUI {
             .is_err()
         {
             return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
+                "failed to clear an address bar".to_string(),
             ));
         }
 
@@ -550,7 +560,7 @@ impl WasabiUI {
             .is_err()
         {
             return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
+                "failed to clear a content area".to_string(),
             ));
         }
 

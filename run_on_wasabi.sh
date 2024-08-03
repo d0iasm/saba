@@ -34,7 +34,10 @@ then
   echo $OS_PATH" exists"
   echo "pulling new changes..."
   cd $OS_PATH
-  git pull
+  git fetch --all
+  git branch backup
+  git reset --hard origin/main
+  git branch -D backup
 else
   echo $OS_PATH" doesn't exist"
   echo "cloning wasabi project..."
@@ -71,7 +74,6 @@ else
   sed "s/^members = \[/members = \[\n    \"app\/$APP_NAME\",/" Cargo.toml.original >| Cargo.toml
 fi
 
-make
 make run
 
 cd $HOME_PATH
