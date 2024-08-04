@@ -12,23 +12,18 @@ gui = []
 wasabi = ["dep:net_wasabi", "dep:ui_wasabi", "dep:noli"]
 
 [[bin]]
-name = "httpclient"
-path = "main/httpclient_wasabi.rs"
-required-features = ["wasabi"]
-
-[[bin]]
 name = "saba"
-path = "main/saba_wasabi.rs"
+path = "src/saba_wasabi.rs"
 required-features = ["wasabi"]
 
 [[bin]]
 name = "saba_gui"
-path = "main/saba_gui.rs"
+path = "src/saba_gui.rs"
 required-features = ["gui"]
 
 [[bin]]
 name = "saba_cui"
-path = "main/saba_cui.rs"
+path = "src/saba_cui.rs"
 required-features = ["cui"]
 
 [dependencies]
@@ -42,4 +37,3 @@ ui_cui = { path = "./ui/cui", optional = true }
 net_wasabi = { path = "./net/wasabi", optional = true }
 ui_wasabi = { path = "./ui/wasabi", optional = true }
 noli = { git = "https://github.com/hikalium/wasabi.git", optional = true }
-#noli = { path = "./../../noli", optional = true }

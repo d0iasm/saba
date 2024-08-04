@@ -3,19 +3,7 @@
 HOME_PATH=$PWD
 TARGET_PATH=$PWD"/build"
 OS_PATH=$TARGET_PATH"/wasabi"
-
-# if --app param is passed to the script, use it
-if [ $1 == "--app" ]
-then
-  if [[ -z "$2" ]]; then
-    APP_NAME="saba"
-  else
-    APP_NAME=$2
-  fi
-else
-  APP_NAME="saba"
-fi
-
+APP_NAME="saba"
 APP_PATH=$OS_PATH"/app/"$APP_NAME
 
 # execute `mkdir build/` if it doesn't exist
@@ -48,7 +36,7 @@ fi
 # go back to the application top directory
 cd $HOME_PATH
 
-# create app/saba in Wasabi OS if it doesn't exist
+# create $APP_PATH in Wasabi OS if it doesn't exist
 if [ -d $APP_PATH ]
 then
   echo $APP_PATH" exists"
@@ -58,21 +46,22 @@ else
 fi
 
 # copy an application except `target`, `.git` and `build` directories to Wasabi
-echo "copying the $APP_NAME application to wasabi OS..."
+echo "copying the project to wasabi OS..."
 cp -R `ls -A ./ | grep -v "target" | grep -v ".git" | grep -v "build"` $APP_PATH
 
 cd $OS_PATH
 
-# update Cargo.toml to add an app
+# update Cargo.toml to add $APP_NAME package
 # this is very hacky and not stable
 mv Cargo.toml Cargo.toml.original
-if grep -Fq "app/"$APP_NAME Cargo.toml.original
+if [ $(grep -c "app/$APP_NAME" Cargo.toml.original) -eq 1 ]
 then
-  echo "app/$APP_NAME already exists in Cargo.toml"
+  echo "$APP_PATH already exists in Cargo.toml"
   mv Cargo.toml.original Cargo.toml
 else
   sed "s/^members = \[/members = \[\n    \"app\/$APP_NAME\",/" Cargo.toml.original >| Cargo.toml
 fi
+rm Cargo.toml.original
 
 make run
 
