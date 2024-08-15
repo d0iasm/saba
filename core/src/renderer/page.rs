@@ -51,7 +51,6 @@ impl Subresource {
 #[derive(Debug, Clone)]
 pub struct Page {
     browser: Weak<RefCell<Browser>>,
-    url: Option<String>,
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/frame/frame.h;drc=ac83a5a2d3c04763d86ce16d92f3904cc9566d3a;bpv=1;bpt=1;l=505
     frame: Option<Rc<RefCell<Window>>>,
     style: Option<StyleSheet>,
@@ -61,17 +60,10 @@ pub struct Page {
     modified: bool,
 }
 
-impl Default for Page {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Page {
     pub fn new() -> Self {
         Self {
             browser: Weak::new(),
-            url: None,
             frame: None,
             style: None,
             layout_view: None,
@@ -152,10 +144,6 @@ impl Page {
         self.set_layout_view();
 
         self.paint_tree();
-    }
-
-    pub fn set_url(&mut self, url: String) {
-        self.url = Some(url);
     }
 
     pub fn set_browser(&mut self, browser: Weak<RefCell<Browser>>) {
