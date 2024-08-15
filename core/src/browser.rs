@@ -12,7 +12,7 @@ use core::cell::RefCell;
 pub struct Browser {
     // TODO: support multiple tabs/pages. This browser currently supports only one page.
     active_page_index: usize,
-    page: Vec<Rc<RefCell<Page>>>,
+    pages: Vec<Rc<RefCell<Page>>>,
     logs: Vec<Log>,
 }
 
@@ -22,22 +22,22 @@ impl Browser {
 
         let browser = Rc::new(RefCell::new(Self {
             active_page_index: 0,
-            page: Vec::new(),
+            pages: Vec::new(),
             logs: Vec::new(),
         }));
 
         page.set_browser(Rc::downgrade(&browser));
-        browser.borrow_mut().page.push(Rc::new(RefCell::new(page)));
+        browser.borrow_mut().pages.push(Rc::new(RefCell::new(page)));
 
         browser
     }
 
     pub fn current_page(&self) -> Rc<RefCell<Page>> {
-        self.page[self.active_page_index].clone()
+        self.pages[self.active_page_index].clone()
     }
 
     pub fn push_url_for_subresource(&mut self, src: String) {
-        self.page[self.active_page_index]
+        self.pages[self.active_page_index]
             .borrow_mut()
             .push_url_for_subresource(src);
     }
