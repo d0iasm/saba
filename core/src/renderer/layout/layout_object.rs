@@ -133,7 +133,7 @@ impl LayoutObject {
                         continue;
                     }
 
-                    if let ComponentValue::InputToken(CssToken::HashToken(color_code)) =
+                    if let ComponentValue::PreservedToken(CssToken::HashToken(color_code)) =
                         &declaration.value
                     {
                         let color = match Color::from_code(color_code) {
@@ -159,7 +159,7 @@ impl LayoutObject {
                         self.style.set_color(color);
                     }
 
-                    if let ComponentValue::InputToken(CssToken::HashToken(color_code)) =
+                    if let ComponentValue::PreservedToken(CssToken::HashToken(color_code)) =
                         &declaration.value
                     {
                         let color = match Color::from_code(color_code) {

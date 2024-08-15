@@ -175,9 +175,9 @@ pub enum ComponentValue {
     /// https://www.w3.org/TR/css-values-3/#numeric-types
     /// This is one of basic data types.
     Number(f64),
-    /// https://www.w3.org/TR/css-syntax-3/#current-input-token
+    /// https://www.w3.org/TR/css-syntax-3/#preserved-tokens
     /// The token from the list of tokens produced by the tokenizer.
-    InputToken(CssToken),
+    PreservedToken(CssToken),
 }
 
 #[derive(Debug, Clone)]
@@ -218,7 +218,7 @@ impl CssParser {
         match token {
             CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
             CssToken::Number(num) => ComponentValue::Number(num),
-            _ => ComponentValue::InputToken(token),
+            _ => ComponentValue::PreservedToken(token),
         }
     }
 
@@ -447,5 +447,130 @@ impl CssParser {
 
         // 4. Return the stylesheet.
         sheet
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloc::rc::Rc;
+    use alloc::vec;
+
+    #[test]
+    fn test_empty() {
+        let browser = Browser::new();
+        let style = "".to_string();
+        let t = CssTokenizer::new(style);
+        let cssom = CssParser::new(Rc::downgrade(&browser), t).parse_stylesheet();
+
+        assert_eq!(cssom.rules.len(), 0);
+    }
+
+    #[test]
+    fn test_one_rule() {
+        let browser = Browser::new();
+        let style = "p { color: red; }".to_string();
+        let t = CssTokenizer::new(style);
+        let cssom = CssParser::new(Rc::downgrade(&browser), t).parse_stylesheet();
+
+        let mut rule = QualifiedRule::default();
+        rule.set_selector(Selector::TypeSelector("p".to_string()));
+        let mut declaration = Declaration::default();
+        declaration.set_property("color".to_string());
+        declaration.set_value(ComponentValue::Keyword("red".to_string()));
+        rule.set_declarations(vec![declaration]);
+
+        let expected = [rule];
+        assert_eq!(cssom.rules.len(), expected.len());
+
+        let mut i = 0;
+        for rule in &cssom.rules {
+            assert_eq!(&expected[i], rule);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_id_selector() {
+        let browser = Browser::new();
+        let style = "#id { color: red; }".to_string();
+        let t = CssTokenizer::new(style);
+        let cssom = CssParser::new(Rc::downgrade(&browser), t).parse_stylesheet();
+
+        let mut rule = QualifiedRule::default();
+        rule.set_selector(Selector::IdSelector("id".to_string()));
+        let mut declaration = Declaration::default();
+        declaration.set_property("color".to_string());
+        declaration.set_value(ComponentValue::Keyword("red".to_string()));
+        rule.set_declarations(vec![declaration]);
+
+        let expected = [rule];
+        assert_eq!(cssom.rules.len(), expected.len());
+
+        let mut i = 0;
+        for rule in &cssom.rules {
+            assert_eq!(&expected[i], rule);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_class_selector() {
+        let browser = Browser::new();
+        let style = ".class { color: red; }".to_string();
+        let t = CssTokenizer::new(style);
+        let cssom = CssParser::new(Rc::downgrade(&browser), t).parse_stylesheet();
+
+        let mut rule = QualifiedRule::default();
+        rule.set_selector(Selector::ClassSelector("class".to_string()));
+        let mut declaration = Declaration::default();
+        declaration.set_property("color".to_string());
+        declaration.set_value(ComponentValue::Keyword("red".to_string()));
+        rule.set_declarations(vec![declaration]);
+
+        let expected = [rule];
+        assert_eq!(cssom.rules.len(), expected.len());
+
+        let mut i = 0;
+        for rule in &cssom.rules {
+            assert_eq!(&expected[i], rule);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_multiple_rules() {
+        let browser = Browser::new();
+        let style = "p { content: \"Hey\"; } h1 { font-size: 40; color: blue; }".to_string();
+        let t = CssTokenizer::new(style);
+        let cssom = CssParser::new(Rc::downgrade(&browser), t).parse_stylesheet();
+
+        let mut rule1 = QualifiedRule::default();
+        rule1.set_selector(Selector::TypeSelector("p".to_string()));
+        let mut declaration1 = Declaration::default();
+        declaration1.set_property("content".to_string());
+        declaration1.set_value(ComponentValue::PreservedToken(CssToken::StringToken(
+            "Hey".to_string(),
+        )));
+        rule1.set_declarations(vec![declaration1]);
+
+        let mut rule2 = QualifiedRule::default();
+        rule2.set_selector(Selector::TypeSelector("h1".to_string()));
+        let mut declaration2 = Declaration::default();
+        declaration2.set_property("font-size".to_string());
+        declaration2.set_value(ComponentValue::Number(40.0));
+        let mut declaration3 = Declaration::default();
+        declaration3.set_property("color".to_string());
+        declaration3.set_value(ComponentValue::Keyword("blue".to_string()));
+        rule2.set_declarations(vec![declaration2, declaration3]);
+
+        let expected = [rule1, rule2];
+        assert_eq!(cssom.rules.len(), expected.len());
+
+        let mut i = 0;
+        for rule in &cssom.rules {
+            assert_eq!(&expected[i], rule);
+            i += 1;
+        }
     }
 }

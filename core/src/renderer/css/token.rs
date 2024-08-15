@@ -262,16 +262,55 @@ mod tests {
     }
 
     #[test]
-    fn test_multiple_rules() {
-        // The value like "40px" is not supported yet.
-        let style = "p { color: red; } h1 { font-size: 40; color: blue; }".to_string();
+    fn test_id_selector() {
+        let style = "#id { color: red; }".to_string();
         let mut t = CssTokenizer::new(style);
         let expected = [
-            CssToken::Ident("p".to_string()),
+            CssToken::HashToken("#id".to_string()),
             CssToken::OpenCurly,
             CssToken::Ident("color".to_string()),
             CssToken::Colon,
             CssToken::Ident("red".to_string()),
+            CssToken::SemiColon,
+            CssToken::CloseCurly,
+        ];
+        for e in expected {
+            assert_eq!(Some(e.clone()), t.next());
+        }
+        assert!(t.next().is_none());
+    }
+
+    #[test]
+    fn test_class_selector() {
+        let style = ".class { color: red; }".to_string();
+        let mut t = CssTokenizer::new(style);
+        let expected = [
+            CssToken::Delim('.'),
+            CssToken::Ident("class".to_string()),
+            CssToken::OpenCurly,
+            CssToken::Ident("color".to_string()),
+            CssToken::Colon,
+            CssToken::Ident("red".to_string()),
+            CssToken::SemiColon,
+            CssToken::CloseCurly,
+        ];
+        for e in expected {
+            assert_eq!(Some(e.clone()), t.next());
+        }
+        assert!(t.next().is_none());
+    }
+
+    #[test]
+    fn test_multiple_rules() {
+        // The value like "40px" is not supported yet.
+        let style = "p { content: \"Hey\"; } h1 { font-size: 40; color: blue; }".to_string();
+        let mut t = CssTokenizer::new(style);
+        let expected = [
+            CssToken::Ident("p".to_string()),
+            CssToken::OpenCurly,
+            CssToken::Ident("content".to_string()),
+            CssToken::Colon,
+            CssToken::StringToken("Hey".to_string()),
             CssToken::SemiColon,
             CssToken::CloseCurly,
             CssToken::Ident("h1".to_string()),
