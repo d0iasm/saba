@@ -167,17 +167,15 @@ impl Function {
 pub struct JsRuntime {
     dom_root: Option<Rc<RefCell<DomNode>>>,
     dom_modified: bool,
-    url: String,
     functions: Vec<Function>,
     env: Rc<RefCell<Environment>>,
 }
 
 impl JsRuntime {
-    pub fn new(dom_root: Rc<RefCell<DomNode>>, url: String) -> Self {
+    pub fn new(dom_root: Rc<RefCell<DomNode>>) -> Self {
         Self {
             dom_root: Some(dom_root),
             dom_modified: false,
-            url,
             functions: Vec::new(),
             env: Rc::new(RefCell::new(Environment::new(None))),
         }
@@ -402,6 +400,9 @@ impl JsRuntime {
                             });
                         }
 
+                        /*
+                        TODO: support window.location.href.
+                        // dom_root.window().location()
                         if object_value == RuntimeValue::StringLiteral("location".to_string()) {
                             if property_value == RuntimeValue::StringLiteral("href".to_string()) {
                                 //println!("[location.href] {:?}", self.url);
@@ -417,6 +418,7 @@ impl JsRuntime {
                                 return Some(RuntimeValue::StringLiteral(hash.clone()));
                             }
                         }
+                        */
 
                         // return a concatenated string such as "console.log"
                         Some(
@@ -539,7 +541,7 @@ mod tests {
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
-        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let mut runtime = JsRuntime::new(dom);
         let expected = [Some(RuntimeValue::Number(42))];
         let mut i = 0;
 
@@ -557,7 +559,7 @@ mod tests {
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
-        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let mut runtime = JsRuntime::new(dom);
         let expected = [Some(RuntimeValue::Number(3))];
         let mut i = 0;
 
@@ -575,7 +577,7 @@ mod tests {
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
-        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let mut runtime = JsRuntime::new(dom);
         let expected = [Some(RuntimeValue::Number(1))];
         let mut i = 0;
 
@@ -593,7 +595,7 @@ mod tests {
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
-        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let mut runtime = JsRuntime::new(dom);
         let expected = [None];
         let mut i = 0;
 
@@ -611,7 +613,7 @@ mod tests {
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
-        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let mut runtime = JsRuntime::new(dom);
         let expected = [None, Some(RuntimeValue::Number(43))];
         let mut i = 0;
 
@@ -629,7 +631,7 @@ mod tests {
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
-        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let mut runtime = JsRuntime::new(dom);
         let expected = [None, Some(RuntimeValue::Number(43))];
         let mut i = 0;
 
@@ -647,7 +649,7 @@ mod tests {
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
-        let mut runtime = JsRuntime::new(dom, "http://test.a".to_string());
+        let mut runtime = JsRuntime::new(dom);
         let expected = [None, None, Some(RuntimeValue::Number(43))];
         let mut i = 0;
 

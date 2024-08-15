@@ -212,12 +212,7 @@ impl Page {
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
 
-        let url = match self.url.clone() {
-            Some(url) => url,
-            None => return,
-        };
-
-        let mut runtime = JsRuntime::new(dom, url);
+        let mut runtime = JsRuntime::new(dom);
         runtime.execute(&ast);
 
         self.modified = runtime.dom_modified();

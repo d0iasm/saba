@@ -17,6 +17,8 @@ pub struct Window {
     _browser: Weak<RefCell<Browser>>,
     _page: Weak<RefCell<Page>>,
     document: Rc<RefCell<Node>>,
+    // TODO: support location
+    //_location: Location,
 }
 
 impl Window {
