@@ -7,7 +7,8 @@
 //! https://www.w3.org/TR/css-syntax-3/#parsing
 
 use crate::browser::Browser;
-use crate::renderer::css::token::*;
+use crate::renderer::css::token::CssToken;
+use crate::renderer::css::token::CssTokenizer;
 use crate::utils::console_warning;
 use alloc::format;
 use alloc::rc::Weak;
@@ -137,6 +138,7 @@ pub enum Selector {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+/// https://www.w3.org/TR/css-syntax-3/#declaration
 pub struct Declaration {
     pub property: String,
     pub value: ComponentValue,
@@ -148,7 +150,6 @@ impl Default for Declaration {
     }
 }
 
-/// https://www.w3.org/TR/css-syntax-3/#declaration
 impl Declaration {
     pub fn new() -> Self {
         Self {

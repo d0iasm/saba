@@ -26,7 +26,7 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
       color: red;
     }
     .first {
-      color: blue;
+      color: #0000ff;
     }
     </style>
 </head>
