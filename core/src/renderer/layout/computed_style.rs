@@ -2,10 +2,12 @@
 //! https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/style/computed_style.h
 //! https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Cascade_and_inheritance
 
+use crate::error::Error;
 use crate::renderer::dom::node::ElementKind;
 use crate::renderer::dom::node::Node;
 use crate::renderer::dom::node::NodeKind;
 use crate::renderer::layout::color::*;
+use alloc::format;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 
@@ -176,6 +178,10 @@ impl ComputedStyle {
         self.height.expect("failed to access CSS property: height")
     }
 
+    pub fn set_display(&mut self, display: DisplayType) {
+        self.display = Some(display);
+    }
+
     pub fn display(&self) -> DisplayType {
         self.display
             .expect("failed to access CSS property: display")
@@ -276,6 +282,18 @@ impl DisplayType {
                 }
             }
             NodeKind::Text(_) => DisplayType::Inline,
+        }
+    }
+
+    pub fn from_str(s: &str) -> Result<Self, Error> {
+        match s {
+            "block" => Ok(Self::Block),
+            "inline" => Ok(Self::Inline),
+            "none" => Ok(Self::DisplayNone),
+            _ => Err(Error::UnexpectedInput(format!(
+                "display {:?} is not supported yet",
+                s
+            ))),
         }
     }
 }

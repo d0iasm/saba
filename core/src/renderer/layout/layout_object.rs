@@ -175,6 +175,18 @@ impl LayoutObject {
                         self.style.set_color(color);
                     }
                 }
+                "display" => {
+                    if let ComponentValue::Keyword(value) = declaration.value {
+                        let display_type = match DisplayType::from_str(&value) {
+                            Ok(display_type) => display_type,
+                            Err(e) => {
+                                console_error(&self.browser, format!("{:?}", e));
+                                DisplayType::DisplayNone
+                            }
+                        };
+                        self.style.set_display(display_type)
+                    }
+                }
                 "height" => {
                     if let ComponentValue::Number(value) = declaration.value {
                         // TODO: remove this? because layout() updates size and style.

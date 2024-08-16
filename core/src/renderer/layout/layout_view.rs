@@ -67,11 +67,21 @@ fn build_layout_tree(
     parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
     cssom: &StyleSheet,
 ) -> Option<Rc<RefCell<LayoutObject>>> {
-    let layout_object = create_layout_object(browser.clone(), node, parent_obj, cssom);
+    // Try to create a LayoutObject. If `display:none`, `layout_object` is None.
+    let mut target_node = node.clone();
+    let mut layout_object = create_layout_object(browser.clone(), node, parent_obj, cssom);
+    // If `layout_object` is None, try to create a LayoutObject with the next sibling.
+    while layout_object.is_none() {
+        if let Some(n) = target_node {
+            target_node = n.borrow().next_sibling().clone();
+            layout_object = create_layout_object(browser.clone(), &target_node, parent_obj, cssom);
+        } else {
+            // Return here because a DOM node doesn't exist (= the end of DOM tree).
+            return layout_object;
+        }
+    }
 
-    layout_object.as_ref()?;
-
-    if let Some(n) = node {
+    if let Some(n) = target_node {
         let original_first_child = n.borrow().first_child();
         let original_next_sibling = n.borrow().next_sibling();
         let mut first_child = build_layout_tree(

@@ -28,17 +28,19 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
     .first {
       color: #0000ff;
     }
+    .hidden {
+      display: none;
+    }
     </style>
 </head>
 <body>
-<div>
     <h1 id="title">Example Domain Response</h1>
     <p class="first">This domain is for use in illustrative examples in documents. You may use this
     domain in literature without prior coordination or asking for permission.</p>
     <p><a href="https://www.iana.org/domains/example">More information...</a></p>
+    <p class="hidden">none</p>
     <img src="https://placehold.co/600x400"/>
     <img src="https://dummyimage.com/300"/>
-</div>
 </body>
 </html>
 "#;
