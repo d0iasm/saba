@@ -63,15 +63,11 @@ pub fn create_layout_object(
                     .inherit_style(&parent.borrow().style());
             }
 
-            let display_type = layout_object.borrow().style().display();
-            if display_type == DisplayType::DisplayNone {
+            if layout_object.borrow().style().display() == DisplayType::DisplayNone {
                 return None;
             }
 
-            let kind = layout_object.borrow().kind();
-            layout_object
-                .borrow_mut()
-                .set_kind(layout_object_kind_from_display(kind, display_type));
+            layout_object.borrow_mut().update_kind();
             Some(layout_object)
         }
         None => None,
@@ -83,36 +79,6 @@ pub enum LayoutObjectKind {
     Block,
     Inline,
     Text,
-}
-
-fn layout_object_kind_by_node(node: &Rc<RefCell<Node>>) -> LayoutObjectKind {
-    match node.borrow().kind() {
-        NodeKind::Document => panic!("should not create a layout object for a Document node"),
-        NodeKind::Element(e) => {
-            // Handle a <body> as a block element for simplicity.
-            if e.is_block_element() || e.kind() == ElementKind::Body {
-                LayoutObjectKind::Block
-            } else {
-                LayoutObjectKind::Inline
-            }
-        }
-        NodeKind::Text(_) => LayoutObjectKind::Text,
-    }
-}
-
-fn layout_object_kind_from_display(
-    kind: LayoutObjectKind,
-    display: DisplayType,
-) -> LayoutObjectKind {
-    if kind == LayoutObjectKind::Text {
-        return kind;
-    }
-
-    match display {
-        DisplayType::Block => LayoutObjectKind::Block,
-        DisplayType::Inline => LayoutObjectKind::Inline,
-        DisplayType::DisplayNone => panic!("should not be reached here"),
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -136,7 +102,7 @@ impl LayoutObject {
     fn new(browser: Weak<RefCell<Browser>>, node: Rc<RefCell<Node>>) -> Self {
         Self {
             browser,
-            kind: layout_object_kind_by_node(&node),
+            kind: LayoutObjectKind::Block,
             node: node.clone(),
             first_child: None,
             next_sibling: None,
@@ -150,8 +116,21 @@ impl LayoutObject {
         self.node.clone()
     }
 
-    pub fn set_kind(&mut self, kind: LayoutObjectKind) {
-        self.kind = kind;
+    pub fn update_kind(&mut self) {
+        match self.node_kind() {
+            NodeKind::Document => panic!("should not create a layout object for a Document node"),
+            NodeKind::Element(_) => {
+                let display = self.style.display();
+                match display {
+                    DisplayType::Block => self.kind = LayoutObjectKind::Block,
+                    DisplayType::Inline => self.kind = LayoutObjectKind::Inline,
+                    DisplayType::DisplayNone => {
+                        panic!("should not create a layout object for display:none")
+                    }
+                }
+            }
+            NodeKind::Text(_) => self.kind = LayoutObjectKind::Text,
+        }
     }
 
     pub fn kind(&self) -> LayoutObjectKind {
@@ -325,9 +304,12 @@ impl LayoutObject {
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
     pub fn inherit_style(&mut self, parent_style: &ComputedStyle) {
         // This may be a hacky way to inherit.
-        if self.kind() == LayoutObjectKind::Text {
-            // Now, only text object inherits CSS properties from its parent.
-            self.style.inherit(parent_style);
+        match self.node_kind() {
+            NodeKind::Text(_) => {
+                // Now, only text object inherits CSS properties from its parent.
+                self.style.inherit(parent_style);
+            }
+            _ => {}
         }
     }
 
