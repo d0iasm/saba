@@ -52,6 +52,21 @@ fn layout_object_kind_by_node(node: &Rc<RefCell<Node>>) -> LayoutObjectKind {
     }
 }
 
+pub fn layout_object_kind_from_display(
+    kind: LayoutObjectKind,
+    display: DisplayType,
+) -> LayoutObjectKind {
+    if kind == LayoutObjectKind::Text {
+        return kind;
+    }
+
+    match display {
+        DisplayType::Block => LayoutObjectKind::Block,
+        DisplayType::Inline => LayoutObjectKind::Inline,
+        DisplayType::DisplayNone => panic!("should not be reached here"),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LayoutObject {
     browser: Weak<RefCell<Browser>>,
@@ -85,6 +100,10 @@ impl LayoutObject {
 
     pub fn node(&self) -> Rc<RefCell<Node>> {
         self.node.clone()
+    }
+
+    pub fn set_kind(&mut self, kind: LayoutObjectKind) {
+        self.kind = kind;
     }
 
     pub fn kind(&self) -> LayoutObjectKind {

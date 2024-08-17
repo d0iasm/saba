@@ -10,6 +10,7 @@ use crate::renderer::dom::api::get_target_element_node;
 use crate::renderer::dom::node::ElementKind;
 use crate::renderer::dom::node::Node;
 use crate::renderer::layout::computed_style::*;
+use crate::renderer::layout::layout_object::layout_object_kind_from_display;
 use crate::renderer::layout::layout_object::LayoutObject;
 use crate::renderer::layout::layout_object::LayoutObjectKind;
 use crate::renderer::layout::layout_point::LayoutPoint;
@@ -50,10 +51,15 @@ fn create_layout_object(
                     .inherit_style(&parent.borrow().style());
             }
 
-            if layout_object.borrow().style().display() == DisplayType::DisplayNone {
+            let display_type = layout_object.borrow().style().display();
+            if display_type == DisplayType::DisplayNone {
                 return None;
             }
 
+            let kind = layout_object.borrow().kind();
+            layout_object
+                .borrow_mut()
+                .set_kind(layout_object_kind_from_display(kind, display_type));
             Some(layout_object)
         }
         None => None,
