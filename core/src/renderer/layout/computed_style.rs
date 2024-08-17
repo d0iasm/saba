@@ -275,8 +275,7 @@ impl DisplayType {
         match &node.borrow().kind() {
             NodeKind::Document => DisplayType::Block,
             NodeKind::Element(e) => {
-                // Handle a <body> as a block element for simplicity.
-                if e.is_block_element() || e.kind() == ElementKind::Body {
+                if e.is_block_element() {
                     DisplayType::Block
                 } else {
                     DisplayType::Inline

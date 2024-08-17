@@ -67,6 +67,7 @@ pub fn create_layout_object(
                 return None;
             }
 
+            // Set a correct LayoutObjectKind.
             layout_object.borrow_mut().update_kind();
             Some(layout_object)
         }

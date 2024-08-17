@@ -269,7 +269,8 @@ impl Element {
     pub fn is_block_element(&self) -> bool {
         match self.kind {
             // https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements#elements
-            ElementKind::H1
+            ElementKind::Body
+            | ElementKind::H1
             | ElementKind::H2
             | ElementKind::P
             | ElementKind::Pre
