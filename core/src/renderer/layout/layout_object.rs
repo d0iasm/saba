@@ -12,6 +12,7 @@ use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::ComponentValue;
 use crate::renderer::css::cssom::Declaration;
 use crate::renderer::css::cssom::Selector;
+use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::css::token::CssToken;
 use crate::renderer::dom::node::ElementKind;
 use crate::renderer::dom::node::Node;
@@ -29,6 +30,53 @@ use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::cell::RefCell;
+
+pub fn create_layout_object(
+    browser: Weak<RefCell<Browser>>,
+    node: &Option<Rc<RefCell<Node>>>,
+    parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
+    cssom: &StyleSheet,
+) -> Option<Rc<RefCell<LayoutObject>>> {
+    match node {
+        Some(n) => {
+            let layout_object =
+                Rc::new(RefCell::new(LayoutObject::new(browser.clone(), n.clone())));
+
+            // Apply CSS rules to LayoutObject.
+            for rule in &cssom.rules {
+                if layout_object.borrow().is_node_selected(&rule.selector) {
+                    layout_object
+                        .borrow_mut()
+                        .cascading_style(rule.declarations.clone());
+                }
+            }
+
+            // Apply a default value to a property.
+            {
+                layout_object.borrow_mut().defaulting_style(n);
+            }
+
+            // Inherit a parent CSS style.
+            if let Some(parent) = parent_obj {
+                layout_object
+                    .borrow_mut()
+                    .inherit_style(&parent.borrow().style());
+            }
+
+            let display_type = layout_object.borrow().style().display();
+            if display_type == DisplayType::DisplayNone {
+                return None;
+            }
+
+            let kind = layout_object.borrow().kind();
+            layout_object
+                .borrow_mut()
+                .set_kind(layout_object_kind_from_display(kind, display_type));
+            Some(layout_object)
+        }
+        None => None,
+    }
+}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum LayoutObjectKind {
@@ -52,7 +100,7 @@ fn layout_object_kind_by_node(node: &Rc<RefCell<Node>>) -> LayoutObjectKind {
     }
 }
 
-pub fn layout_object_kind_from_display(
+fn layout_object_kind_from_display(
     kind: LayoutObjectKind,
     display: DisplayType,
 ) -> LayoutObjectKind {
@@ -85,7 +133,7 @@ pub struct LayoutObject {
 }
 
 impl LayoutObject {
-    pub fn new(browser: Weak<RefCell<Browser>>, node: Rc<RefCell<Node>>) -> Self {
+    fn new(browser: Weak<RefCell<Browser>>, node: Rc<RefCell<Node>>) -> Self {
         Self {
             browser,
             kind: layout_object_kind_by_node(&node),
