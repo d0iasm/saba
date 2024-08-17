@@ -722,7 +722,6 @@ mod tests {
         let t = HtmlTokenizer::new(html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
         let document = window.borrow().document();
-
         assert_eq!(
             Rc::new(RefCell::new(Node::new(NodeKind::Document))),
             document

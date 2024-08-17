@@ -88,8 +88,8 @@ pub struct LayoutObject {
     kind: LayoutObjectKind,
     // Similar structure with a DOM node.
     node: Rc<RefCell<Node>>,
-    pub first_child: Option<Rc<RefCell<LayoutObject>>>,
-    pub next_sibling: Option<Rc<RefCell<LayoutObject>>>,
+    first_child: Option<Rc<RefCell<LayoutObject>>>,
+    next_sibling: Option<Rc<RefCell<LayoutObject>>>,
     // CSS information.
     style: ComputedStyle,
     // Layout information.
@@ -97,6 +97,12 @@ pub struct LayoutObject {
     point: LayoutPoint,
     // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_box.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=2404
     size: LayoutSize,
+}
+
+impl PartialEq for LayoutObject {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
 }
 
 impl LayoutObject {
@@ -142,8 +148,16 @@ impl LayoutObject {
         self.node.borrow().kind().clone()
     }
 
+    pub fn set_first_child(&mut self, first_child: Option<Rc<RefCell<LayoutObject>>>) {
+        self.first_child = first_child;
+    }
+
     pub fn first_child(&self) -> Option<Rc<RefCell<LayoutObject>>> {
         self.first_child.as_ref().cloned()
+    }
+
+    pub fn set_next_sibling(&mut self, next_sibling: Option<Rc<RefCell<LayoutObject>>>) {
+        self.next_sibling = next_sibling;
     }
 
     pub fn next_sibling(&self) -> Option<Rc<RefCell<LayoutObject>>> {
