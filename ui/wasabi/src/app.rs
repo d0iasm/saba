@@ -8,6 +8,7 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::include_bytes;
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
+use noli::error::Result as OsResult;
 use noli::prelude::SystemApi;
 use noli::print;
 use noli::println;
@@ -16,6 +17,7 @@ use noli::sys::api::MouseEvent;
 use noli::sys::wasabi::Api;
 use noli::window::StringSize;
 use noli::window::Window;
+use saba_core::renderer::layout::layout_point;
 use saba_core::{
     browser::Browser,
     constants::*,
@@ -80,141 +82,51 @@ impl WasabiUI {
     }
 
     fn setup(&mut self) -> Result<(), Error> {
-        self.setup_toolbar()?;
+        if let Err(error) = self.setup_toolbar() {
+            return Err(Error::InvalidUI(format!(
+                "failed to initialize a toolbar with error: {:#?}",
+                error
+            )));
+        }
         self.window.flush();
         Ok(())
     }
 
-    fn setup_toolbar(&mut self) -> Result<(), Error> {
-        if self
-            .window
-            .fill_rect(LIGHTGREY, 0, 0, WINDOW_WIDTH, TOOLBAR_HEIGHT)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
+    fn setup_toolbar(&mut self) -> OsResult<()> {
+        self.window
+            .fill_rect(LIGHTGREY, 0, 0, WINDOW_WIDTH, TOOLBAR_HEIGHT)?;
 
-        if self
-            .window
-            .draw_line(GREY, 0, TOOLBAR_HEIGHT, WINDOW_WIDTH - 1, TOOLBAR_HEIGHT)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-        if self
-            .window
-            .draw_line(
-                DARKGREY,
-                0,
-                TOOLBAR_HEIGHT + 1,
-                WINDOW_WIDTH - 1,
-                TOOLBAR_HEIGHT + 1,
-            )
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
+        self.window
+            .draw_line(GREY, 0, TOOLBAR_HEIGHT, WINDOW_WIDTH - 1, TOOLBAR_HEIGHT)?;
+        self.window.draw_line(
+            DARKGREY,
+            0,
+            TOOLBAR_HEIGHT + 1,
+            WINDOW_WIDTH - 1,
+            TOOLBAR_HEIGHT + 1,
+        )?;
 
-        if self
-            .window
-            .draw_string(
-                BLACK,
-                5,
-                5,
-                "Address:",
-                StringSize::Medium,
-                /*underline=*/ false,
-            )
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
+        self.window.draw_string(
+            BLACK,
+            5,
+            5,
+            "Address:",
+            StringSize::Medium,
+            /*underline=*/ false,
+        )?;
 
         // address bar
-        if self
-            .window
-            .fill_rect(WHITE, 70, 2, WINDOW_WIDTH - 74, 2 + ADDRESSBAR_HEIGHT)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
+        self.window
+            .fill_rect(WHITE, 70, 2, WINDOW_WIDTH - 74, 2 + ADDRESSBAR_HEIGHT)?;
 
         // shadow for address bar
-        if self
-            .window
-            .draw_line(GREY, 70, 2, WINDOW_WIDTH - 4, 2)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-        if self
-            .window
-            .draw_line(GREY, 70, 2, 70, 2 + ADDRESSBAR_HEIGHT)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-        if self
-            .window
-            .draw_line(BLACK, 71, 3, WINDOW_WIDTH - 5, 3)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
+        self.window.draw_line(GREY, 70, 2, WINDOW_WIDTH - 4, 2)?;
+        self.window
+            .draw_line(GREY, 70, 2, 70, 2 + ADDRESSBAR_HEIGHT)?;
+        self.window.draw_line(BLACK, 71, 3, WINDOW_WIDTH - 5, 3)?;
 
-        if self
-            .window
-            .draw_line(GREY, 71, 3, 71, 1 + ADDRESSBAR_HEIGHT)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-
-        /*
-        // high light for address bar
-        if self
-            .window
-            .draw_line(
-                LIGHTGREY,
-                71,
-                2 + ADDRESSBAR_HEIGHT,
-                WINDOW_WIDTH - 5,
-                2 + ADDRESSBAR_HEIGHT,
-            )
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-        if self
-            .window
-            .draw_line(LIGHTGREY, WINDOW_WIDTH - 5, 2, WINDOW_WIDTH - 5, 2 + ADDRESSBAR_HEIGHT)
-            .is_err()
-        {
-            return Err(Error::InvalidUI(
-                "failed to initialize a toolbar".to_string(),
-            ));
-        }
-        */
+        self.window
+            .draw_line(GREY, 71, 3, 71, 1 + ADDRESSBAR_HEIGHT)?;
 
         Ok(())
     }
@@ -373,7 +285,7 @@ impl WasabiUI {
                     text,
                     destination: _,
                     style,
-                    layout_point: _,
+                    layout_point,
                 } => {
                     if self
                         .window
@@ -381,6 +293,8 @@ impl WasabiUI {
                             style.color().code_u32(),
                             self.position.0,
                             self.position.1,
+                            //layout_point.x(),
+                            //layout_point.y(),
                             &text,
                             StringSize::Medium,
                             style.text_decoration() == TextDecoration::Underline,
@@ -394,7 +308,7 @@ impl WasabiUI {
                 DisplayItem::Text {
                     text,
                     style,
-                    layout_point: _,
+                    layout_point,
                 } => {
                     let string_size = convert_font_size(style.font_size());
                     let char_width = match string_size {
@@ -417,6 +331,8 @@ impl WasabiUI {
                             .window
                             .draw_string(
                                 style.color().code_u32(),
+                                //layout_point.x(),
+                                //layout_point.y(),
                                 self.position.0,
                                 self.position.1,
                                 &line,

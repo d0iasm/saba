@@ -4,6 +4,8 @@
 
 use crate::browser::Browser;
 use crate::constants::CONTENT_AREA_WIDTH;
+use crate::constants::TOOLBAR_HEIGHT;
+use crate::constants::WINDOW_PADDING;
 use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::dom::api::get_target_element_node;
@@ -163,6 +165,7 @@ impl LayoutView {
     fn calculate_node_position(
         node: &Option<Rc<RefCell<LayoutObject>>>,
         parent_point: LayoutPoint,
+        previous_sibiling_kind: LayoutObjectKind,
         previous_sibiling_point: Option<LayoutPoint>,
         previous_sibiling_size: Option<LayoutSize>,
     ) {
@@ -170,17 +173,25 @@ impl LayoutView {
             Some(n) => {
                 n.borrow_mut().compute_position(
                     parent_point,
+                    previous_sibiling_kind,
                     previous_sibiling_point,
                     previous_sibiling_size,
                 );
 
                 let first_child = n.borrow().first_child();
-                Self::calculate_node_position(&first_child, n.borrow().point(), None, None);
+                Self::calculate_node_position(
+                    &first_child,
+                    n.borrow().point(),
+                    previous_sibiling_kind,
+                    previous_sibiling_point,
+                    previous_sibiling_size,
+                );
 
                 let next_sibling = n.borrow().next_sibling();
                 Self::calculate_node_position(
                     &next_sibling,
                     parent_point,
+                    n.borrow().kind(),
                     Some(n.borrow().point()),
                     Some(n.borrow().size()),
                 );
@@ -193,7 +204,13 @@ impl LayoutView {
     fn update_layout(&mut self) {
         Self::calculate_node_size(&self.root, LayoutSize::new(CONTENT_AREA_WIDTH, 0));
 
-        Self::calculate_node_position(&self.root, LayoutPoint::new(0, 0), None, None);
+        Self::calculate_node_position(
+            &self.root,
+            LayoutPoint::new(WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
+            LayoutObjectKind::Block,
+            None,
+            None,
+        );
     }
 
     pub fn root(&self) -> Option<Rc<RefCell<LayoutObject>>> {
@@ -406,7 +423,7 @@ mod tests {
 </style>
 </head>
 <body>
-  <p class="hidden"><a>link1</a></p>
+  <a class="hidden">link1</a>
   <p></p>
   <p class="hidden"><a>link2</a></p>
 </body>

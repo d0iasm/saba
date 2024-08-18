@@ -428,25 +428,39 @@ impl LayoutObject {
     pub fn compute_position(
         &mut self,
         parent_point: LayoutPoint,
+        previous_sibiling_kind: LayoutObjectKind,
         previous_sibiling_point: Option<LayoutPoint>,
         previous_sibiling_size: Option<LayoutSize>,
     ) {
         let mut point = LayoutPoint::new(0, 0);
 
-        match self.kind() {
-            LayoutObjectKind::Block => {
+        match (self.kind(), previous_sibiling_kind) {
+            (LayoutObjectKind::Block, LayoutObjectKind::Block)
+            | (LayoutObjectKind::Inline, LayoutObjectKind::Block)
+            | (LayoutObjectKind::Block, LayoutObjectKind::Inline)
+            | (LayoutObjectKind::Block, LayoutObjectKind::Text)
+            | (LayoutObjectKind::Text, LayoutObjectKind::Block) => {
                 if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
                     // TODO: consider padding of the previous sibiling.
-                    point.set_y(
-                        point.y() + pos.y() + size.height() + self.style.margin_top() as i64,
-                    );
+                    point.set_y(pos.y() + size.height() + self.style.margin_top() as i64);
                 } else {
                     point.set_y(parent_point.y());
                 }
+                point.set_x(parent_point.x());
             }
-            // TODO: calculate the position for inline elements.
-            LayoutObjectKind::Inline => {}
-            LayoutObjectKind::Text => {}
+            (LayoutObjectKind::Inline, LayoutObjectKind::Inline) => {
+                if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
+                    // TODO: consider padding of the previous sibiling.
+                    point.set_x(pos.x() + size.width() + self.style.margin_left() as i64);
+                } else {
+                    point.set_x(parent_point.x());
+                }
+                point.set_y(parent_point.y());
+            }
+            _ => {
+                point.set_x(parent_point.x());
+                point.set_y(parent_point.y());
+            }
         }
 
         self.point = point;
