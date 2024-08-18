@@ -4,8 +4,6 @@
 
 use crate::browser::Browser;
 use crate::constants::CONTENT_AREA_WIDTH;
-use crate::constants::TOOLBAR_HEIGHT;
-use crate::constants::WINDOW_PADDING;
 use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::StyleSheet;
 use crate::renderer::dom::api::get_target_element_node;
@@ -206,7 +204,7 @@ impl LayoutView {
 
         Self::calculate_node_position(
             &self.root,
-            LayoutPoint::new(WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
+            LayoutPoint::new(0, 0),
             LayoutObjectKind::Block,
             None,
             None,

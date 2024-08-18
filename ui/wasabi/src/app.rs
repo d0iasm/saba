@@ -285,8 +285,8 @@ impl WasabiUI {
                         .window
                         .draw_string(
                             style.color().code_u32(),
-                            layout_point.x(),
-                            layout_point.y(),
+                            layout_point.x() + WINDOW_PADDING,
+                            layout_point.y() + WINDOW_PADDING + TOOLBAR_HEIGHT,
                             &text,
                             StringSize::Medium,
                             style.text_decoration() == TextDecoration::Underline,
@@ -305,8 +305,8 @@ impl WasabiUI {
                         .window
                         .draw_string(
                             style.color().code_u32(),
-                            layout_point.x(),
-                            layout_point.y(),
+                            layout_point.x() + WINDOW_PADDING,
+                            layout_point.y() + WINDOW_PADDING + TOOLBAR_HEIGHT,
                             &text,
                             convert_font_size(style.font_size()),
                             style.text_decoration() == TextDecoration::Underline,
@@ -341,7 +341,10 @@ impl WasabiUI {
 
                     let image = Image::new(
                         &bmp,
-                        Point::new(layout_point.x() as i32, layout_point.y() as i32),
+                        Point::new(
+                            (layout_point.x() + WINDOW_PADDING) as i32,
+                            (layout_point.y() + WINDOW_PADDING + TOOLBAR_HEIGHT) as i32,
+                        ),
                     );
                     //print!("image: {:#?}\n", image);
 
