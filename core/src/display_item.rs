@@ -12,13 +12,6 @@ pub enum DisplayItem {
         layout_point: LayoutPoint,
         layout_size: LayoutSize,
     },
-    // TODO: remove Link and merge it into Text by adding `text-decoration: underline;`.
-    Link {
-        text: String,
-        destination: String,
-        style: ComputedStyle,
-        layout_point: LayoutPoint,
-    },
     Text {
         text: String,
         style: ComputedStyle,
@@ -39,18 +32,6 @@ impl DisplayItem {
                 style: _,
                 layout_point: _,
                 layout_size: _,
-            }
-        )
-    }
-
-    pub fn is_link(&self) -> bool {
-        matches!(
-            self,
-            DisplayItem::Link {
-                text: _,
-                destination: _,
-                style: _,
-                layout_point: _,
             }
         )
     }

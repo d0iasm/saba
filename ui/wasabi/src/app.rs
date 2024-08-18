@@ -268,28 +268,27 @@ impl WasabiUI {
             .borrow()
             .display_items();
 
+        println!("DisplayItems:");
         for item in display_items {
+            println!("{:#?}", item);
             match item {
                 DisplayItem::Rect {
-                    style: _,
-                    layout_point: _,
-                    layout_size: _,
-                } => {}
-                DisplayItem::Link {
-                    text,
-                    destination: _,
                     style,
                     layout_point,
+                    layout_size,
                 } => {
+                    if style.background_color().name() == Some("white".to_string()) {
+                        continue;
+                    }
+
                     if self
                         .window
-                        .draw_string(
-                            style.color().code_u32(),
+                        .fill_rect(
+                            style.background_color().code_u32(),
                             layout_point.x() + WINDOW_PADDING,
                             layout_point.y() + WINDOW_PADDING + TOOLBAR_HEIGHT,
-                            &text,
-                            StringSize::Medium,
-                            style.text_decoration() == TextDecoration::Underline,
+                            layout_size.width(),
+                            layout_size.height(),
                         )
                         .is_err()
                     {

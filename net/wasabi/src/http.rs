@@ -31,13 +31,18 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
     .hidden {
       display: none;
     }
+    .link {
+      background-color: #00ffff;
+    }
     </style>
 </head>
 <body>
     <h1 id="title">Example Domain Response</h1>
     <p class="first">This domain is for use in illustrative examples in documents. You may use this
     domain in literature without prior coordination or asking for permission.</p>
-    <p class="link"><a>Link1</a><a>Link2</a></p>
+    <div class="link">
+      <p class="link-wrapper"><a>Link1</a><a>Link2</a></p>
+    </div>
     <p class="wrapper"><p class="text1">Text1</p><p class="text2">Text2</p></p>
     <p><a href="https://www.iana.org/domains/example">More information...</a></p>
     <p class="hidden">none</p>

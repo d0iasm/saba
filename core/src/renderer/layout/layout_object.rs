@@ -545,33 +545,6 @@ impl LayoutObject {
             }
             LayoutObjectKind::Inline => {
                 if let NodeKind::Element(e) = self.node_kind() {
-                    if e.kind() == ElementKind::A {
-                        // <a> element should have a text node as a first child
-                        let text_node = self.first_child();
-                        let mut link_text = String::new();
-                        if let Some(text_node) = text_node {
-                            match text_node.borrow().node_kind() {
-                                NodeKind::Text(text) => link_text = text,
-                                _ => return vec![],
-                            }
-                        }
-
-                        let mut href = String::new();
-                        for attr in e.attributes() {
-                            if attr.name() == "href" {
-                                href = attr.value()
-                            }
-                        }
-
-                        // remove the first child from the tree to avoid operating it twice
-                        self.first_child = None;
-                        return vec![DisplayItem::Link {
-                            text: link_text,
-                            destination: href,
-                            style: self.style(),
-                            layout_point: self.point(),
-                        }];
-                    }
                     if e.kind() == ElementKind::IMG {
                         for attr in &e.attributes() {
                             if attr.name() == "src" {
