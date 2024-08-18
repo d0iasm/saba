@@ -65,8 +65,29 @@ impl ComputedStyle {
     }
 
     /// https://www.w3.org/TR/css-cascade-4/#defaulting
+    /// https://www.w3.org/TR/css-cascade-4/#inheriting
     /// If there is no cascading value, use the default value.
-    pub fn defaulting(&mut self, node: &Rc<RefCell<Node>>) {
+    pub fn defaulting(&mut self, node: &Rc<RefCell<Node>>, parent_style: Option<ComputedStyle>) {
+        // If the parent exists and a CSS property doesn't have a default value, inherit the value.
+        if let Some(parent_style) = parent_style {
+            // currently, only inherit `background_color`, `color`, `font_size` and `text_decoration`.
+            if self.background_color.is_none() && parent_style.background_color() != Color::white()
+            {
+                self.background_color = Some(parent_style.background_color());
+            }
+            if self.color.is_none() && parent_style.color() != Color::black() {
+                self.color = Some(parent_style.color());
+            }
+            if self.font_size.is_none() && parent_style.font_size() != FontSize::Medium {
+                self.font_size = Some(parent_style.font_size());
+            }
+            if self.text_decoration.is_none()
+                && parent_style.text_decoration() != TextDecoration::None
+            {
+                self.text_decoration = Some(parent_style.text_decoration());
+            }
+        }
+
         if self.background_color.is_none() {
             self.background_color = Some(Color::white());
         }
@@ -101,53 +122,6 @@ impl ComputedStyle {
             // check the default value for width
             self.width = Some(0.0);
         }
-    }
-
-    /// https://www.w3.org/TR/css-cascade-4/#inheriting
-    /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
-    pub fn inherit(&mut self, parent_style: &ComputedStyle) {
-        self.background_color = Some(parent_style.background_color());
-        self.color = Some(parent_style.color());
-        self.display = Some(parent_style.display());
-        self.font_size = Some(parent_style.font_size());
-        self.height = Some(parent_style.height());
-        self.margin = Some(parent_style.margin());
-        self.padding = Some(parent_style.padding());
-        self.text_decoration = Some(parent_style.text_decoration());
-        self.white_space = Some(parent_style.white_space());
-        self.width = Some(parent_style.width());
-        /*
-        if self.background_color.is_none() {
-            self.background_color = Some(parent_style.background_color().clone());
-        }
-        if self.color.is_none() {
-            self.color = Some(parent_style.color().clone());
-        }
-        if self.display.is_none() {
-            self.display = Some(parent_style.display().clone());
-        }
-        if self.font_size.is_none() {
-            self.font_size = Some(parent_style.font_size().clone());
-        }
-        if self.height.is_none() {
-            self.height = Some(parent_style.height().clone());
-        }
-        if self.margin.is_none() {
-            self.margin = Some(parent_style.margin().clone());
-        }
-        if self.padding.is_none() {
-            self.padding = Some(parent_style.padding().clone());
-        }
-        if self.text_decoration.is_none() {
-            self.text_decoration = Some(parent_style.text_decoration().clone());
-        }
-        if self.white_space.is_none() {
-            self.white_space = Some(parent_style.white_space().clone());
-        }
-        if self.width.is_none() {
-            self.width = Some(parent_style.width().clone());
-        }
-        */
     }
 
     pub fn set_background_color(&mut self, color: Color) {

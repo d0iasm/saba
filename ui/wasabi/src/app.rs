@@ -268,19 +268,13 @@ impl WasabiUI {
             .borrow()
             .display_items();
 
-        println!("DisplayItems:");
         for item in display_items {
-            println!("{:#?}", item);
             match item {
                 DisplayItem::Rect {
                     style,
                     layout_point,
                     layout_size,
                 } => {
-                    if style.background_color().name() == Some("white".to_string()) {
-                        continue;
-                    }
-
                     if self
                         .window
                         .fill_rect(

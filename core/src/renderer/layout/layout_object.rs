@@ -23,6 +23,7 @@ use crate::renderer::layout::computed_style::FontSize;
 use crate::renderer::layout::layout_point::LayoutPoint;
 use crate::renderer::layout::layout_size::LayoutSize;
 use crate::utils::console_error;
+use crate::utils::console_warning;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
@@ -77,17 +78,13 @@ pub fn create_layout_object(
                 }
             }
 
-            // Apply a default value to a property.
-            {
-                layout_object.borrow_mut().defaulting_style(n);
-            }
-
             // Inherit a parent CSS style.
-            if let Some(parent) = parent_obj {
-                layout_object
-                    .borrow_mut()
-                    .inherit_style(&parent.borrow().style());
-            }
+            let parent_style = if let Some(parent) = parent_obj {
+                Some(parent.borrow().style())
+            } else {
+                None
+            };
+            layout_object.borrow_mut().defaulting_style(n, parent_style);
 
             if layout_object.borrow().style().display() == DisplayType::DisplayNone {
                 return None;
@@ -325,33 +322,24 @@ impl LayoutObject {
                 }
                 // TODO: support padding
                 _ => {
-                    /*
                     console_warning(
-                    &self.browser,
-                    format!("css property {} is not supported yet", declaration.property),
+                        &self.browser,
+                        format!("css property {} is not supported yet", declaration.property),
                     );
-                    */
                 }
             }
         }
     }
 
     /// https://www.w3.org/TR/css-cascade-4/#defaulting
-    pub fn defaulting_style(&mut self, node: &Rc<RefCell<Node>>) {
-        self.style.defaulting(node);
-    }
-
     /// https://www.w3.org/TR/css-cascade-4/#inheriting
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/css/resolver/style_resolver.h;drc=48340c1e35efad5fb0253025dcc36b3a9573e258;bpv=1;bpt=1;l=234
-    pub fn inherit_style(&mut self, parent_style: &ComputedStyle) {
-        // This may be a hacky way to inherit.
-        match self.node_kind() {
-            NodeKind::Text(_) => {
-                // Now, only text object inherits CSS properties from its parent.
-                self.style.inherit(parent_style);
-            }
-            _ => {}
-        }
+    pub fn defaulting_style(
+        &mut self,
+        node: &Rc<RefCell<Node>>,
+        parent_style: Option<ComputedStyle>,
+    ) {
+        self.style.defaulting(node, parent_style);
     }
 
     /// Returns the size of this element including margins, paddings, etc.
