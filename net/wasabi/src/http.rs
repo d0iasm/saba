@@ -38,10 +38,10 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
     <p class="first">This domain is for use in illustrative examples in documents. You may use this
     domain in literature without prior coordination or asking for permission.</p>
     <p><a>Link1</a><a>Link2</a></p>
+    <p><p class="text1">Text1</p><p class="text2">Text2</p></p>
     <p><a href="https://www.iana.org/domains/example">More information...</a></p>
     <p class="hidden">none</p>
     <img src="https://placehold.co/600x400"/>
-    <img src="https://dummyimage.com/300"/>
 </body>
 </html>
 "#;

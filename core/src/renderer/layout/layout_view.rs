@@ -220,9 +220,7 @@ impl LayoutView {
     fn paint_node(node: &Option<Rc<RefCell<LayoutObject>>>, display_items: &mut Vec<DisplayItem>) {
         match node {
             Some(n) => {
-                if let Some(item) = n.borrow_mut().paint() {
-                    display_items.push(item);
-                }
+                display_items.extend(n.borrow_mut().paint());
 
                 let first_child = n.borrow().first_child();
                 Self::paint_node(&first_child, display_items);

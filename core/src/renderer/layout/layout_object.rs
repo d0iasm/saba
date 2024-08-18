@@ -5,9 +5,7 @@
 
 use crate::alloc::string::ToString;
 use crate::browser::Browser;
-use crate::constants::CHAR_HEIGHT_WITH_PADDING;
-use crate::constants::CHAR_WIDTH;
-use crate::constants::CONTENT_AREA_WIDTH;
+use crate::constants::*;
 use crate::display_item::DisplayItem;
 use crate::renderer::css::cssom::ComponentValue;
 use crate::renderer::css::cssom::Declaration;
@@ -28,8 +26,36 @@ use crate::utils::console_error;
 use alloc::format;
 use alloc::rc::{Rc, Weak};
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
+
+/// This is used when { word-break: normal; } in CSS.
+/// https://drafts.csswg.org/css-text/#word-break-property
+fn find_index_for_line_break(line: String, max_index: usize) -> usize {
+    for i in (0..max_index).rev() {
+        if line.chars().collect::<Vec<char>>()[i] == ' ' {
+            return i;
+        }
+    }
+    max_index
+}
+
+/// https://drafts.csswg.org/css-text/#word-break-property
+fn split_text(line: String, char_width: i64) -> Vec<String> {
+    let mut result: Vec<String> = vec![];
+    if line.len() as i64 * char_width > (WINDOW_WIDTH + WINDOW_PADDING) {
+        let s = line.split_at(find_index_for_line_break(
+            line.clone(),
+            ((WINDOW_WIDTH + WINDOW_PADDING) / char_width) as usize,
+        ));
+        result.push(s.0.to_string());
+        result.extend(split_text(s.1.trim().to_string(), char_width))
+    } else {
+        result.push(line);
+    }
+    result
+}
 
 pub fn create_layout_object(
     browser: Weak<RefCell<Browser>>,
@@ -357,17 +383,23 @@ impl LayoutObject {
                         - self.style.padding_right() as i64,
                 );
 
-                // For height, sum up the height of all children directly under this element.
+                // For height, sum up the height of all children next to the block element.
                 let mut height = 0;
                 let mut child = self.first_child();
+                let mut previous_child_kind = LayoutObjectKind::Block;
                 while child.is_some() {
                     let c = match child {
                         Some(c) => c,
                         None => panic!("first child should exist"),
                     };
 
-                    height += c.borrow().size.height();
+                    if previous_child_kind == LayoutObjectKind::Block
+                        || c.borrow().kind() == LayoutObjectKind::Block
+                    {
+                        height += c.borrow().size.height();
+                    }
 
+                    previous_child_kind = c.borrow().kind();
                     child = c.borrow().next_sibling();
                 }
                 size.set_height(height);
@@ -435,11 +467,8 @@ impl LayoutObject {
         let mut point = LayoutPoint::new(0, 0);
 
         match (self.kind(), previous_sibiling_kind) {
-            (LayoutObjectKind::Block, LayoutObjectKind::Block)
-            | (LayoutObjectKind::Inline, LayoutObjectKind::Block)
-            | (LayoutObjectKind::Block, LayoutObjectKind::Inline)
-            | (LayoutObjectKind::Block, LayoutObjectKind::Text)
-            | (LayoutObjectKind::Text, LayoutObjectKind::Block) => {
+            // If a current node or a sibiling node is a block element, grow along the Y-axis direction.
+            (LayoutObjectKind::Block, _) | (_, LayoutObjectKind::Block) => {
                 if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
                     // TODO: consider padding of the previous sibiling.
                     point.set_y(pos.y() + size.height() + self.style.margin_top() as i64);
@@ -448,6 +477,7 @@ impl LayoutObject {
                 }
                 point.set_x(parent_point.x());
             }
+            // If both a current node and a sibiling node are inline elements, grow along the X-axis direction.
             (LayoutObjectKind::Inline, LayoutObjectKind::Inline) => {
                 if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
                     // TODO: consider padding of the previous sibiling.
@@ -498,19 +528,19 @@ impl LayoutObject {
     }
 
     /// https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/layout/layout_object.h;drc=0e9a0b6e9bb6ec59521977eec805f5d0bca833e0;bpv=1;bpt=1;l=2377
-    pub fn paint(&mut self) -> Option<DisplayItem> {
+    pub fn paint(&mut self) -> Vec<DisplayItem> {
         if self.style.display() == DisplayType::DisplayNone {
-            return None;
+            return vec![];
         }
 
         match self.kind {
             LayoutObjectKind::Block => {
                 if let NodeKind::Element(_e) = self.node_kind() {
-                    return Some(DisplayItem::Rect {
+                    return vec![DisplayItem::Rect {
                         style: self.style(),
                         layout_point: self.point(),
                         layout_size: self.size(),
-                    });
+                    }];
                 }
             }
             LayoutObjectKind::Inline => {
@@ -522,7 +552,7 @@ impl LayoutObject {
                         if let Some(text_node) = text_node {
                             match text_node.borrow().node_kind() {
                                 NodeKind::Text(text) => link_text = text,
-                                _ => return None,
+                                _ => return vec![],
                             }
                         }
 
@@ -535,21 +565,21 @@ impl LayoutObject {
 
                         // remove the first child from the tree to avoid operating it twice
                         self.first_child = None;
-                        return Some(DisplayItem::Link {
+                        return vec![DisplayItem::Link {
                             text: link_text,
                             destination: href,
                             style: self.style(),
                             layout_point: self.point(),
-                        });
+                        }];
                     }
                     if e.kind() == ElementKind::IMG {
                         for attr in &e.attributes() {
                             if attr.name() == "src" {
-                                return Some(DisplayItem::Img {
+                                return vec![DisplayItem::Img {
                                     src: attr.value(),
                                     style: self.style(),
                                     layout_point: self.point(),
-                                });
+                                }];
                             }
                         }
                     }
@@ -557,15 +587,39 @@ impl LayoutObject {
             }
             LayoutObjectKind::Text => {
                 if let NodeKind::Text(t) = self.node_kind() {
-                    return Some(DisplayItem::Text {
-                        text: t,
-                        style: self.style(),
-                        layout_point: self.point(),
-                    });
+                    let mut v = vec![];
+
+                    let ratio = match self.style.font_size() {
+                        FontSize::Medium => 1,
+                        FontSize::XLarge => 2,
+                        FontSize::XXLarge => 3,
+                    };
+                    let plain_text = t
+                        .replace("\n", " ")
+                        .split(' ')
+                        .filter(|s| !s.is_empty())
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    let lines = split_text(plain_text, CHAR_WIDTH * ratio);
+                    let mut i = 0;
+                    for line in lines {
+                        let item = DisplayItem::Text {
+                            text: line,
+                            style: self.style(),
+                            layout_point: LayoutPoint::new(
+                                self.point().x(),
+                                self.point().y() + CHAR_HEIGHT_WITH_PADDING * i,
+                            ),
+                        };
+                        v.push(item);
+                        i += 1;
+                    }
+
+                    return v;
                 }
             }
         }
 
-        None
+        vec![]
     }
 }

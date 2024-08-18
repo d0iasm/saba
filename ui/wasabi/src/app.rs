@@ -3,8 +3,6 @@ use alloc::format;
 use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::string::ToString;
-use alloc::vec;
-use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::include_bytes;
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
@@ -17,7 +15,6 @@ use noli::sys::api::MouseEvent;
 use noli::sys::wasabi::Api;
 use noli::window::StringSize;
 use noli::window::Window;
-use saba_core::renderer::layout::layout_point;
 use saba_core::{
     browser::Browser,
     constants::*,
@@ -40,8 +37,6 @@ pub struct WasabiUI {
     input_url: String,
     input_mode: InputMode,
     window: Window,
-    // The (x, y) position to render a next display item.
-    position: (i64, i64),
     cursor: Cursor,
 }
 
@@ -60,7 +55,6 @@ impl WasabiUI {
                 WINDOW_HEIGHT,
             )
             .expect("failed to create a window"),
-            position: (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING),
             cursor: Cursor::new(),
         }
     }
@@ -291,10 +285,8 @@ impl WasabiUI {
                         .window
                         .draw_string(
                             style.color().code_u32(),
-                            self.position.0,
-                            self.position.1,
-                            //layout_point.x(),
-                            //layout_point.y(),
+                            layout_point.x(),
+                            layout_point.y(),
                             &text,
                             StringSize::Medium,
                             style.text_decoration() == TextDecoration::Underline,
@@ -303,58 +295,31 @@ impl WasabiUI {
                     {
                         return Err(Error::InvalidUI("failed to draw a string".to_string()));
                     }
-                    self.position.1 += CHAR_HEIGHT_WITH_PADDING;
                 }
                 DisplayItem::Text {
                     text,
                     style,
                     layout_point,
                 } => {
-                    let string_size = convert_font_size(style.font_size());
-                    let char_width = match string_size {
-                        StringSize::Medium => CHAR_WIDTH,
-                        StringSize::Large => CHAR_WIDTH * 2,
-                        StringSize::XLarge => CHAR_WIDTH * 3,
-                    };
-                    // replace new lines to white spaces and replace sequential multiple white
-                    // spaces with one white space.
-                    let plain_text = text
-                        .replace("\n", " ")
-                        .split(' ')
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<_>>()
-                        .join(" ");
-                    let lines = split_text(plain_text, char_width);
-
-                    for line in lines {
-                        if self
-                            .window
-                            .draw_string(
-                                style.color().code_u32(),
-                                //layout_point.x(),
-                                //layout_point.y(),
-                                self.position.0,
-                                self.position.1,
-                                &line,
-                                string_size.clone(),
-                                style.text_decoration() == TextDecoration::Underline,
-                            )
-                            .is_err()
-                        {
-                            return Err(Error::InvalidUI("failed to draw a string".to_string()));
-                        }
-
-                        match string_size {
-                            StringSize::Medium => self.position.1 += CHAR_HEIGHT_WITH_PADDING,
-                            StringSize::Large => self.position.1 += CHAR_HEIGHT_WITH_PADDING * 2,
-                            StringSize::XLarge => self.position.1 += CHAR_HEIGHT_WITH_PADDING * 3,
-                        }
+                    if self
+                        .window
+                        .draw_string(
+                            style.color().code_u32(),
+                            layout_point.x(),
+                            layout_point.y(),
+                            &text,
+                            convert_font_size(style.font_size()),
+                            style.text_decoration() == TextDecoration::Underline,
+                        )
+                        .is_err()
+                    {
+                        return Err(Error::InvalidUI("failed to draw a string".to_string()));
                     }
                 }
                 DisplayItem::Img {
                     src,
                     style: _,
-                    layout_point: _,
+                    layout_point,
                 } => {
                     print!("DisplayItem::Img src: {}\n", src);
 
@@ -367,26 +332,22 @@ impl WasabiUI {
                             return Err(Error::Other(format!("failed to draw an image: {:?}", e)))
                         }
                     };
-                    let bmp_header = match RawBmp::from_slice(data) {
+                    let _bmp_header = match RawBmp::from_slice(data) {
                         Ok(bmp) => bmp.header().clone(),
                         Err(e) => {
                             return Err(Error::Other(format!("failed to draw an image: {:?}", e)))
                         }
                     };
 
-                    //let img: ImageRawBE<Rgb888> = ImageRaw::new(data, 200);
-                    //let image = Image::new(&img, Point::zero());
                     let image = Image::new(
                         &bmp,
-                        Point::new(self.position.0 as i32, self.position.1 as i32),
+                        Point::new(layout_point.x() as i32, layout_point.y() as i32),
                     );
                     //print!("image: {:#?}\n", image);
 
                     if image.draw(&mut self.window).is_err() {
                         return Err(Error::Other("failed to draw an image".to_string()));
                     }
-
-                    self.position.1 += bmp_header.image_size.height as i64;
                 }
             }
         }
@@ -452,8 +413,6 @@ impl WasabiUI {
     }
 
     fn clear_content_area(&mut self) -> Result<(), Error> {
-        self.position = (WINDOW_PADDING, TOOLBAR_HEIGHT + WINDOW_PADDING);
-
         // fill out the content area with white box
         if self
             .window
@@ -485,31 +444,4 @@ fn convert_font_size(size: FontSize) -> StringSize {
         FontSize::XLarge => StringSize::Large,
         FontSize::XXLarge => StringSize::XLarge,
     }
-}
-
-/// This is used when { word-break: normal; } in CSS.
-/// https://drafts.csswg.org/css-text/#word-break-property
-fn find_index_for_line_break(line: String, max_index: usize) -> usize {
-    for i in (0..max_index).rev() {
-        if line.chars().collect::<Vec<char>>()[i] == ' ' {
-            return i;
-        }
-    }
-    max_index
-}
-
-/// https://drafts.csswg.org/css-text/#word-break-property
-fn split_text(line: String, char_width: i64) -> Vec<String> {
-    let mut result: Vec<String> = vec![];
-    if line.len() as i64 * char_width > (WINDOW_WIDTH + WINDOW_PADDING) {
-        let s = line.split_at(find_index_for_line_break(
-            line.clone(),
-            ((WINDOW_WIDTH + WINDOW_PADDING) / char_width) as usize,
-        ));
-        result.push(s.0.to_string());
-        result.extend(split_text(s.1.trim().to_string(), char_width))
-    } else {
-        result.push(line);
-    }
-    result
 }
