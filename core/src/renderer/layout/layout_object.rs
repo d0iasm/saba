@@ -78,7 +78,7 @@ pub fn create_layout_object(
                 }
             }
 
-            // Inherit a parent CSS style.
+            // Defaulting a parent CSS style.
             let parent_style = if let Some(parent) = parent_obj {
                 Some(parent.borrow().style())
             } else {
