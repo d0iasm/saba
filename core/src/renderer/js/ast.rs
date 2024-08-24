@@ -1,7 +1,8 @@
 //! https://github.com/estree/estree
 //! https://astexplorer.net/
 
-use crate::renderer::js::token::{JsLexer, Token};
+use crate::renderer::js::token::JsLexer;
+use crate::renderer::js::token::Token;
 use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::vec;
@@ -281,8 +282,9 @@ impl JsParser {
                 '+' | '-' => {
                     // consume '+' or '-'
                     assert!(self.t.next().is_some());
-                    Node::new_binary_expression(c, left, self.left_hand_side_expression())
+                    Node::new_binary_expression(c, left, self.assignment_expression())
                 }
+                /*
                 // end of expression
                 ';' => {
                     // consume ';'
@@ -291,6 +293,7 @@ impl JsParser {
                 }
                 // end of expression wihtout consuming next token
                 ',' | ')' => left,
+                */
                 _ => left,
             },
             _ => left,
