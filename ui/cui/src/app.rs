@@ -12,6 +12,7 @@ use crossterm::{
 use saba_core::browser::Browser;
 use saba_core::http::HttpResponse;
 use saba_core::renderer::layout::computed_style::FontSize;
+use saba_core::renderer::layout::computed_style::TextDecoration;
 use saba_core::utils::*;
 use saba_core::{display_item::DisplayItem, error::Error};
 use std::io;
@@ -138,30 +139,32 @@ impl Tui {
         let mut previous_link_item: Option<Link> = None;
         for item in display_items {
             match item {
-                DisplayItem::Link {
+                DisplayItem::Text {
                     text,
-                    destination,
-                    style: _,
+                    style,
                     layout_point: _,
-                } => match &self.focus {
-                    Some(current_focus_item) => {
-                        if current_focus_item.text == text
-                            && current_focus_item.destination == destination
-                        {
-                            if let Some(prev_link_item) = previous_link_item {
-                                self.focus = Some(prev_link_item);
-                                return;
-                            } else {
-                                self.focus = None;
-                                return;
+                } => {
+                    if style.text_decoration() != TextDecoration::Underline {
+                        continue;
+                    }
+                    match &self.focus {
+                        Some(current_focus_item) => {
+                            if current_focus_item.text == text {
+                                if let Some(prev_link_item) = previous_link_item {
+                                    self.focus = Some(prev_link_item);
+                                    return;
+                                } else {
+                                    self.focus = None;
+                                    return;
+                                }
                             }
+                            previous_link_item = Some(current_focus_item.clone());
                         }
-                        previous_link_item = Some(current_focus_item.clone());
+                        None => {
+                            return;
+                        }
                     }
-                    None => {
-                        return;
-                    }
-                },
+                }
                 _ => {}
             }
         }
@@ -178,29 +181,35 @@ impl Tui {
         let mut focus_item_found = false;
         for item in display_items {
             match item {
-                DisplayItem::Link {
+                DisplayItem::Text {
                     text,
-                    destination,
-                    style: _,
+                    style,
                     layout_point: _,
-                } => match &self.focus {
-                    Some(current_focus_item) => {
-                        if focus_item_found {
+                } => {
+                    if style.text_decoration() != TextDecoration::Underline {
+                        continue;
+                    }
+                    // TODO: get correct destination link from Node.
+                    let destination = "http://example.com".to_string();
+                    match &self.focus {
+                        Some(current_focus_item) => {
+                            if focus_item_found {
+                                self.focus = Some(Link::new(text, destination));
+                                return;
+                            }
+
+                            if current_focus_item.text == text
+                                && current_focus_item.destination == destination
+                            {
+                                focus_item_found = true;
+                            }
+                        }
+                        None => {
                             self.focus = Some(Link::new(text, destination));
                             return;
                         }
-
-                        if current_focus_item.text == text
-                            && current_focus_item.destination == destination
-                        {
-                            focus_item_found = true;
-                        }
                     }
-                    None => {
-                        self.focus = Some(Link::new(text, destination));
-                        return;
-                    }
-                },
+                }
                 _ => {}
             }
         }
@@ -435,41 +444,37 @@ impl Tui {
                     i = i + 1;
                     */
                 }
-                DisplayItem::Link {
-                    text,
-                    destination,
-                    style: _,
-                    layout_point: _,
-                } => {
-                    if let Some(focus_item) = &self.focus {
-                        if focus_item.text == text && focus_item.destination == destination {
-                            spans.push(Spans::from(Span::styled(
-                                text,
-                                Style::default()
-                                    .fg(Color::Blue)
-                                    .add_modifier(Modifier::UNDERLINED),
-                            )));
-                            continue;
-                        }
-                    }
-                    spans.push(Spans::from(Span::styled(
-                        text,
-                        Style::default().fg(Color::Blue),
-                    )));
-                }
                 DisplayItem::Text {
                     text,
                     style,
                     layout_point: _,
                 } => {
-                    for line in text.split("\n") {
+                    if style.text_decoration() == TextDecoration::Underline {
+                        // link text.
+                        if let Some(focus_item) = &self.focus {
+                            if focus_item.text == text {
+                                spans.push(Spans::from(Span::styled(
+                                    text,
+                                    Style::default()
+                                        .fg(Color::Blue)
+                                        .add_modifier(Modifier::UNDERLINED),
+                                )));
+                                continue;
+                            }
+                        }
+                        spans.push(Spans::from(Span::styled(
+                            text,
+                            Style::default().fg(Color::Blue),
+                        )));
+                    } else {
+                        // normal text.
                         spans.push(if style.font_size() != FontSize::Medium {
                             Spans::from(Span::styled(
-                                String::from(line),
+                                text,
                                 Style::default().add_modifier(Modifier::BOLD),
                             ))
                         } else {
-                            Spans::from(Span::raw(String::from(line)))
+                            Spans::from(Span::raw(text))
                         });
                     }
                 }
