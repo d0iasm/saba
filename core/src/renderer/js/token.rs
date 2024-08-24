@@ -1,6 +1,7 @@
 //! https://262.ecma-international.org/12.0/#sec-ecmascript-language-lexical-grammar
 
-use alloc::string::{String, ToString};
+use alloc::string::String;
+use alloc::string::ToString;
 use alloc::vec::Vec;
 
 static RESERVED_WORDS: [&str; 3] = ["var", "function", "return"];
@@ -117,17 +118,6 @@ impl JsLexer {
         None
     }
 
-    pub fn peek(&mut self) -> Option<Token> {
-        let start_position = self.pos;
-
-        let token = self.get_next_token();
-
-        // Restore the start position to avoid consuming input.
-        self.pos = start_position;
-
-        token
-    }
-
     fn get_next_token(&mut self) -> Option<Token> {
         if self.pos >= self.input.len() {
             return None;
@@ -182,14 +172,14 @@ mod tests {
     #[test]
     fn test_empty() {
         let input = "".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         assert!(lexer.peek().is_none());
     }
 
     #[test]
     fn test_num() {
         let input = "42".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [Token::Number(42)].to_vec();
         let mut i = 0;
         while lexer.peek().is_some() {
@@ -202,7 +192,7 @@ mod tests {
     #[test]
     fn test_string() {
         let input = "\"foo\"".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [Token::StringLiteral("foo".to_string())].to_vec();
         let mut i = 0;
         while lexer.peek().is_some() {
@@ -215,7 +205,7 @@ mod tests {
     #[test]
     fn test_add_nums() {
         let input = "1 + 2".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [Token::Number(1), Token::Punctuator('+'), Token::Number(2)].to_vec();
         let mut i = 0;
         while lexer.peek().is_some() {
@@ -228,7 +218,7 @@ mod tests {
     #[test]
     fn test_add_strings() {
         let input = "\"foo\" + \"bar\"".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::StringLiteral("foo".to_string()),
             Token::Punctuator('+'),
@@ -246,7 +236,7 @@ mod tests {
     #[test]
     fn test_add_num_and_string() {
         let input = "1 + \"2\"".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Number(1),
             Token::Punctuator('+'),
@@ -264,7 +254,7 @@ mod tests {
     #[test]
     fn test_assign_variable() {
         let input = "var foo=42;".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Keyword("var".to_string()),
             Token::Identifier("foo".to_string()),
@@ -284,7 +274,7 @@ mod tests {
     #[test]
     fn test_add_variable_and_num() {
         let input = "var foo=42; var result=foo+1;".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Keyword("var".to_string()),
             Token::Identifier("foo".to_string()),
@@ -311,7 +301,7 @@ mod tests {
     #[test]
     fn test_define_function() {
         let input = "function foo() { return 42; }".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Keyword("function".to_string()),
             Token::Identifier("foo".to_string()),
@@ -335,7 +325,7 @@ mod tests {
     #[test]
     fn test_define_function_with_args() {
         let input = "function foo(a, b) { return a+b; }".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Keyword("function".to_string()),
             Token::Identifier("foo".to_string()),
@@ -364,7 +354,7 @@ mod tests {
     #[test]
     fn test_add_function_and_num() {
         let input = "function foo() { return 42; } var result = foo() + 1;".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Keyword("function".to_string()),
             Token::Identifier("foo".to_string()),
@@ -397,7 +387,7 @@ mod tests {
     #[test]
     fn test_add_local_variable_and_num() {
         let input = "function foo() { var a=42; return a; } var result = foo() + 1;".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Keyword("function".to_string()),
             Token::Identifier("foo".to_string()),
@@ -436,7 +426,7 @@ mod tests {
     fn test_add_override_local_variable() {
         let input =
             "var a=1; function foo() { var a=42; return a; } var result = foo() + 1;".to_string();
-        let mut lexer = JsLexer::new(input);
+        let mut lexer = JsLexer::new(input).peekable();
         let expected = [
             Token::Keyword("var".to_string()),
             Token::Identifier("a".to_string()),

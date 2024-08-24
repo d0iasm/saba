@@ -6,6 +6,7 @@ use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
+use core::iter::Peekable;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Program {
@@ -170,13 +171,14 @@ impl Node {
     }
 }
 
+#[derive(Debug)]
 pub struct JsParser {
-    t: JsLexer,
+    t: Peekable<JsLexer>,
 }
 
 impl JsParser {
     pub fn new(t: JsLexer) -> Self {
-        Self { t }
+        Self { t: t.peekable() }
     }
 
     /// Literal ::= ( <DECIMAL_LITERAL> | <HEX_INTEGER_LITERAL> | <STRING_LITERAL> |
@@ -217,7 +219,7 @@ impl JsParser {
 
         match t {
             Token::Punctuator(c) => {
-                if c == '.' {
+                if c == &'.' {
                     // consume '.'
                     assert!(self.t.next().is_some());
                     return Node::new_member_expression(expr, self.identifier());
@@ -246,7 +248,7 @@ impl JsParser {
 
         match t {
             Token::Punctuator(c) => {
-                if c == '(' {
+                if c == &'(' {
                     // consume '('
                     assert!(self.t.next().is_some());
                     return Node::new_call_expression(expr, self.arguments());
@@ -268,7 +270,7 @@ impl JsParser {
         let left = self.left_hand_side_expression();
 
         let t = match self.t.peek() {
-            Some(token) => token,
+            Some(token) => token.clone(),
             None => return left,
         };
 
@@ -423,7 +425,7 @@ impl JsParser {
 
         if let Some(Token::Punctuator(c)) = self.t.peek() {
             // consume ';'
-            if c == ';' {
+            if c == &';' {
                 assert!(self.t.next().is_some());
             }
         }
@@ -446,7 +448,7 @@ impl JsParser {
         loop {
             // loop until hits '}'
             if let Some(Token::Punctuator(c)) = self.t.peek() {
-                if c == '}' {
+                if c == &'}' {
                     // consume '}'
                     assert!(self.t.next().is_some());
                     return Node::new_block_statement(body);
@@ -466,12 +468,12 @@ impl JsParser {
             match self.t.peek() {
                 Some(t) => match t {
                     Token::Punctuator(c) => {
-                        if c == ')' {
+                        if c == &')' {
                             // consume ')'
                             assert!(self.t.next().is_some());
                             return arguments;
                         }
-                        if c == ',' {
+                        if c == &',' {
                             // consume ','
                             assert!(self.t.next().is_some());
                         }
@@ -501,12 +503,12 @@ impl JsParser {
             match self.t.peek() {
                 Some(t) => match t {
                     Token::Punctuator(c) => {
-                        if c == ')' {
+                        if c == &')' {
                             // consume ')'
                             assert!(self.t.next().is_some());
                             return params;
                         }
-                        if c == ',' {
+                        if c == &',' {
                             // consume ','
                             assert!(self.t.next().is_some());
                         }
@@ -536,7 +538,7 @@ impl JsParser {
 
         match t {
             Token::Keyword(keyword) => {
-                if keyword == *"function" {
+                if keyword == "function" {
                     // consume "function"
                     assert!(self.t.next().is_some());
                     self.function_declaration()
