@@ -328,30 +328,6 @@ impl JsParser {
         }
     }
 
-    /// AssignmentExpression ::= ( LeftHandSideExpression AssignmentOperator AssignmentExpression
-    ///                          | ConditionalExpression )
-    ///
-    /// Expression ::= AssignmentExpression ( "," AssignmentExpression )*
-    fn expression(&mut self) -> Option<Rc<Node>> {
-        let expr = self.assignment_expression();
-
-        let t = match self.t.peek() {
-            Some(token) => token,
-            None => return expr,
-        };
-
-        match t {
-            Token::Punctuator(',') => {
-                // consume ','
-                assert!(self.t.next().is_some());
-                // TODO: how to hold multiple expressions?
-                // currently, an old expr is overriden by a new one
-                self.expression()
-            }
-            _ => expr,
-        }
-    }
-
     /// Identifier ::= <IDENTIFIER_NAME>
     fn identifier(&mut self) -> Option<Rc<Node>> {
         let t = match self.t.next() {
@@ -373,7 +349,7 @@ impl JsParser {
         };
 
         match t {
-            Token::Punctuator('=') => self.expression(),
+            Token::Punctuator('=') => self.assignment_expression(),
             _ => None,
         }
     }
@@ -392,6 +368,11 @@ impl JsParser {
     }
 
     /// https://262.ecma-international.org/12.0/#prod-Statement
+    ///
+    /// AssignmentExpression ::= ( LeftHandSideExpression AssignmentOperator AssignmentExpression
+    ///                          | ConditionalExpression )
+    ///
+    /// Expression ::= AssignmentExpression ( "," AssignmentExpression )*
     ///
     /// VariableStatement ::= "var" VariableDeclarationList ( ";" )?
     /// ExpressionStatement ::= Expression ( ";" )?
@@ -415,12 +396,12 @@ impl JsParser {
                     // consume "return"
                     assert!(self.t.next().is_some());
 
-                    Node::new_return_statement(self.expression())
+                    Node::new_return_statement(self.assignment_expression())
                 } else {
                     None
                 }
             }
-            _ => Node::new_expression_statement(self.expression()),
+            _ => Node::new_expression_statement(self.assignment_expression()),
         };
 
         if let Some(Token::Punctuator(c)) = self.t.peek() {
@@ -459,6 +440,8 @@ impl JsParser {
         }
     }
 
+    /// ArgumentList ::= AssignmentExpression ( "," AssignmentExpression )*
+    ///
     /// Arguments ::= "(" ( ArgumentList )? ")"
     fn arguments(&mut self) -> Vec<Option<Rc<Node>>> {
         let mut arguments = Vec::new();
@@ -478,7 +461,7 @@ impl JsParser {
                             assert!(self.t.next().is_some());
                         }
                     }
-                    _ => arguments.push(self.expression()),
+                    _ => arguments.push(self.assignment_expression()),
                 },
                 None => return arguments,
             }
