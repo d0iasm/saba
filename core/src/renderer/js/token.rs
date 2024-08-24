@@ -117,8 +117,12 @@ impl JsLexer {
 
         None
     }
+}
 
-    fn get_next_token(&mut self) -> Option<Token> {
+impl Iterator for JsLexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
         if self.pos >= self.input.len() {
             return None;
         }
@@ -154,14 +158,6 @@ impl JsLexer {
         };
 
         Some(token)
-    }
-}
-
-impl Iterator for JsLexer {
-    type Item = Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.get_next_token()
     }
 }
 

@@ -5,11 +5,13 @@ use crate::renderer::js::ast::Node;
 use crate::renderer::js::ast::Program;
 use alloc::format;
 use alloc::rc::Rc;
-use alloc::string::{String, ToString};
+use alloc::string::String;
+use alloc::string::ToString;
 use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::cell::RefCell;
-use core::fmt::{Display, Formatter};
+use core::fmt::Display;
+use core::fmt::Formatter;
 use core::ops::Add;
 use core::ops::Sub;
 
@@ -131,23 +133,21 @@ impl Environment {
         self.variables.push((name, value));
     }
 
-    /*
-    fn assign_variable(&mut self, name: String, value: Option<RuntimeValue>) {
-        let entry = self.variables.entry(name.clone());
-        match entry {
-            Entry::Occupied(_) => {
-                entry.insert(value);
-            }
-            Entry::Vacant(_) => {
-                if let Some(p) = &self.outer {
-                    p.borrow_mut().assign_variable(name, value);
-                } else {
-                    entry.insert(value);
-                }
+    fn update_variable(&mut self, name: String, value: Option<RuntimeValue>) {
+        for i in 0..self.variables.len() {
+            // If find a varialbe, remove the old entry and add new entry.
+            if self.variables[i].0 == name {
+                self.variables.remove(i);
+                self.variables.push((name, value));
+                return;
             }
         }
+
+        // Check the outer environment.
+        if let Some(env) = &self.outer {
+            env.borrow_mut().update_variable(name, value);
+        }
     }
-    */
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -323,22 +323,26 @@ impl JsRuntime {
                 right,
             } => {
                 if operator == &'=' {
+                    // Variable reassignment.
+                    if let Some(node) = left {
+                        if let Node::Identifier(id) = node.borrow() {
+                            let new_value = self.eval(right, env.clone());
+                            env.borrow_mut().update_variable(id.to_string(), new_value);
+                            return None;
+                        }
+                    }
+
+                    // If the left value is HtmlElement, update DOM.
                     let left_value = match self.eval(left, env.clone()) {
                         Some(value) => value,
                         None => return None,
                     };
-                    let right_value = match self.eval(right, env.clone()) {
+                    let right_value = match self.eval(left, env.clone()) {
                         Some(value) => value,
                         None => return None,
                     };
 
-                    //println!("AssignmentExpression {:?} = {:?}", left_value, right_value);
-
                     match left_value {
-                        RuntimeValue::Number(n) => panic!("unexpected value {:?}", n),
-                        RuntimeValue::StringLiteral(_s) => {
-                            // TODO: update variable here
-                        }
                         RuntimeValue::HtmlElement { object, property } => {
                             if let Some(p) = property {
                                 // this is the implementation of
@@ -354,6 +358,7 @@ impl JsRuntime {
                                 }
                             }
                         }
+                        _ => {}
                     }
                 }
                 None
@@ -615,6 +620,24 @@ mod tests {
         let ast = parser.parse_ast();
         let mut runtime = JsRuntime::new(dom);
         let expected = [None, Some(RuntimeValue::Number(43))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_reassign_variable() {
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
+        let input = "var foo=42; foo=1; foo".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom);
+        let expected = [None, None, Some(RuntimeValue::Number(1))];
         let mut i = 0;
 
         for node in ast.body() {

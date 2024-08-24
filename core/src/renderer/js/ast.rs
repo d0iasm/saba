@@ -656,6 +656,31 @@ mod tests {
     }
 
     #[test]
+    fn test_reassign_variable() {
+        let input = "var foo=42; foo=1;".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let mut expected = Program::new();
+        let mut body = Vec::new();
+        body.push(Rc::new(Node::VariableDeclaration {
+            declarations: [Some(Rc::new(Node::VariableDeclarator {
+                id: Some(Rc::new(Node::Identifier("foo".to_string()))),
+                init: Some(Rc::new(Node::NumericLiteral(42))),
+            }))]
+            .to_vec(),
+        }));
+        body.push(Rc::new(Node::ExpressionStatement(Some(Rc::new(
+            Node::AssignmentExpression {
+                operator: '=',
+                left: Some(Rc::new(Node::Identifier("foo".to_string()))),
+                right: Some(Rc::new(Node::NumericLiteral(1))),
+            },
+        )))));
+        expected.set_body(body);
+        assert_eq!(expected, parser.parse_ast());
+    }
+
+    #[test]
     fn test_define_function() {
         let input = "function foo() { return 42; }".to_string();
         let lexer = JsLexer::new(input);
