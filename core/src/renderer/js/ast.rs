@@ -785,4 +785,24 @@ mod tests {
         expected.set_body(body);
         assert_eq!(expected, parser.parse_ast());
     }
+
+    #[test]
+    fn test_browser_api() {
+        let input = "document.getElementById(\"target\")".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let mut expected = Program::new();
+        let mut body = Vec::new();
+        body.push(Rc::new(Node::ExpressionStatement(Some(Rc::new(
+            Node::CallExpression {
+                callee: Some(Rc::new(Node::MemberExpression {
+                    object: Some(Rc::new(Node::Identifier("document".to_string()))),
+                    property: Some(Rc::new(Node::Identifier("getElementById".to_string()))),
+                })),
+                arguments: [Some(Rc::new(Node::StringLiteral("target".to_string())))].to_vec(),
+            },
+        )))));
+        expected.set_body(body);
+        assert_eq!(expected, parser.parse_ast());
+    }
 }

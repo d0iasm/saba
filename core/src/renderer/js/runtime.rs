@@ -7,6 +7,7 @@ use alloc::format;
 use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::string::ToString;
+use alloc::vec;
 use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::cell::RefCell;
@@ -18,11 +19,9 @@ use core::ops::Sub;
 #[derive(Debug, Clone)]
 /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types
 pub enum RuntimeValue {
-    /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-number-value
-    /// https://262.ecma-international.org/13.0/#sec-numeric-types
+    /// https://tc39.es/ecma262/#sec-numeric-types
     Number(u64),
-    /// https://262.ecma-international.org/13.0/#sec-terms-and-definitions-string-value
-    /// https://262.ecma-international.org/13.0/#sec-ecmascript-language-types-string-type
+    /// https://tc39.es/ecma262/#sec-ecmascript-language-types-string-type
     StringLiteral(String),
     /// https://dom.spec.whatwg.org/#interface-htmlcollection
     /// https://dom.spec.whatwg.org/#element
@@ -30,6 +29,7 @@ pub enum RuntimeValue {
         object: Rc<RefCell<DomNode>>,
         property: Option<String>,
     },
+    Function(Function),
 }
 
 impl Display for RuntimeValue {
@@ -43,6 +43,7 @@ impl Display for RuntimeValue {
             } => {
                 format!("HtmlElement: {:#?}", object)
             }
+            RuntimeValue::Function(func) => format!("{}", func.id),
         };
         write!(f, "{}", s)
     }
@@ -63,6 +64,10 @@ impl PartialEq for RuntimeValue {
                 object: _,
                 property: _,
             } => false,
+            RuntimeValue::Function(func1) => match other {
+                RuntimeValue::Function(func2) => func1.id == func2.id,
+                _ => false,
+            },
         }
     }
 }
@@ -111,15 +116,29 @@ impl Environment {
         }
     }
 
-    pub fn get_variable(&self, name: String) -> Option<RuntimeValue> {
-        if self.variables.is_empty() {
-            return None;
+    pub fn get_function(&self, name: String) -> Option<RuntimeValue> {
+        for variable in &self.variables {
+            if variable.0 == name {
+                if let Some(RuntimeValue::Function(_)) = &variable.1 {
+                    return variable.1.clone();
+                }
+            }
         }
+
+        if let Some(env) = &self.outer {
+            env.borrow_mut().get_function(name)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_variable(&self, name: String) -> Option<RuntimeValue> {
         for variable in &self.variables {
             if variable.0 == name {
                 return variable.1.clone();
             }
         }
+
         if let Some(env) = &self.outer {
             env.borrow_mut().get_variable(name)
         } else {
@@ -171,11 +190,29 @@ pub struct JsRuntime {
 
 impl JsRuntime {
     pub fn new(dom_root: Rc<RefCell<DomNode>>) -> Self {
+        let mut env = Environment::new(None);
+        env.add_variable(
+            "document".to_string(),
+            Some(RuntimeValue::HtmlElement {
+                object: dom_root.clone(),
+                property: None,
+            }),
+        );
+
+        env.add_variable(
+            "getElementById".to_string(),
+            Some(RuntimeValue::Function(Function::new(
+                "getElementById".to_string(),
+                vec![Node::new_identifier("target".to_string())],
+                None,
+            ))),
+        );
+
         Self {
             dom_root: Some(dom_root),
             dom_modified: false,
             functions: Vec::new(),
-            env: Rc::new(RefCell::new(Environment::new(None))),
+            env: Rc::new(RefCell::new(env)),
         }
     }
 
@@ -190,9 +227,9 @@ impl JsRuntime {
     /// https://developer.mozilla.org/en-US/docs/Web/API
     ///
     /// returns a tuple (bool, Option<RuntimeValue>)
-    ///   bool: whether or not a Web API is found
-    ///   Option<RuntimeValue>: the result of a Web API
-    fn call_web_api(
+    ///   bool: whether or not a Browser API is found
+    ///   Option<RuntimeValue>: the result of a Browser API
+    fn call_browser_api(
         &mut self,
         func: &RuntimeValue,
         arguments: &[Option<Rc<Node>>],
@@ -208,22 +245,28 @@ impl JsRuntime {
             }
         }
 
-        if func == &RuntimeValue::StringLiteral("document.getElementById".to_string()) {
-            let arg = match self.eval(&arguments[0], env.clone()) {
-                Some(a) => a,
-                None => return (true, None),
-            };
-            let target = match get_element_by_id(self.dom_root.clone(), &arg.to_string()) {
-                Some(n) => n,
-                None => return (true, None),
-            };
-            return (
-                true,
-                Some(RuntimeValue::HtmlElement {
-                    object: target,
-                    property: None,
-                }),
-            );
+        if let RuntimeValue::HtmlElement {
+            object: _,
+            property,
+        } = func
+        {
+            if property == &Some("getElementById".to_string()) {
+                let arg = match self.eval(&arguments[0], env.clone()) {
+                    Some(a) => a,
+                    None => return (true, None),
+                };
+                let target = match get_element_by_id(self.dom_root.clone(), &arg.to_string()) {
+                    Some(n) => n,
+                    None => return (true, None),
+                };
+                return (
+                    true,
+                    Some(RuntimeValue::HtmlElement {
+                        object: target,
+                        property: None,
+                    }),
+                );
+            }
         }
 
         (false, None)
@@ -252,22 +295,24 @@ impl JsRuntime {
             Node::FunctionDeclaration { id, params, body } => {
                 let id = match self.eval(id, env.clone()) {
                     Some(value) => match value {
-                        RuntimeValue::Number(n) => {
-                            unimplemented!("id should be string but got {:?}", n)
-                        }
                         RuntimeValue::StringLiteral(s) => s,
-                        RuntimeValue::HtmlElement {
-                            object: node,
-                            property: _,
-                        } => {
+                        _ => {
                             panic!("unexpected runtime value {:?}", node)
                         }
                     },
                     None => return None,
                 };
                 let cloned_body = body.as_ref().cloned();
-                self.functions
-                    .push(Function::new(id, params.to_vec(), cloned_body));
+                env.borrow_mut().add_variable(
+                    id.to_string(),
+                    Some(RuntimeValue::Function(Function::new(
+                        id,
+                        params.to_vec(),
+                        cloned_body,
+                    ))),
+                );
+                //self.functions
+                //   .push(Function::new(id, params.to_vec(), cloned_body));
                 None
             }
             Node::VariableDeclaration { declarations } => {
@@ -317,18 +362,18 @@ impl JsRuntime {
                     // Variable reassignment.
                     if let Some(node) = left {
                         if let Node::Identifier(id) = node.borrow() {
-                            let new_value = self.eval(right, env.clone());
+                            let new_value = self.eval(&right, env.clone());
                             env.borrow_mut().update_variable(id.to_string(), new_value);
                             return None;
                         }
                     }
 
                     // If the left value is HtmlElement, update DOM.
-                    let left_value = match self.eval(left, env.clone()) {
+                    let left_value = match self.eval(&left, env.clone()) {
                         Some(value) => value,
                         None => return None,
                     };
-                    let right_value = match self.eval(right, env.clone()) {
+                    let right_value = match self.eval(&right, env.clone()) {
                         Some(value) => value,
                         None => return None,
                     };
@@ -366,11 +411,11 @@ impl JsRuntime {
                 None
             }
             Node::MemberExpression { object, property } => {
-                let object_value = match self.eval(object, env.clone()) {
+                let object_value = match self.eval(&object, env.clone()) {
                     Some(value) => value,
                     None => return None,
                 };
-                let property_value = match self.eval(property, env.clone()) {
+                let property_value = match self.eval(&property, env.clone()) {
                     Some(value) => value,
                     // return RuntimeValue in `object` because of no `property`
                     None => return Some(object_value),
@@ -379,6 +424,13 @@ impl JsRuntime {
                 match object_value {
                     // return html element for DOM manipulation
                     RuntimeValue::HtmlElement { object, property } => {
+                        match env.borrow_mut().get_function(property_value.to_string()) {
+                            Some(func) => {
+                                return Some(func);
+                            }
+                            None => {}
+                        };
+
                         assert!(property.is_none());
 
                         // set `property` to the HtmlElement value.
@@ -438,20 +490,21 @@ impl JsRuntime {
             }
             Node::CallExpression { callee, arguments } => {
                 // Create a new scope.
-                let env = Rc::new(RefCell::new(Environment::new(Some(env))));
+                let new_env = Rc::new(RefCell::new(Environment::new(Some(env))));
 
-                let callee_value = match self.eval(callee, env.clone()) {
+                let callee_value = match self.eval(&callee, new_env.clone()) {
                     Some(value) => value,
                     None => return None,
                 };
 
-                // call a Web API
-                let web_api_result = self.call_web_api(&callee_value, arguments, env.clone());
-                if web_api_result.0 {
-                    return web_api_result.1;
+                // call a Browser API
+                let api_result = self.call_browser_api(&callee_value, arguments, new_env.clone());
+                if api_result.0 {
+                    return api_result.1;
                 }
 
                 // find a function defined in the JS code
+                /*
                 let function = {
                     let mut f: Option<Function> = None;
 
@@ -466,36 +519,40 @@ impl JsRuntime {
                         None => unimplemented!("function {:?} doesn't exist", callee),
                     }
                 };
+                */
+                let function = match callee_value {
+                    RuntimeValue::Function(func) => func,
+                    _ => {
+                        panic!("{:#?} cannot be called", callee_value);
+                    }
+                };
 
                 // assign arguments to params as local variables
                 assert!(arguments.len() == function.params.len());
-                for (i, _item) in arguments.iter().enumerate() {
-                    let name = match self.eval(&function.params[i], env.clone()) {
+                for (i, item) in arguments.iter().enumerate() {
+                    let name = match self.eval(&function.params[i], new_env.clone()) {
                         Some(value) => match value {
-                            RuntimeValue::Number(n) => {
-                                unimplemented!("id should be string but got {:?}", n)
-                            }
                             RuntimeValue::StringLiteral(s) => s,
-                            RuntimeValue::HtmlElement {
-                                object,
-                                property: _,
-                            } => {
-                                panic!("unexpected runtime value {:?}", object)
+                            _ => {
+                                panic!("unexpected runtime value {:?}", node)
                             }
                         },
                         None => return None,
                     };
 
-                    env.borrow_mut()
-                        .add_variable(name, self.eval(&arguments[i], env.clone()));
+                    new_env
+                        .borrow_mut()
+                        .add_variable(name, self.eval(item, new_env.clone()));
                 }
 
                 // call function with arguments
-                self.eval(&function.body.clone(), env.clone())
+                self.eval(&function.body.clone(), new_env.clone())
             }
             Node::Identifier(name) => {
                 match env.borrow_mut().get_variable(name.to_string()) {
-                    Some(v) => Some(v),
+                    Some(v) => {
+                        return Some(v);
+                    }
                     // first time to evaluate this identifier
                     None => Some(RuntimeValue::StringLiteral(name.to_string())),
                 }
@@ -687,6 +744,24 @@ mod tests {
     fn test_local_variable() {
         let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
         let input = "var a=42; function foo() { var a=1; return a; } foo()+a".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom);
+        let expected = [None, None, Some(RuntimeValue::Number(43))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_browser_api() {
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
+        let input = "document.getElementById(\"target\")".to_string();
         let lexer = JsLexer::new(input);
         let mut parser = JsParser::new(lexer);
         let ast = parser.parse_ast();
