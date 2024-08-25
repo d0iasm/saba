@@ -38,12 +38,10 @@ impl Display for RuntimeValue {
             RuntimeValue::Number(value) => format!("{}", value),
             RuntimeValue::StringLiteral(value) => value.to_string(),
             RuntimeValue::HtmlElement {
-                object: _,
+                object,
                 property: _,
             } => {
-                "HtmlElement".to_string()
-                // TODO: fix
-                //format!("{:?}", object.borrow().kind())
+                format!("HtmlElement: {:#?}", object)
             }
         };
         write!(f, "{}", s)
@@ -219,13 +217,6 @@ impl JsRuntime {
                 Some(n) => n,
                 None => return (true, None),
             };
-            /*
-            println!(
-                "[document.getElementById] {:?}\n{:?}",
-                arg.to_string(),
-                target
-            );
-            */
             return (
                 true,
                 Some(RuntimeValue::HtmlElement {
@@ -337,7 +328,7 @@ impl JsRuntime {
                         Some(value) => value,
                         None => return None,
                     };
-                    let right_value = match self.eval(left, env.clone()) {
+                    let right_value = match self.eval(right, env.clone()) {
                         Some(value) => value,
                         None => return None,
                     };
@@ -345,6 +336,17 @@ impl JsRuntime {
                     match left_value {
                         RuntimeValue::HtmlElement { object, property } => {
                             if let Some(p) = property {
+                                // this is the implementation of
+                                // `document.getElementById("target").textContent = "foobar";`
+                                if p == "textContent" {
+                                    // Not necessary to set dom_modified=true because only text
+                                    // content is changed.
+                                    object.borrow_mut().set_first_child(Some(Rc::new(
+                                        RefCell::new(DomNode::new(DomNodeKind::Text(
+                                            right_value.to_string(),
+                                        ))),
+                                    )));
+                                }
                                 // this is the implementation of
                                 // `document.getElementById("target").innerHTML = "foobar";`
                                 // Currently, an assignment value should be a text like "foobar".
@@ -435,7 +437,9 @@ impl JsRuntime {
                 }
             }
             Node::CallExpression { callee, arguments } => {
+                // Create a new scope.
                 let env = Rc::new(RefCell::new(Environment::new(Some(env))));
+
                 let callee_value = match self.eval(callee, env.clone()) {
                     Some(value) => value,
                     None => return None,
@@ -446,32 +450,6 @@ impl JsRuntime {
                 if web_api_result.0 {
                     return web_api_result.1;
                 }
-
-                /*
-                if callee_value
-                    == RuntimeValue::StringLiteral("document.getElementById".to_string())
-                {
-                    let arg = match self.eval(&arguments[0], env.clone()) {
-                        Some(a) => a,
-                        None => return None,
-                    };
-                    let target = match get_element_by_id(self.dom_root.clone(), &arg.to_string()) {
-                        Some(n) => n,
-                        None => return None,
-                    };
-                    println!(
-                        "[document.getElementById] {:?}\n{:?}",
-                        arg.to_string(),
-                        target
-                    );
-                    return Some(RuntimeValue::HtmlElement {
-                        object: target,
-                        property: None,
-                    });
-                }
-                */
-
-                let mut new_local_variables: VariableMap = VariableMap::new();
 
                 // find a function defined in the JS code
                 let function = {
@@ -508,7 +486,8 @@ impl JsRuntime {
                         None => return None,
                     };
 
-                    new_local_variables.push((name, self.eval(&arguments[i], env.clone())));
+                    env.borrow_mut()
+                        .add_variable(name, self.eval(&arguments[i], env.clone()));
                 }
 
                 // call function with arguments
@@ -648,6 +627,27 @@ mod tests {
     }
 
     #[test]
+    fn test_reassign_string() {
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
+        let input = "var foo=42; foo=\"<h1>foo</h1>\"; foo".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom);
+        let expected = [
+            None,
+            None,
+            Some(RuntimeValue::StringLiteral("<h1>foo</h1>".to_string())),
+        ];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+    #[test]
     fn test_add_function_and_num() {
         let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
         let input = "function foo() { return 42; } foo()+1".to_string();
@@ -656,6 +656,24 @@ mod tests {
         let ast = parser.parse_ast();
         let mut runtime = JsRuntime::new(dom);
         let expected = [None, Some(RuntimeValue::Number(43))];
+        let mut i = 0;
+
+        for node in ast.body() {
+            let result = runtime.eval(&Some(node.clone()), runtime.env.clone());
+            assert_eq!(expected[i], result);
+            i += 1;
+        }
+    }
+
+    #[test]
+    fn test_define_function_with_args() {
+        let dom = Rc::new(RefCell::new(DomNode::new(DomNodeKind::Document)));
+        let input = "function foo(a, b) { return a + b; } foo(1, 2) + 3;".to_string();
+        let lexer = JsLexer::new(input);
+        let mut parser = JsParser::new(lexer);
+        let ast = parser.parse_ast();
+        let mut runtime = JsRuntime::new(dom);
+        let expected = [None, Some(RuntimeValue::Number(6))];
         let mut i = 0;
 
         for node in ast.body() {

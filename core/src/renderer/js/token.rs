@@ -295,6 +295,27 @@ mod tests {
     }
 
     #[test]
+    fn test_reassgin_string() {
+        let input = "foo.innerHTML=\"<h1>dynamic</h1>\";".to_string();
+        let mut lexer = JsLexer::new(input).peekable();
+        let expected = [
+            Token::Identifier("foo".to_string()),
+            Token::Punctuator('.'),
+            Token::Identifier("innerHTML".to_string()),
+            Token::Punctuator('='),
+            Token::StringLiteral("<h1>dynamic</h1>".to_string()),
+            Token::Punctuator(';'),
+        ]
+        .to_vec();
+        let mut i = 0;
+        while lexer.peek().is_some() {
+            assert_eq!(Some(expected[i].clone()), lexer.next());
+            i += 1;
+        }
+        assert!(lexer.peek().is_none());
+    }
+
+    #[test]
     fn test_define_function() {
         let input = "function foo() { return 42; }".to_string();
         let mut lexer = JsLexer::new(input).peekable();

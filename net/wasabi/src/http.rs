@@ -35,6 +35,14 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
       background-color: #00ffff;
     }
     </style>
+    <script type="text/javascript">
+      var target=document.getElementById("target");
+      function foo(a, b) {
+        return a+b;
+      }
+      target.textContent=foo(1, 2) + 3;
+      target.textContent="dynamic text";
+     </script>
 </head>
 <body>
     <h1 id="title">Example Domain Response</h1>
@@ -43,6 +51,7 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
     <div class="link">
       <p class="link-wrapper"><a>Link1</a><a>Link2</a></p>
     </div>
+    <p id="target">original text</p>
     <p class="wrapper"><p class="text1">Text1</p><p class="text2">Text2</p></p>
     <p><a href="https://www.iana.org/domains/example">More information...</a></p>
     <p class="hidden">none</p>
