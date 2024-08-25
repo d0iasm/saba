@@ -4,4 +4,6 @@ name = "saba_core"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+#[dependencies.regex]
+#version = "1.10.6"
+#default-features = false
