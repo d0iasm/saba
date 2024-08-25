@@ -37,6 +37,7 @@ static FAKE_RESPONSE_BODY: &str = r#"<html>
     </style>
     <script type="text/javascript">
       var target=document.getElementById("target");
+      console.log(target);
       function foo(a, b) {
         return a+b;
       }

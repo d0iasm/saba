@@ -7,7 +7,6 @@ use alloc::format;
 use alloc::rc::Rc;
 use alloc::string::String;
 use alloc::string::ToString;
-use alloc::vec;
 use alloc::vec::Vec;
 use core::borrow::Borrow;
 use core::cell::RefCell;
@@ -29,7 +28,6 @@ pub enum RuntimeValue {
         object: Rc<RefCell<DomNode>>,
         property: Option<String>,
     },
-    Function(Function),
 }
 
 impl Display for RuntimeValue {
@@ -43,7 +41,6 @@ impl Display for RuntimeValue {
             } => {
                 format!("HtmlElement: {:#?}", object)
             }
-            RuntimeValue::Function(func) => format!("{}", func.id),
         };
         write!(f, "{}", s)
     }
@@ -64,10 +61,6 @@ impl PartialEq for RuntimeValue {
                 object: _,
                 property: _,
             } => false,
-            RuntimeValue::Function(func1) => match other {
-                RuntimeValue::Function(func2) => func1.id == func2.id,
-                _ => false,
-            },
         }
     }
 }
@@ -113,22 +106,6 @@ impl Environment {
         Self {
             variables: VariableMap::new(),
             outer,
-        }
-    }
-
-    pub fn get_function(&self, name: String) -> Option<RuntimeValue> {
-        for variable in &self.variables {
-            if variable.0 == name {
-                if let Some(RuntimeValue::Function(_)) = &variable.1 {
-                    return variable.1.clone();
-                }
-            }
-        }
-
-        if let Some(env) = &self.outer {
-            env.borrow_mut().get_function(name)
-        } else {
-            None
         }
     }
 
@@ -199,15 +176,6 @@ impl JsRuntime {
             }),
         );
 
-        env.add_variable(
-            "getElementById".to_string(),
-            Some(RuntimeValue::Function(Function::new(
-                "getElementById".to_string(),
-                vec![Node::new_identifier("target".to_string())],
-                None,
-            ))),
-        );
-
         Self {
             dom_root: Some(dom_root),
             dom_modified: false,
@@ -238,7 +206,7 @@ impl JsRuntime {
         if func == &RuntimeValue::StringLiteral("console.log".to_string()) {
             match self.eval(&arguments[0], env.clone()) {
                 Some(_arg) => {
-                    //println!("[console.log] {:?}", arg.to_string());
+                    //panic!("[console.log] {:?}", arg.to_string());
                     return (true, None);
                 }
                 None => return (false, None),
@@ -303,16 +271,8 @@ impl JsRuntime {
                     None => return None,
                 };
                 let cloned_body = body.as_ref().cloned();
-                env.borrow_mut().add_variable(
-                    id.to_string(),
-                    Some(RuntimeValue::Function(Function::new(
-                        id,
-                        params.to_vec(),
-                        cloned_body,
-                    ))),
-                );
-                //self.functions
-                //   .push(Function::new(id, params.to_vec(), cloned_body));
+                self.functions
+                    .push(Function::new(id, params.to_vec(), cloned_body));
                 None
             }
             Node::VariableDeclaration { declarations } => {
@@ -424,13 +384,6 @@ impl JsRuntime {
                 match object_value {
                     // return html element for DOM manipulation
                     RuntimeValue::HtmlElement { object, property } => {
-                        match env.borrow_mut().get_function(property_value.to_string()) {
-                            Some(func) => {
-                                return Some(func);
-                            }
-                            None => {}
-                        };
-
                         assert!(property.is_none());
 
                         // set `property` to the HtmlElement value.
@@ -440,25 +393,6 @@ impl JsRuntime {
                         })
                     }
                     _ => {
-                        if object_value == RuntimeValue::StringLiteral("document".to_string()) {
-                            // TOOD: this is tricky to support member functions for document.*. find smarter way...
-                            if property_value
-                                == RuntimeValue::StringLiteral("getElementById".to_string())
-                            {
-                                return Some(
-                                    object_value
-                                        + RuntimeValue::StringLiteral(".".to_string())
-                                        + property_value,
-                                );
-                            }
-
-                            // set `property` to the HtmlElement value.
-                            return Some(RuntimeValue::HtmlElement {
-                                object: self.dom_root.clone().expect("failed to get root node"),
-                                property: Some(property_value.to_string()),
-                            });
-                        }
-
                         /*
                         TODO: support window.location.href.
                         // dom_root.window().location()
@@ -504,7 +438,6 @@ impl JsRuntime {
                 }
 
                 // find a function defined in the JS code
-                /*
                 let function = {
                     let mut f: Option<Function> = None;
 
@@ -517,13 +450,6 @@ impl JsRuntime {
                     match f {
                         Some(f) => f,
                         None => unimplemented!("function {:?} doesn't exist", callee),
-                    }
-                };
-                */
-                let function = match callee_value {
-                    RuntimeValue::Function(func) => func,
-                    _ => {
-                        panic!("{:#?} cannot be called", callee_value);
                     }
                 };
 
