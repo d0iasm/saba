@@ -256,9 +256,9 @@ impl HtmlParser {
                             return self.window.clone();
                         }
                     }
-                    token = self.t.next();
-                    //self.insert_element("html", Vec::new());
-                    //self.mode = InsertionMode::BeforeHead;
+                    self.insert_element("html", Vec::new());
+                    self.mode = InsertionMode::BeforeHead;
+                    continue;
                 } // end of InsertionMode::BeforeHtml
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#the-before-head-insertion-mode
@@ -287,9 +287,9 @@ impl HtmlParser {
                         }
                         _ => {}
                     }
-                    token = self.t.next();
-                    //self.insert_element("head", Vec::new());
-                    //self.mode = InsertionMode::InHead;
+                    self.insert_element("head", Vec::new());
+                    self.mode = InsertionMode::InHead;
+                    continue;
                 } // end of InsertionMode::BeforeHead
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inhead
@@ -342,9 +342,9 @@ impl HtmlParser {
                             return self.window.clone();
                         }
                     }
-                    token = self.t.next();
-                    //self.mode = InsertionMode::AfterHead;
-                    //self.pop_until(ElementKind::Head);
+                    self.pop_until(ElementKind::Head);
+                    self.mode = InsertionMode::AfterHead;
+                    continue;
                 } // end of InsertionMode::InHead
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#the-after-head-insertion-mode
@@ -374,9 +374,9 @@ impl HtmlParser {
                         }
                         _ => {}
                     }
-                    token = self.t.next();
-                    //self.insert_element("body", Vec::new());
-                    //self.mode = InsertionMode::InBody;
+                    self.insert_element("body", Vec::new());
+                    self.mode = InsertionMode::InBody;
+                    continue;
                 } // end of InsertionMode::AfterHead
 
                 // https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inbody
@@ -882,6 +882,67 @@ mod tests {
         assert_eq!(
             Rc::new(RefCell::new(Node::new(NodeKind::Text("text".to_string())))),
             text
+        );
+    }
+
+    #[test]
+    fn test_no_body_tag() {
+        let browser = Browser::new();
+        let html = "<p>a</p>".to_string();
+        let t = HtmlTokenizer::new(html);
+        let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
+        let document = window.borrow().document();
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Document))),
+            document
+        );
+
+        let html = document
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of document");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "html",
+                Vec::new()
+            ))))),
+            html
+        );
+
+        let head = html
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of html");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "head",
+                Vec::new()
+            ))))),
+            head
+        );
+
+        let body = head
+            .borrow()
+            .next_sibling()
+            .expect("failed to get a next sibling of head");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "body",
+                Vec::new()
+            ))))),
+            body
+        );
+
+        let p = body
+            .borrow()
+            .first_child()
+            .expect("failed to get a first child of body");
+        assert_eq!(
+            Rc::new(RefCell::new(Node::new(NodeKind::Element(Element::new(
+                "p",
+                Vec::new()
+            ))))),
+            p
         );
     }
 }

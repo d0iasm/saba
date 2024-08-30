@@ -231,8 +231,8 @@ impl PartialEq for NodeKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
 /// https://dom.spec.whatwg.org/#interface-element
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Element {
     kind: ElementKind,
     attributes: Vec<Attribute>,
