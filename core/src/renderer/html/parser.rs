@@ -329,6 +329,20 @@ impl HtmlParser {
                                 token = self.t.next();
                                 continue;
                             }
+
+                            // This is not defined in the spec but we need this for HTML without
+                            // <head>. Otherwise, infinite loop occurs when <head> tag doesn't
+                            // exist.
+                            if tag == "body" {
+                                self.pop_until(ElementKind::Head);
+                                self.mode = InsertionMode::AfterHead;
+                                continue;
+                            }
+                            if let Ok(_element_kind) = ElementKind::from_str(tag) {
+                                self.pop_until(ElementKind::Head);
+                                self.mode = InsertionMode::AfterHead;
+                                continue;
+                            }
                         }
                         Some(HtmlToken::EndTag { ref tag }) => {
                             if tag == "head" {
@@ -342,8 +356,8 @@ impl HtmlParser {
                             return self.window.clone();
                         }
                     }
-                    self.pop_until(ElementKind::Head);
-                    self.mode = InsertionMode::AfterHead;
+                    // Ignore unsupported tags like <meta> and <title>.
+                    token = self.t.next();
                     continue;
                 } // end of InsertionMode::InHead
 
