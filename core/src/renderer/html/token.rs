@@ -465,20 +465,6 @@ impl Iterator for HtmlTokenizer {
                 }
                 // https://html.spec.whatwg.org/multipage/parsing.html#script-data-state
                 State::ScriptData => {
-                    // TODO: fix this.
-                    // this is not aligned with the spec.
-                    // check the temporary buffer
-                    if c == '>' {
-                        if let Some(HtmlToken::EndTag { ref tag }) = self.latest_token.as_mut() {
-                            if tag == "script" {
-                                self.state = State::Data;
-                                return self.take_latest_token();
-                            } else {
-                                self.latest_token = None;
-                            }
-                        }
-                    }
-
                     if c == '<' {
                         self.state = State::ScriptDataLessThanSign;
                         continue;

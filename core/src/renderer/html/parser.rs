@@ -315,8 +315,16 @@ impl HtmlParser {
                                 continue;
                             }
                             if tag == "script" {
+                                // "6. Insert the newly created element at the adjusted insertion
+                                // location."
+                                // "7. Push the element onto the stack of open elements so that it is
+                                // the new current node."
                                 self.insert_element(tag, attributes.to_vec());
+                                // "8. Switch the tokenizer to the script data state."
+                                self.t.switch_context(State::ScriptData);
+                                // "9. Let the original insertion mode be the current insertion mode."
                                 self.original_insertion_mode = self.mode;
+                                // "10. Switch the insertion mode to "text"."
                                 self.mode = InsertionMode::Text;
                                 token = self.t.next();
                                 continue;
@@ -383,14 +391,16 @@ impl HtmlParser {
                                 // A start tag whose tag name is one of: "base", "basefont",
                                 // "bgsound", "link", "meta", "noframes", "script", "style",
                                 // "template", "title"
-                                "script" => {
+                                "script" | "style" => {
                                     // Process the token using the rules for the "in head" insertion mode.
                                     //
                                     // https://html.spec.whatwg.org/multipage/parsing.html#parsing-html-fragments
                                     // Switch the tokenizer to the script data state.
+                                    self.insert_element(tag, attributes.to_vec());
                                     self.t.switch_context(State::ScriptData);
-
-                                    self.mode = InsertionMode::InHead;
+                                    self.original_insertion_mode = self.mode;
+                                    self.mode = InsertionMode::Text;
+                                    token = self.t.next();
                                     continue;
                                 }
                                 // A start tag whose tag name is one of: "address", "article",

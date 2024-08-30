@@ -249,6 +249,10 @@ impl DisplayType {
         match &node.borrow().kind() {
             NodeKind::Document => DisplayType::Block,
             NodeKind::Element(e) => {
+                if e.kind() == ElementKind::Script || e.kind() == ElementKind::Style {
+                    return DisplayType::DisplayNone;
+                }
+
                 if e.is_block_element() {
                     DisplayType::Block
                 } else {

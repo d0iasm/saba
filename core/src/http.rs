@@ -13,8 +13,8 @@ use alloc::vec::Vec;
 
 #[derive(Debug, Clone)]
 pub struct Header {
-    pub name: String,
-    pub value: String,
+    name: String,
+    value: String,
 }
 
 impl Header {
