@@ -546,14 +546,12 @@ impl HtmlParser {
                                 // An end tag whose tag name is "body"
                                 "body" => {
                                     self.mode = InsertionMode::AfterBody;
-                                    let element_kind = ElementKind::from_str(tag)
-                                        .expect("failed to convert string to ElementKind");
                                     token = self.t.next();
                                     if !self.contain_in_stack(ElementKind::Body) {
                                         // Parse error. Ignore the token.
                                         continue;
                                     }
-                                    self.pop_until(element_kind);
+                                    self.pop_until(ElementKind::Body);
                                     continue;
                                 }
                                 // An end tag whose tag name is "html"
