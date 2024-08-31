@@ -177,6 +177,7 @@ impl Iterator for CssTokenizer {
                     // returned value, and return it.
                     if self.input[self.pos + 1].is_ascii_alphabetic()
                         && self.input[self.pos + 2].is_alphanumeric()
+                        && self.input[self.pos + 3].is_alphanumeric()
                     {
                         // skip '@'
                         self.pos += 1;

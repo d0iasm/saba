@@ -154,7 +154,7 @@ impl Declaration {
     pub fn new() -> Self {
         Self {
             property: String::new(),
-            value: ComponentValue::Keyword(String::new()),
+            value: ComponentValue::Ident(String::new()),
         }
     }
 
@@ -169,17 +169,7 @@ impl Declaration {
 
 /// https://www.w3.org/TR/css-syntax-3/#component-value
 /// https://www.w3.org/TR/css-values-4/#component-types
-#[derive(Debug, Clone, PartialEq)]
-pub enum ComponentValue {
-    /// https://www.w3.org/TR/css-values-3/#keywords
-    Keyword(String),
-    /// https://www.w3.org/TR/css-values-3/#numeric-types
-    /// This is one of basic data types.
-    Number(f64),
-    /// https://www.w3.org/TR/css-syntax-3/#preserved-tokens
-    /// The token from the list of tokens produced by the tokenizer.
-    PreservedToken(CssToken),
-}
+pub type ComponentValue = CssToken;
 
 #[derive(Debug, Clone)]
 pub struct CssParser {
@@ -211,16 +201,9 @@ impl CssParser {
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-component-value
     fn consume_component_value(&mut self) -> ComponentValue {
-        let token = match self.t.next() {
-            Some(t) => t,
-            None => panic!("should have a token but got None"),
-        };
-
-        match token {
-            CssToken::Ident(ident) => ComponentValue::Keyword(ident.to_string()),
-            CssToken::Number(num) => ComponentValue::Number(num),
-            _ => ComponentValue::PreservedToken(token),
-        }
+        self.t
+            .next()
+            .expect("should have a token in consume_component_value")
     }
 
     /// https://www.w3.org/TR/css-syntax-3/#qualified-rule
@@ -267,8 +250,6 @@ impl CssParser {
 
     /// https://www.w3.org/TR/css-syntax-3/#consume-a-declaration
     fn consume_declaration(&mut self) -> Option<Declaration> {
-        self.t.peek()?;
-
         // Create a new declaration with its name set to the value of the current input token.
         let mut declaration = Declaration::new();
         declaration.set_property(self.consume_ident());
@@ -284,6 +265,7 @@ impl CssParser {
 
         // "4. As long as the next input token is anything other than an <EOF-token>, consume a
         // component value and append it to the declaration’s value."
+        // TODO: support multiple values in one declaration.
         declaration.set_value(self.consume_component_value());
 
         Some(declaration)
@@ -315,25 +297,16 @@ impl CssParser {
                 CssToken::Ident(ref _ident) => {
                     if let Some(declaration) = self.consume_declaration() {
                         declarations.push(declaration);
-                        if self.t.peek() == Some(&CssToken::Delim(',')) {
-                            self.t.next();
-                        }
-                    }
-                }
-                CssToken::StringToken(_) => {
-                    self.t.next();
-                    if self.t.peek() == Some(&CssToken::Delim(',')) {
-                        self.t.next();
-                    }
-                }
-                CssToken::Number(_) => {
-                    self.t.next();
-                    if self.t.peek() == Some(&CssToken::Delim(',')) {
-                        self.t.next();
                     }
                 }
                 _ => {
-                    console_warning(&self.browser, format!("unexpected token {:?}", token));
+                    console_warning(
+                        &self.browser,
+                        format!(
+                            "unexpected token in consume_list_of_declarations {:?}",
+                            token
+                        ),
+                    );
                     self.t.next();
                 }
             }
@@ -478,7 +451,7 @@ mod tests {
         rule.set_selector(Selector::TypeSelector("p".to_string()));
         let mut declaration = Declaration::default();
         declaration.set_property("color".to_string());
-        declaration.set_value(ComponentValue::Keyword("red".to_string()));
+        declaration.set_value(ComponentValue::Ident("red".to_string()));
         rule.set_declarations(vec![declaration]);
 
         let expected = [rule];
@@ -502,7 +475,7 @@ mod tests {
         rule.set_selector(Selector::IdSelector("id".to_string()));
         let mut declaration = Declaration::default();
         declaration.set_property("color".to_string());
-        declaration.set_value(ComponentValue::Keyword("red".to_string()));
+        declaration.set_value(ComponentValue::Ident("red".to_string()));
         rule.set_declarations(vec![declaration]);
 
         let expected = [rule];
@@ -526,7 +499,7 @@ mod tests {
         rule.set_selector(Selector::ClassSelector("class".to_string()));
         let mut declaration = Declaration::default();
         declaration.set_property("color".to_string());
-        declaration.set_value(ComponentValue::Keyword("red".to_string()));
+        declaration.set_value(ComponentValue::Ident("red".to_string()));
         rule.set_declarations(vec![declaration]);
 
         let expected = [rule];
@@ -550,9 +523,7 @@ mod tests {
         rule1.set_selector(Selector::TypeSelector("p".to_string()));
         let mut declaration1 = Declaration::default();
         declaration1.set_property("content".to_string());
-        declaration1.set_value(ComponentValue::PreservedToken(CssToken::StringToken(
-            "Hey".to_string(),
-        )));
+        declaration1.set_value(ComponentValue::StringToken("Hey".to_string()));
         rule1.set_declarations(vec![declaration1]);
 
         let mut rule2 = QualifiedRule::default();
@@ -562,7 +533,7 @@ mod tests {
         declaration2.set_value(ComponentValue::Number(40.0));
         let mut declaration3 = Declaration::default();
         declaration3.set_property("color".to_string());
-        declaration3.set_value(ComponentValue::Keyword("blue".to_string()));
+        declaration3.set_value(ComponentValue::Ident("blue".to_string()));
         rule2.set_declarations(vec![declaration2, declaration3]);
 
         let expected = [rule1, rule2];

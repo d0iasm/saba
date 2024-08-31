@@ -213,6 +213,13 @@ impl HtmlParser {
             match self.mode {
                 // https://html.spec.whatwg.org/multipage/parsing.html#the-initial-insertion-mode
                 InsertionMode::Initial => {
+                    // Ignore <!doctype html>.
+                    // <!doctype html> is generated as a Char token.
+                    if let Some(HtmlToken::Char(_)) = token {
+                        token = self.t.next();
+                        continue;
+                    }
+
                     self.mode = InsertionMode::BeforeHtml;
                     continue;
                 }
@@ -296,7 +303,6 @@ impl HtmlParser {
                     match token {
                         Some(HtmlToken::Char(c)) => {
                             if c == ' ' || c == '\n' {
-                                self.insert_char(c);
                                 token = self.t.next();
                                 continue;
                             }
@@ -534,7 +540,7 @@ impl HtmlParser {
                                 _ => {
                                     console_warning(
                                         &self.browser,
-                                        format!("unknown tag {:?}", tag),
+                                        format!("unsupported start tag in InBody {:?}", tag),
                                     );
                                     token = self.t.next();
                                 }
@@ -616,7 +622,7 @@ impl HtmlParser {
                                 _ => {
                                     console_warning(
                                         &self.browser,
-                                        format!("unknown tag {:?}", tag),
+                                        format!("unsupported end tag InBody {:?}", tag),
                                     );
                                     token = self.t.next();
                                 }

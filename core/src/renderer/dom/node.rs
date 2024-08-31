@@ -16,7 +16,8 @@ use alloc::rc::{Rc, Weak};
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::cell::RefCell;
-use core::fmt::{Display, Formatter};
+use core::fmt::Display;
+use core::fmt::Formatter;
 use core::str::FromStr;
 
 #[derive(Debug, Clone)]

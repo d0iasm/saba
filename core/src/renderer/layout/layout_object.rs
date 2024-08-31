@@ -11,7 +11,6 @@ use crate::renderer::css::cssom::ComponentValue;
 use crate::renderer::css::cssom::Declaration;
 use crate::renderer::css::cssom::Selector;
 use crate::renderer::css::cssom::StyleSheet;
-use crate::renderer::css::token::CssToken;
 use crate::renderer::dom::node::ElementKind;
 use crate::renderer::dom::node::Node;
 use crate::renderer::dom::node::NodeKind;
@@ -208,7 +207,7 @@ impl LayoutObject {
         for declaration in declarations {
             match declaration.property.as_str() {
                 "background-color" => {
-                    if let ComponentValue::Keyword(value) = &declaration.value {
+                    if let ComponentValue::Ident(value) = &declaration.value {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
                             Err(e) => {
@@ -220,9 +219,7 @@ impl LayoutObject {
                         continue;
                     }
 
-                    if let ComponentValue::PreservedToken(CssToken::HashToken(color_code)) =
-                        &declaration.value
-                    {
+                    if let ComponentValue::HashToken(color_code) = &declaration.value {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
                             Err(e) => {
@@ -235,7 +232,7 @@ impl LayoutObject {
                     }
                 }
                 "color" => {
-                    if let ComponentValue::Keyword(value) = &declaration.value {
+                    if let ComponentValue::Ident(value) = &declaration.value {
                         let color = match Color::from_name(value) {
                             Ok(color) => color,
                             Err(e) => {
@@ -246,9 +243,7 @@ impl LayoutObject {
                         self.style.set_color(color);
                     }
 
-                    if let ComponentValue::PreservedToken(CssToken::HashToken(color_code)) =
-                        &declaration.value
-                    {
+                    if let ComponentValue::HashToken(color_code) = &declaration.value {
                         let color = match Color::from_code(color_code) {
                             Ok(color) => color,
                             Err(e) => {
@@ -260,7 +255,7 @@ impl LayoutObject {
                     }
                 }
                 "display" => {
-                    if let ComponentValue::Keyword(value) = declaration.value {
+                    if let ComponentValue::Ident(value) = declaration.value {
                         let display_type = match DisplayType::from_str(&value) {
                             Ok(display_type) => display_type,
                             Err(e) => {
