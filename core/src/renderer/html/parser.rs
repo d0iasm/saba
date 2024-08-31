@@ -116,10 +116,9 @@ impl HtmlParser {
 
     /// https://html.spec.whatwg.org/multipage/parsing.html#insert-a-character
     fn insert_char(&mut self, c: char) {
-        let window = self.window.borrow();
         let current = match self.stack_of_open_elements.last() {
             Some(n) => n.clone(),
-            None => window.document(),
+            None => return,
         };
 
         // When the current node is Text, add a character to the current node.
