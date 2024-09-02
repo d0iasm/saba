@@ -138,8 +138,9 @@ impl WasabiUI {
                 if let Some(c) = Api::read_key() {
                     if c == 0x0A as char {
                         // enter key
-                        let _ = self.start_navigation(handle_url, "http://example.com".to_string());
+                        let _ = self.start_navigation(handle_url, self.input_url.clone());
 
+                        self.input_url = String::new();
                         self.input_mode = InputMode::Normal;
                     } else if c == 0x7F as char || c == 0x08 as char {
                         // delete key
@@ -217,6 +218,8 @@ impl WasabiUI {
 
                 if let Some(url) = next_destination {
                     // navigate to the next url.
+                    self.input_url = url.clone();
+                    self.update_address_bar()?;
                     let _ = self.start_navigation(handle_url, url);
                 }
             }
@@ -359,7 +362,16 @@ impl WasabiUI {
     }
 
     fn update_address_bar(&mut self) -> Result<(), Error> {
-        self.clear_address_bar()?;
+        // clear address bar
+        if self
+            .window
+            .fill_rect(WHITE, 72, 4, WINDOW_WIDTH - 76, ADDRESSBAR_HEIGHT - 2)
+            .is_err()
+        {
+            return Err(Error::InvalidUI(
+                "failed to clear an address bar".to_string(),
+            ));
+        }
 
         // draw URL string
         if self
@@ -404,6 +416,17 @@ impl WasabiUI {
                 "failed to clear an address bar".to_string(),
             ));
         }
+
+        self.window.flush_area(
+            // This rect should be the absolute potision.
+            Rect::new(
+                WINDOW_INIT_X_POS,
+                WINDOW_INIT_Y_POS + TITLE_BAR_HEIGHT,
+                WINDOW_WIDTH,
+                TOOLBAR_HEIGHT,
+            )
+            .expect("failed to create a rect for the address bar"),
+        );
 
         Ok(())
     }

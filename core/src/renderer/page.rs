@@ -86,31 +86,12 @@ impl Page {
                 format!("cliecked node {:?}", n.borrow().node_kind()),
             );
 
-            // TODO: Ideally, navigate a link from the renderer intead of returning a link string by this
-            // function.
-            let mut child = n.borrow().first_child();
-            while child.is_some() {
-                let c = match child {
-                    Some(ref c) => c.clone(),
-                    None => panic!("child node should exist"),
-                };
-
-                if let NodeKind::Element(e) = c.borrow().node().borrow().kind() {
+            if let Some(parent) = n.borrow().parent().upgrade() {
+                if let NodeKind::Element(e) = parent.borrow().node().borrow().kind() {
                     if e.kind() == ElementKind::A {
                         return e.get_attribute("href");
                     }
                 }
-
-                if c.borrow().first_child().is_some() {
-                    child = c.borrow().first_child();
-                    continue;
-                }
-                if c.borrow().next_sibling().is_some() {
-                    child = c.borrow().next_sibling();
-                    continue;
-                }
-
-                return None;
             }
         }
 

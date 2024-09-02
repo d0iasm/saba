@@ -63,38 +63,39 @@ pub fn create_layout_object(
     parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
     cssom: &StyleSheet,
 ) -> Option<Rc<RefCell<LayoutObject>>> {
-    match node {
-        Some(n) => {
-            let layout_object =
-                Rc::new(RefCell::new(LayoutObject::new(browser.clone(), n.clone())));
+    if let Some(n) = node {
+        let layout_object = Rc::new(RefCell::new(LayoutObject::new(
+            browser.clone(),
+            n.clone(),
+            parent_obj,
+        )));
 
-            // Apply CSS rules to LayoutObject.
-            for rule in &cssom.rules {
-                if layout_object.borrow().is_node_selected(&rule.selector) {
-                    layout_object
-                        .borrow_mut()
-                        .cascading_style(rule.declarations.clone());
-                }
+        // Apply CSS rules to LayoutObject.
+        for rule in &cssom.rules {
+            if layout_object.borrow().is_node_selected(&rule.selector) {
+                layout_object
+                    .borrow_mut()
+                    .cascading_style(rule.declarations.clone());
             }
-
-            // Defaulting a parent CSS style.
-            let parent_style = if let Some(parent) = parent_obj {
-                Some(parent.borrow().style())
-            } else {
-                None
-            };
-            layout_object.borrow_mut().defaulting_style(n, parent_style);
-
-            if layout_object.borrow().style().display() == DisplayType::DisplayNone {
-                return None;
-            }
-
-            // Set a correct LayoutObjectKind.
-            layout_object.borrow_mut().update_kind();
-            Some(layout_object)
         }
-        None => None,
+
+        // Defaulting a parent CSS style.
+        let parent_style = if let Some(parent) = parent_obj {
+            Some(parent.borrow().style())
+        } else {
+            None
+        };
+        layout_object.borrow_mut().defaulting_style(n, parent_style);
+
+        if layout_object.borrow().style().display() == DisplayType::DisplayNone {
+            return None;
+        }
+
+        // Set a correct LayoutObjectKind.
+        layout_object.borrow_mut().update_kind();
+        return Some(layout_object);
     }
+    None
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -112,6 +113,7 @@ pub struct LayoutObject {
     node: Rc<RefCell<Node>>,
     first_child: Option<Rc<RefCell<LayoutObject>>>,
     next_sibling: Option<Rc<RefCell<LayoutObject>>>,
+    parent: Weak<RefCell<LayoutObject>>,
     // CSS information.
     style: ComputedStyle,
     // Layout information.
@@ -128,13 +130,23 @@ impl PartialEq for LayoutObject {
 }
 
 impl LayoutObject {
-    fn new(browser: Weak<RefCell<Browser>>, node: Rc<RefCell<Node>>) -> Self {
+    fn new(
+        browser: Weak<RefCell<Browser>>,
+        node: Rc<RefCell<Node>>,
+        parent_obj: &Option<Rc<RefCell<LayoutObject>>>,
+    ) -> Self {
+        let parent = match parent_obj {
+            Some(p) => Rc::downgrade(p),
+            None => Weak::new(),
+        };
+
         Self {
             browser,
             kind: LayoutObjectKind::Block,
             node: node.clone(),
             first_child: None,
             next_sibling: None,
+            parent,
             style: ComputedStyle::new(),
             point: LayoutPoint::new(0, 0),
             size: LayoutSize::new(0, 0),
@@ -143,6 +155,10 @@ impl LayoutObject {
 
     pub fn node(&self) -> Rc<RefCell<Node>> {
         self.node.clone()
+    }
+
+    pub fn parent(&self) -> Weak<RefCell<Self>> {
+        self.parent.clone()
     }
 
     pub fn update_kind(&mut self) {
@@ -465,10 +481,11 @@ impl LayoutObject {
                 if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
                     // TODO: consider padding of the previous sibiling.
                     point.set_x(pos.x() + size.width() + self.style.margin_left() as i64);
+                    point.set_y(pos.y());
                 } else {
                     point.set_x(parent_point.x());
+                    point.set_y(parent_point.y());
                 }
-                point.set_y(parent_point.y());
             }
             _ => {
                 point.set_x(parent_point.x());

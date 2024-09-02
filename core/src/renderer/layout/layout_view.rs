@@ -180,9 +180,9 @@ impl LayoutView {
                 Self::calculate_node_position(
                     &first_child,
                     n.borrow().point(),
-                    previous_sibiling_kind,
-                    previous_sibiling_point,
-                    previous_sibiling_size,
+                    LayoutObjectKind::Block,
+                    None,
+                    None,
                 );
 
                 let next_sibling = n.borrow().next_sibling();
@@ -239,17 +239,13 @@ impl LayoutView {
         display_items
     }
 
+    /// Find the most child node. In most cases, `Text` node.
     fn find_node_by_position_internal(
         node: &Option<Rc<RefCell<LayoutObject>>>,
         position: (i64, i64),
     ) -> Option<Rc<RefCell<LayoutObject>>> {
         match node {
             Some(n) => {
-                // currently, position is currectly calculated only for block elements.
-                if n.borrow().kind() != LayoutObjectKind::Block {
-                    return None;
-                }
-
                 let first_child = n.borrow().first_child();
                 let result1 = Self::find_node_by_position_internal(&first_child, position);
                 if result1.is_some() {
