@@ -139,24 +139,21 @@ impl LayoutView {
     }
 
     fn calculate_node_size(node: &Option<Rc<RefCell<LayoutObject>>>, parent_size: LayoutSize) {
-        match node {
-            Some(n) => {
-                // For block elements, we should layout the size before calling children.
-                if n.borrow().kind() == LayoutObjectKind::Block {
-                    n.borrow_mut().compute_size(parent_size);
-                }
-
-                let first_child = n.borrow().first_child();
-                Self::calculate_node_size(&first_child, n.borrow().size());
-
-                let next_sibling = n.borrow().next_sibling();
-                Self::calculate_node_size(&next_sibling, parent_size);
-
-                // TODO: optimize this code because we call compute_size() twice.
-                // For inline, text elements and the height of block elements, we should layout the size after calling children.
+        if let Some(n) = node {
+            // For block elements, we should layout the size before calling children.
+            if n.borrow().kind() == LayoutObjectKind::Block {
                 n.borrow_mut().compute_size(parent_size);
             }
-            None => (),
+
+            let first_child = n.borrow().first_child();
+            Self::calculate_node_size(&first_child, n.borrow().size());
+
+            let next_sibling = n.borrow().next_sibling();
+            Self::calculate_node_size(&next_sibling, parent_size);
+
+            // TODO: optimize this code because we call compute_size() twice.
+            // For inline, text elements and the height of block elements, we should layout the size after calling children.
+            n.borrow_mut().compute_size(parent_size);
         }
     }
 
@@ -167,34 +164,31 @@ impl LayoutView {
         previous_sibiling_point: Option<LayoutPoint>,
         previous_sibiling_size: Option<LayoutSize>,
     ) {
-        match node {
-            Some(n) => {
-                n.borrow_mut().compute_position(
-                    parent_point,
-                    previous_sibiling_kind,
-                    previous_sibiling_point,
-                    previous_sibiling_size,
-                );
+        if let Some(n) = node {
+            n.borrow_mut().compute_position(
+                parent_point,
+                previous_sibiling_kind,
+                previous_sibiling_point,
+                previous_sibiling_size,
+            );
 
-                let first_child = n.borrow().first_child();
-                Self::calculate_node_position(
-                    &first_child,
-                    n.borrow().point(),
-                    LayoutObjectKind::Block,
-                    None,
-                    None,
-                );
+            let first_child = n.borrow().first_child();
+            Self::calculate_node_position(
+                &first_child,
+                n.borrow().point(),
+                LayoutObjectKind::Block,
+                None,
+                None,
+            );
 
-                let next_sibling = n.borrow().next_sibling();
-                Self::calculate_node_position(
-                    &next_sibling,
-                    parent_point,
-                    n.borrow().kind(),
-                    Some(n.borrow().point()),
-                    Some(n.borrow().size()),
-                );
-            }
-            None => (),
+            let next_sibling = n.borrow().next_sibling();
+            Self::calculate_node_position(
+                &next_sibling,
+                parent_point,
+                n.borrow().kind(),
+                Some(n.borrow().point()),
+                Some(n.borrow().size()),
+            );
         }
     }
 
