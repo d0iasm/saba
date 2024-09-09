@@ -8,15 +8,15 @@ static RESERVED_WORDS: [&str; 3] = ["var", "function", "return"];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
-    /// https://262.ecma-international.org/12.0/#sec-identifier-names
+    /// https://262.ecma-international.org/#sec-identifier-names
     Identifier(String),
-    /// https://262.ecma-international.org/12.0/#sec-keywords-and-reserved-words
+    /// https://262.ecma-international.org/#sec-keywords-and-reserved-words
     Keyword(String),
-    /// https://262.ecma-international.org/12.0/#sec-punctuators
+    /// https://262.ecma-international.org/#sec-punctuators
     Punctuator(char),
-    /// https://262.ecma-international.org/12.0/#sec-literals-string-literals
+    /// https://262.ecma-international.org/#sec-literals-string-literals
     StringLiteral(String),
-    /// https://262.ecma-international.org/12.0/#sec-literals-numeric-literals
+    /// https://262.ecma-international.org/#sec-literals-numeric-literals
     Number(u64),
 }
 

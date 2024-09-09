@@ -40,8 +40,9 @@ use core::iter::Peekable;
 //     |-- Vec<Declaration>
 //         |-- color: red
 
-#[derive(Debug, Clone, PartialEq)]
 /// https://www.w3.org/TR/cssom-1/#cssstylesheet
+/// https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleRule
+#[derive(Debug, Clone, PartialEq)]
 pub struct StyleSheet {
     /// https://drafts.csswg.org/cssom/#dom-cssstylesheet-cssrules
     pub rules: Vec<QualifiedRule>,
@@ -91,6 +92,8 @@ impl AtRule {
 #[derive(Debug, Clone, PartialEq)]
 /// https://www.w3.org/TR/css-syntax-3/#qualified-rule
 /// https://www.w3.org/TR/css-syntax-3/#style-rules
+/// https://www.w3.org/TR/cssom-1/#cssstylerule
+/// https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleRule
 pub struct QualifiedRule {
     // TODO: support multiple selectors
     /// https://www.w3.org/TR/selectors-4/#typedef-selector-list
@@ -139,6 +142,8 @@ pub enum Selector {
 
 #[derive(Debug, Clone, PartialEq)]
 /// https://www.w3.org/TR/css-syntax-3/#declaration
+/// https://www.w3.org/TR/cssom-1/#the-cssstyledeclaration-interface
+/// https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleDeclaration
 pub struct Declaration {
     pub property: String,
     pub value: ComponentValue,
