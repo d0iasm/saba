@@ -5,6 +5,9 @@ version = "0.1.0"
 edition = "2021"
 default-run = "saba"
 
+[workspace]
+members = [ "net/wasabi", "ui/wasabi" ]
+
 [features]
 default = ["wasabi"]
 cui = ["dep:net_std", "dep:ui_cui"]

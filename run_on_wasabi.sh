@@ -5,6 +5,7 @@ TARGET_PATH=$PWD"/build"
 OS_PATH=$TARGET_PATH"/wasabi"
 APP_NAME="saba"
 APP_PATH=$OS_PATH"/app/"$APP_NAME
+MAKEFILE_PATH=$HOME_PATH"/Makefile"
 
 # execute `mkdir build/` if it doesn't exist
 if [ -d $TARGET_PATH ]
@@ -36,33 +37,11 @@ fi
 # go back to the application top directory
 cd $HOME_PATH
 
-# create $APP_PATH in Wasabi OS if it doesn't exist
-if [ -d $APP_PATH ]
-then
-  echo $APP_PATH" exists"
-else
-  echo $APP_PATH" doesn't exist"
-  mkdir $APP_PATH
+# download Makefile if it doesn't exist
+if [ ! -f $MAKEFILE_PATH ]; then
+  echo "downloading Makefile..."
+  wget https://raw.githubusercontent.com/hikalium/wasabi/main/external_app_template/Makefile
 fi
 
-# copy an application except `target`, `.git` and `build` directories to Wasabi
-echo "copying the project to wasabi OS..."
-cp -R `ls -A ./ | grep -v "target" | grep -v ".git" | grep -v "build"` $APP_PATH
-
-cd $OS_PATH
-
-# update Cargo.toml to add $APP_NAME package
-# this is very hacky and not stable
-mv Cargo.toml Cargo.toml.original
-if [ $(grep -c "app/$APP_NAME" Cargo.toml.original) -eq 1 ]
-then
-  echo "$APP_PATH already exists in Cargo.toml"
-  mv Cargo.toml.original Cargo.toml
-else
-  sed "s/^members = \[/members = \[\n    \"app\/$APP_NAME\",/" Cargo.toml.original >| Cargo.toml
-fi
-rm Cargo.toml.original
-
-make run
-
-cd $HOME_PATH
+make build
+make $OS_PATH/scripts/run_with_app.sh ./target/x86_64-unknown-none/release/$APP_NAME
