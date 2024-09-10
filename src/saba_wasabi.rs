@@ -3,6 +3,10 @@
 
 extern crate alloc;
 
+#![cfg_attr(not(target_os = "linux"), no_main)]
+use noli::prelude::*;
+entry_point!(main);
+
 use crate::alloc::string::ToString;
 use alloc::format;
 use alloc::rc::Rc;
@@ -98,4 +102,3 @@ fn main() -> u64 {
     0
 }
 
-entry_point!(main);
