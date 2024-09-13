@@ -7,4 +7,3 @@ edition = "2021"
 [dependencies]
 saba_core = { path = "../../core" }
 noli = { git = "https://github.com/hikalium/wasabi.git" }
-#noli = { path = "../../../../noli" }

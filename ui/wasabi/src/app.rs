@@ -6,7 +6,6 @@ use alloc::string::ToString;
 use core::cell::RefCell;
 use core::include_bytes;
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
-use noli::_print;
 use noli::error::Result as OsResult;
 use noli::prelude::SystemApi;
 use noli::print;

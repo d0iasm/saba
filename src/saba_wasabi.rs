@@ -13,7 +13,6 @@ use alloc::rc::Rc;
 use alloc::string::String;
 use core::cell::RefCell;
 use net_wasabi::http::HttpClient;
-use noli::entry_point;
 use noli::println;
 use saba_core::browser::Browser;
 use saba_core::error::Error;
