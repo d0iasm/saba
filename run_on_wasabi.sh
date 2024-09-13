@@ -44,4 +44,4 @@ if [ ! -f $MAKEFILE_PATH ]; then
 fi
 
 make build
-make $OS_PATH/scripts/run_with_app.sh ./target/x86_64-unknown-none/release/$APP_NAME
+$OS_PATH/scripts/run_with_app.sh ./target/x86_64-unknown-none/release/$APP_NAME
