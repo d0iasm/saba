@@ -5,6 +5,9 @@ version = "0.1.0"
 edition = "2021"
 default-run = "saba"
 
+[workspace]
+members = [ "net/wasabi", "ui/wasabi" ]
+
 [features]
 default = ["wasabi"]
 cui = ["dep:net_std", "dep:ui_cui"]
@@ -36,4 +39,4 @@ ui_cui = { path = "./ui/cui", optional = true }
 # Dependencies used for browser on WasabiOS
 net_wasabi = { path = "./net/wasabi", optional = true }
 ui_wasabi = { path = "./ui/wasabi", optional = true }
-noli = { git = "https://github.com/hikalium/wasabi.git", optional = true }
+noli = { git = "https://github.com/hikalium/wasabi.git", optional = true, version = "0.1.0" }

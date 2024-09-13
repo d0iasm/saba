@@ -3,6 +3,10 @@
 
 extern crate alloc;
 
+#[cfg_attr(target_os = "linux", no_main)]
+use noli::prelude::*;
+entry_point!(main);
+
 use crate::alloc::string::ToString;
 use alloc::format;
 use alloc::rc::Rc;
@@ -17,7 +21,7 @@ use saba_core::http::HttpResponse;
 use saba_core::url::HtmlUrl;
 use ui_wasabi::app::WasabiUI;
 
-fn handle_url(url: String) -> Result<HttpResponse, Error> {
+fn handle_url(url: String) -> core::result::Result<HttpResponse, Error> {
     // parse url
     let parsed_url = match HtmlUrl::new(url.to_string()).parse() {
         Ok(url) => url,
@@ -97,5 +101,3 @@ fn main() -> u64 {
 
     0
 }
-
-entry_point!(main);
