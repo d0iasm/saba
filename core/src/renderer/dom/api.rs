@@ -24,9 +24,6 @@ pub fn get_element_by_id(
 
             let result1 = get_element_by_id(n.borrow().first_child(), id_name);
             let result2 = get_element_by_id(n.borrow().next_sibling(), id_name);
-            if result1.is_none() && result2.is_none() {
-                return None;
-            }
             if result1.is_none() {
                 return result2;
             }
@@ -51,9 +48,6 @@ pub fn get_target_element_node(
             }
             let result1 = get_target_element_node(n.borrow().first_child(), element_kind);
             let result2 = get_target_element_node(n.borrow().next_sibling(), element_kind);
-            if result1.is_none() && result2.is_none() {
-                return None;
-            }
             if result1.is_none() {
                 return result2;
             }

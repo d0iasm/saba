@@ -136,11 +136,6 @@ impl Environment {
                 return;
             }
         }
-
-        // Check the outer environment.
-        if let Some(env) = &self.outer {
-            env.borrow_mut().update_variable(name, value);
-        }
     }
 }
 
@@ -159,7 +154,7 @@ impl Function {
 
 #[derive(Debug, Clone)]
 pub struct JsRuntime {
-    dom_root: Option<Rc<RefCell<DomNode>>>,
+    dom_root: Rc<RefCell<DomNode>>,
     dom_modified: bool,
     functions: Vec<Function>,
     env: Rc<RefCell<Environment>>,
@@ -177,14 +172,14 @@ impl JsRuntime {
         );
 
         Self {
-            dom_root: Some(dom_root),
+            dom_root,
             dom_modified: false,
             functions: Vec::new(),
             env: Rc::new(RefCell::new(env)),
         }
     }
 
-    pub fn dom_root(&self) -> Option<Rc<RefCell<DomNode>>> {
+    pub fn dom_root(&self) -> Rc<RefCell<DomNode>> {
         self.dom_root.clone()
     }
 
@@ -223,7 +218,8 @@ impl JsRuntime {
                     Some(a) => a,
                     None => return (true, None),
                 };
-                let target = match get_element_by_id(self.dom_root.clone(), &arg.to_string()) {
+                let target = match get_element_by_id(Some(self.dom_root.clone()), &arg.to_string())
+                {
                     Some(n) => n,
                     None => return (true, None),
                 };
@@ -261,18 +257,14 @@ impl JsRuntime {
             }
             Node::ReturnStatement { argument } => self.eval(argument, env.clone()),
             Node::FunctionDeclaration { id, params, body } => {
-                let id = match self.eval(id, env.clone()) {
-                    Some(value) => match value {
-                        RuntimeValue::StringLiteral(s) => s,
-                        _ => {
-                            panic!("unexpected runtime value {:?}", node)
-                        }
-                    },
-                    None => return None,
+                if let Some(RuntimeValue::StringLiteral(id)) = self.eval(&id, env.clone()) {
+                    let cloned_body = match body {
+                        Some(b) => Some(b.clone()),
+                        None => None,
+                    };
+                    self.functions
+                        .push(Function::new(id, params.to_vec(), cloned_body));
                 };
-                let cloned_body = body.as_ref().cloned();
-                self.functions
-                    .push(Function::new(id, params.to_vec(), cloned_body));
                 None
             }
             Node::VariableDeclaration { declarations } => {
@@ -318,55 +310,57 @@ impl JsRuntime {
                 left,
                 right,
             } => {
-                if operator == &'=' {
-                    // Variable reassignment.
-                    if let Some(node) = left {
-                        if let Node::Identifier(id) = node.borrow() {
-                            let new_value = self.eval(&right, env.clone());
-                            env.borrow_mut().update_variable(id.to_string(), new_value);
-                            return None;
-                        }
+                if operator != &'=' {
+                    return None;
+                }
+
+                // Variable reassignment.
+                if let Some(node) = left {
+                    if let Node::Identifier(id) = node.borrow() {
+                        let new_value = self.eval(&right, env.clone());
+                        env.borrow_mut().update_variable(id.to_string(), new_value);
+                        return None;
                     }
+                }
 
-                    // If the left value is HtmlElement, update DOM.
-                    let left_value = match self.eval(&left, env.clone()) {
-                        Some(value) => value,
-                        None => return None,
-                    };
-                    let right_value = match self.eval(&right, env.clone()) {
-                        Some(value) => value,
-                        None => return None,
-                    };
+                // If the left value is HtmlElement, update DOM.
+                let left_value = match self.eval(&left, env.clone()) {
+                    Some(value) => value,
+                    None => return None,
+                };
+                let right_value = match self.eval(&right, env.clone()) {
+                    Some(value) => value,
+                    None => return None,
+                };
 
-                    match left_value {
-                        RuntimeValue::HtmlElement { object, property } => {
-                            if let Some(p) = property {
-                                // this is the implementation of
-                                // `document.getElementById("target").textContent = "foobar";`
-                                if p == "textContent" {
-                                    // Not necessary to set dom_modified=true because only text
-                                    // content is changed.
-                                    object.borrow_mut().set_first_child(Some(Rc::new(
-                                        RefCell::new(DomNode::new(DomNodeKind::Text(
-                                            right_value.to_string(),
-                                        ))),
-                                    )));
-                                }
-                                // this is the implementation of
-                                // `document.getElementById("target").innerHTML = "foobar";`
-                                // Currently, an assignment value should be a text like "foobar".
-                                if p == "innerHTML" {
-                                    self.dom_modified = true;
-                                    object.borrow_mut().set_first_child(Some(Rc::new(
-                                        RefCell::new(DomNode::new(DomNodeKind::Text(
-                                            right_value.to_string(),
-                                        ))),
-                                    )));
-                                }
+                match left_value {
+                    RuntimeValue::HtmlElement { object, property } => {
+                        if let Some(p) = property {
+                            // this is the implementation of
+                            // `document.getElementById("target").textContent = "foobar";`
+                            if p == "textContent" {
+                                // Not necessary to set dom_modified=true because only text
+                                // content is changed.
+                                object
+                                    .borrow_mut()
+                                    .set_first_child(Some(Rc::new(RefCell::new(DomNode::new(
+                                        DomNodeKind::Text(right_value.to_string()),
+                                    )))));
+                            }
+                            // this is the implementation of
+                            // `document.getElementById("target").innerHTML = "foobar";`
+                            // Currently, an assignment value should be a text like "foobar".
+                            if p == "innerHTML" {
+                                self.dom_modified = true;
+                                object
+                                    .borrow_mut()
+                                    .set_first_child(Some(Rc::new(RefCell::new(DomNode::new(
+                                        DomNodeKind::Text(right_value.to_string()),
+                                    )))));
                             }
                         }
-                        _ => {}
                     }
+                    _ => {}
                 }
                 None
             }
@@ -456,19 +450,13 @@ impl JsRuntime {
                 // assign arguments to params as local variables
                 assert!(arguments.len() == function.params.len());
                 for (i, item) in arguments.iter().enumerate() {
-                    let name = match self.eval(&function.params[i], new_env.clone()) {
-                        Some(value) => match value {
-                            RuntimeValue::StringLiteral(s) => s,
-                            _ => {
-                                panic!("unexpected runtime value {:?}", node)
-                            }
-                        },
-                        None => return None,
-                    };
-
-                    new_env
-                        .borrow_mut()
-                        .add_variable(name, self.eval(item, new_env.clone()));
+                    if let Some(RuntimeValue::StringLiteral(name)) =
+                        self.eval(&function.params[i], new_env.clone())
+                    {
+                        new_env
+                            .borrow_mut()
+                            .add_variable(name, self.eval(item, new_env.clone()));
+                    }
                 }
 
                 // call function with arguments
