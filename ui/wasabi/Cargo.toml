@@ -8,4 +8,4 @@ edition = "2021"
 tinybmp = "0.5.0"
 embedded-graphics = "0.8.1"
 saba_core = { path = "../../core" }
-noli = { git = "https://github.com/hikalium/wasabi.git" }
+noli = { git = "https://github.com/hikalium/wasabi.git", branch = "for_saba" }
