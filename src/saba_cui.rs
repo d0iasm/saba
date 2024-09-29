@@ -10,12 +10,12 @@ use net::http::HttpClient;
 use saba_core::browser::Browser;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
-use saba_core::url::HtmlUrl;
+use saba_core::url::Url;
 use ui::app::Tui;
 
 fn handle_url(url: String) -> Result<HttpResponse, Error> {
     // parse url
-    let parsed_url = match HtmlUrl::new(url.to_string()).parse() {
+    let parsed_url = match Url::new(url.to_string()).parse() {
         Ok(url) => url,
         Err(e) => {
             return Err(Error::UnexpectedInput(format!(
@@ -42,7 +42,7 @@ fn handle_url(url: String) -> Result<HttpResponse, Error> {
                     Ok(value) => value,
                     Err(_) => return Ok(res),
                 };
-                let redirect_parsed_url = HtmlUrl::new(location);
+                let redirect_parsed_url = Url::new(location);
 
                 let redirect_client = HttpClient::new();
                 match redirect_client.get(
