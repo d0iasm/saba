@@ -13,8 +13,8 @@ The book is published on Nov 9, 2024!
 It supports sending/receiving HTTP GET request/response, basic HTML tags, basic CSS syntax and basic JavaScript syntax.
 
 - [x] Handle HTTP GET request/response
-- [x] Basic HTML tags (<html>, <head> ,<body>, <h1>, <h2>, <p>, etc.)
-- [x] Basic CSS syntax ("background-color", "color", "display", etc.)
+- [x] Basic HTML tags (html, head, body, h1, h2, p, etc.)
+- [x] Basic CSS syntax (background-color, color, display, etc.)
 - [x] Basic JavaScript syntax (addition, subtraction, variable, function)
 
 Upcoming features:
