@@ -5,6 +5,8 @@
 
 Sample Browser Application (SaBA) on a single thread/process. The browser runs on Mac/Linux as a CUI application or on [Wasabi OS](https://github.com/hikalium/wasabi) as a GUI application.
 
+<img src="./test.png" alt="test page on SaBA on Wasabi OS" width="600"/>
+
 The book is published on Nov 9, 2024!
 
 [『［作って学ぶ］ブラウザのしくみ──HTTP、HTML、CSS、JavaScriptの裏側』](https://amzn.asia/d/j1XxxsN) is written in Japanese. The book describes how to make your own browser from scratch in Rust. The code used in the book is based on this repository.
