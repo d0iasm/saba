@@ -1,4 +1,7 @@
-# SaBA (Sample Brorwser Application)
+# SaBA: Sample Brorwser Application
+
+[![Actions Status](https://github.com/d0iasm/saba/actions/workflows/rust.yml/badge.svg)](https://github.com/d0iasm/saba/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/d0iasm/rvemu/master/LICENSE)
 
 Sample Browser Application (SaBA) on a single thread/process. The browser runs on Mac/Linux as a CUI application or on [Wasabi OS](https://github.com/hikalium/wasabi) as a GUI application.
 
