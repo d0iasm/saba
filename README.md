@@ -1,4 +1,4 @@
-# SaBA: Sample Brorwser Application
+# SaBA: Sample Browser Application
 
 [![Actions Status](https://github.com/d0iasm/saba/actions/workflows/rust.yml/badge.svg)](https://github.com/d0iasm/saba/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/d0iasm/rvemu/master/LICENSE)
