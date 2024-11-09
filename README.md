@@ -34,7 +34,7 @@ Upcoming features:
 
 ### GUI Application on Wasabi OS
 
-You may not be able to run via `cargo run` because the target archtecture
+You may not be able to run via `cargo run` because the target architecture
 is different from your environment.
 So use a helper script to run the code,
 
