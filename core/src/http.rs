@@ -39,7 +39,7 @@ pub struct HttpResponse {
 ///                [ message-body ]
 impl HttpResponse {
     pub fn new(raw_response: String) -> Result<Self, Error> {
-        let preprocessed_response = raw_response.trim_start().replace("\n\r", "\n");
+        let preprocessed_response = raw_response.trim_start().replace("\r\n", "\n");
 
         let (status_line, remaining) = match preprocessed_response.split_once('\n') {
             Some((s, r)) => (s, r),
@@ -153,6 +153,19 @@ mod tests {
     #[test]
     fn test_body() {
         let raw = "HTTP/1.1 200 OK\nDate: xx xx xx\n\nbody message".to_string();
+        let res = HttpResponse::new(raw).expect("failed to parse http response");
+        assert_eq!(res.version(), "HTTP/1.1");
+        assert_eq!(res.status_code(), 200);
+        assert_eq!(res.reason(), "OK");
+
+        assert_eq!(res.header_value("Date"), Ok("xx xx xx".to_string()));
+
+        assert_eq!(res.body(), "body message".to_string());
+    }
+
+    #[test]
+    fn test_crlf() {
+        let raw = "HTTP/1.1 200 OK\r\nDate: xx xx xx\r\n\r\nbody message".to_string();
         let res = HttpResponse::new(raw).expect("failed to parse http response");
         assert_eq!(res.version(), "HTTP/1.1");
         assert_eq!(res.status_code(), 200);
