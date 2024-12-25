@@ -448,7 +448,7 @@ impl Iterator for HtmlTokenizer {
                     }
 
                     self.reconsume = true;
-                    self.state = State::BeforeAttributeValue;
+                    self.state = State::BeforeAttributeName;
                 }
                 // https://html.spec.whatwg.org/multipage/parsing.html#self-closing-start-tag-state
                 State::SelfClosingStartTag => {
