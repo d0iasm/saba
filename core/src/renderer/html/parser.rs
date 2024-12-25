@@ -80,9 +80,9 @@ impl HtmlParser {
         let node = Rc::new(RefCell::new(self.create_element(tag, attributes)));
 
         if current.borrow().first_child().is_some() {
-            let mut last_sibiling = current.borrow().first_child();
+            let mut last_sibling = current.borrow().first_child();
             loop {
-                last_sibiling = match last_sibiling {
+                last_sibling = match last_sibling {
                     Some(ref node) => {
                         if node.borrow().next_sibling().is_some() {
                             node.borrow().next_sibling()
@@ -90,19 +90,17 @@ impl HtmlParser {
                             break;
                         }
                     }
-                    None => unimplemented!("last_sibiling should be Some"),
+                    None => unimplemented!("last_sibling should be Some"),
                 };
             }
 
-            last_sibiling
+            last_sibling
+                .as_ref()
                 .unwrap()
                 .borrow_mut()
                 .set_next_sibling(Some(node.clone()));
             node.borrow_mut().set_previous_sibling(Rc::downgrade(
-                &current
-                    .borrow()
-                    .first_child()
-                    .expect("failed to get a first child"),
+                &last_sibling.expect("last_sibling should be Some"),
             ))
         } else {
             current.borrow_mut().set_first_child(Some(node.clone()));
