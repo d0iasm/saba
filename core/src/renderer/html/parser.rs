@@ -141,12 +141,6 @@ impl HtmlParser {
                 .unwrap()
                 .borrow_mut()
                 .set_next_sibling(Some(node.clone()));
-            node.borrow_mut().set_previous_sibling(Rc::downgrade(
-                &current
-                    .borrow()
-                    .first_child()
-                    .expect("failed to get a first child"),
-            ));
         } else {
             current.borrow_mut().set_first_child(Some(node.clone()));
         }
