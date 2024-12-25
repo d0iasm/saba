@@ -135,6 +135,7 @@ impl HtmlParser {
         let node = Rc::new(RefCell::new(self.create_char(c)));
 
         if current.borrow().first_child().is_some() {
+            // TODO: Probably impossible to reach here. `first_child` of the current node is always None.
             current
                 .borrow()
                 .first_child()
