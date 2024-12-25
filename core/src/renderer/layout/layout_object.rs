@@ -459,27 +459,27 @@ impl LayoutObject {
     pub fn compute_position(
         &mut self,
         parent_point: LayoutPoint,
-        previous_sibiling_kind: LayoutObjectKind,
-        previous_sibiling_point: Option<LayoutPoint>,
-        previous_sibiling_size: Option<LayoutSize>,
+        previous_sibling_kind: LayoutObjectKind,
+        previous_sibling_point: Option<LayoutPoint>,
+        previous_sibling_size: Option<LayoutSize>,
     ) {
         let mut point = LayoutPoint::new(0, 0);
 
-        match (self.kind(), previous_sibiling_kind) {
-            // If a current node or a sibiling node is a block element, grow along the Y-axis direction.
+        match (self.kind(), previous_sibling_kind) {
+            // If a current node or a sibling node is a block element, grow along the Y-axis direction.
             (LayoutObjectKind::Block, _) | (_, LayoutObjectKind::Block) => {
-                if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
-                    // TODO: consider padding of the previous sibiling.
+                if let (Some(size), Some(pos)) = (previous_sibling_size, previous_sibling_point) {
+                    // TODO: consider padding of the previous sibling.
                     point.set_y(pos.y() + size.height() + self.style.margin_top() as i64);
                 } else {
                     point.set_y(parent_point.y());
                 }
                 point.set_x(parent_point.x());
             }
-            // If both a current node and a sibiling node are inline elements, grow along the X-axis direction.
+            // If both a current node and a sibling node are inline elements, grow along the X-axis direction.
             (LayoutObjectKind::Inline, LayoutObjectKind::Inline) => {
-                if let (Some(size), Some(pos)) = (previous_sibiling_size, previous_sibiling_point) {
-                    // TODO: consider padding of the previous sibiling.
+                if let (Some(size), Some(pos)) = (previous_sibling_size, previous_sibling_point) {
+                    // TODO: consider padding of the previous sibling.
                     point.set_x(pos.x() + size.width() + self.style.margin_left() as i64);
                     point.set_y(pos.y());
                 } else {

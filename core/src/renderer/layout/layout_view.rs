@@ -52,7 +52,7 @@ fn build_layout_tree(
             build_layout_tree(browser.clone(), &original_next_sibling, &None, cssom);
 
         // if the original first child node is "display:none" and the original first child
-        // node has a next sibiling node, treat the next sibling node as a new first child
+        // node has a next sibling node, treat the next sibling node as a new first child
         // node.
         if first_child.is_none() && original_first_child.is_some() {
             let mut original_dom_node = original_first_child
@@ -160,16 +160,16 @@ impl LayoutView {
     fn calculate_node_position(
         node: &Option<Rc<RefCell<LayoutObject>>>,
         parent_point: LayoutPoint,
-        previous_sibiling_kind: LayoutObjectKind,
-        previous_sibiling_point: Option<LayoutPoint>,
-        previous_sibiling_size: Option<LayoutSize>,
+        previous_sibling_kind: LayoutObjectKind,
+        previous_sibling_point: Option<LayoutPoint>,
+        previous_sibling_size: Option<LayoutSize>,
     ) {
         if let Some(n) = node {
             n.borrow_mut().compute_position(
                 parent_point,
-                previous_sibiling_kind,
-                previous_sibiling_point,
-                previous_sibiling_size,
+                previous_sibling_kind,
+                previous_sibling_point,
+                previous_sibling_size,
             );
 
             let first_child = n.borrow().first_child();
