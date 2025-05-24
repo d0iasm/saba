@@ -43,10 +43,7 @@ impl Url {
     }
 
     fn is_http(&self) -> bool {
-        if self.url.contains("http://") {
-            return true;
-        }
-        false
+        self.url.contains("http://")
     }
 
     fn extract_host(&self) -> String {
