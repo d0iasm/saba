@@ -302,13 +302,13 @@ impl Iterator for HtmlTokenizer {
                 }
                 // https://html.spec.whatwg.org/multipage/parsing.html#before-attribute-name-state
                 State::BeforeAttributeName => {
+                    self.reconsume = true;
+
                     if c == '/' || c == '>' || self.is_eof() {
-                        self.reconsume = true;
                         self.state = State::AfterAttributeName;
                         continue;
                     }
 
-                    self.reconsume = true;
                     self.state = State::AttributeName;
                     self.start_new_attribute();
                 }
