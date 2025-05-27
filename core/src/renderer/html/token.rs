@@ -491,14 +491,14 @@ impl Iterator for HtmlTokenizer {
                 }
                 // https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-open-state
                 State::ScriptDataEndTagOpen => {
+                    self.reconsume = true;
+
                     if c.is_ascii_alphabetic() {
-                        self.reconsume = true;
                         self.state = State::ScriptDataEndTagName;
                         self.create_tag(false);
                         continue;
                     }
 
-                    self.reconsume = true;
                     self.state = State::ScriptData;
                     // TODO: emit '<' and '/'
                     // "Emit a U+003C LESS-THAN SIGN character token and a U+002F SOLIDUS character
