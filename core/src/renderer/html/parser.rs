@@ -63,7 +63,7 @@ impl HtmlParser {
     }
 
     /// Creates an element node.
-    fn create_element(&self, tag: &str, attributes: Vec<Attribute>) -> Node {
+    fn create_element(tag: &str, attributes: Vec<Attribute>) -> Node {
         Node::new(NodeKind::Element(Element::new(tag, attributes)))
     }
 
@@ -77,7 +77,7 @@ impl HtmlParser {
             None => window.document(),
         };
 
-        let node = Rc::new(RefCell::new(self.create_element(tag, attributes)));
+        let node = Rc::new(RefCell::new(Self::create_element(tag, attributes)));
 
         if current.borrow().first_child().is_some() {
             let mut last_sibling = current.borrow().first_child();
