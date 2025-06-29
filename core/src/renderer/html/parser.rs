@@ -728,7 +728,7 @@ mod tests {
     fn test_empty() {
         let browser = Browser::new();
         let html = "".to_string();
-        let t = HtmlTokenizer::new(html);
+        let t = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
         let expected = Rc::new(RefCell::new(Node::new(NodeKind::Document)));
 
@@ -739,7 +739,7 @@ mod tests {
     fn test_body() {
         let browser = Browser::new();
         let html = "<html><head></head><body></body></html>".to_string();
-        let t = HtmlTokenizer::new(html);
+        let t = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
         let document = window.borrow().document();
         assert_eq!(
@@ -785,7 +785,7 @@ mod tests {
     fn test_text() {
         let browser = Browser::new();
         let html = "<html><head></head><body>text</body></html>".to_string();
-        let t = HtmlTokenizer::new(html);
+        let t = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
         let document = window.borrow().document();
 
@@ -832,7 +832,7 @@ mod tests {
     fn test_multiple_nodes() {
         let browser = Browser::new();
         let html = "<html><head></head><body><p><a foo=bar>text</a></p></body></html>".to_string();
-        let t = HtmlTokenizer::new(html);
+        let t = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
         let document = window.borrow().document();
 
@@ -899,7 +899,7 @@ mod tests {
     fn test_no_body_tag() {
         let browser = Browser::new();
         let html = "<p>a</p>".to_string();
-        let t = HtmlTokenizer::new(html);
+        let t = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
         let document = window.borrow().document();
         assert_eq!(

@@ -1,10 +1,13 @@
 //! This is a part of "13.2.5 Tokenization" in the HTML spec.
 //! https://html.spec.whatwg.org/multipage/parsing.html#tokenization
 
+use crate::browser::Browser;
 use crate::renderer::html::attribute::Attribute;
+use alloc::rc::Weak;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::assert;
+use core::cell::RefCell;
 use core::iter::Iterator;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,8 +67,10 @@ pub enum HtmlToken {
     Eof,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct HtmlTokenizer {
+    browser: Weak<RefCell<Browser>>,
     state: State,
     pos: usize,
     /// True if the next token should be reconsumed.
@@ -76,8 +81,9 @@ pub struct HtmlTokenizer {
 }
 
 impl HtmlTokenizer {
-    pub fn new(html: String) -> Self {
+    pub fn new(browser: Weak<RefCell<Browser>>, html: String) -> Self {
         Self {
+            browser: browser,
             state: State::Data,
             pos: 0,
             reconsume: false,
@@ -554,19 +560,22 @@ impl Iterator for HtmlTokenizer {
 mod tests {
     use super::*;
     use crate::alloc::string::ToString;
+    use alloc::rc::Rc;
     use alloc::vec;
 
     #[test]
     fn test_empty() {
+        let browser = Browser::new();
         let html = "".to_string();
-        let mut tokenizer = HtmlTokenizer::new(html);
+        let mut tokenizer = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         assert!(tokenizer.next().is_none());
     }
 
     #[test]
     fn test_start_and_end_tag() {
+        let browser = Browser::new();
         let html = "<body></body>".to_string();
-        let mut tokenizer = HtmlTokenizer::new(html);
+        let mut tokenizer = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let expected = [
             HtmlToken::StartTag {
                 tag: "body".to_string(),
@@ -584,8 +593,9 @@ mod tests {
 
     #[test]
     fn test_attributes() {
+        let browser = Browser::new();
         let html = "<p class=\"A\" id='B' foo=bar></p>".to_string();
-        let mut tokenizer = HtmlTokenizer::new(html);
+        let mut tokenizer = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let mut attr1 = Attribute::new();
         attr1.add_char('c', true);
         attr1.add_char('l', true);
@@ -624,8 +634,9 @@ mod tests {
 
     #[test]
     fn test_self_closing_tag() {
+        let browser = Browser::new();
         let html = "<img />".to_string();
-        let mut tokenizer = HtmlTokenizer::new(html);
+        let mut tokenizer = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let expected = [HtmlToken::StartTag {
             tag: "img".to_string(),
             self_closing: true,
@@ -638,8 +649,9 @@ mod tests {
 
     #[test]
     fn test_script_tag() {
+        let browser = Browser::new();
         let html = "<script>js code;</script>".to_string();
-        let mut tokenizer = HtmlTokenizer::new(html);
+        let mut tokenizer = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let expected = [
             HtmlToken::StartTag {
                 tag: "script".to_string(),

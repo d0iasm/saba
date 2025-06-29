@@ -132,7 +132,7 @@ impl Page {
     }
 
     fn create_frame(&mut self, html: String) {
-        let html_tokenizer = HtmlTokenizer::new(html);
+        let html_tokenizer = HtmlTokenizer::new(self.browser.clone(), html);
 
         let frame = HtmlParser::new(self.browser.clone(), html_tokenizer).construct_tree();
         let dom = frame.borrow().document();

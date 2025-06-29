@@ -286,7 +286,7 @@ mod tests {
 
     fn create_layout_view(html: String) -> LayoutView {
         let browser = Browser::new();
-        let t = HtmlTokenizer::new(html);
+        let t = HtmlTokenizer::new(Rc::downgrade(&browser), html);
         let window = HtmlParser::new(Rc::downgrade(&browser), t).construct_tree();
         let dom = window.borrow().document();
         let style = get_style_content(dom.clone());
