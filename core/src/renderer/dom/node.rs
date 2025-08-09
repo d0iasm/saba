@@ -221,13 +221,11 @@ pub enum NodeKind {
 
 impl PartialEq for NodeKind {
     fn eq(&self, other: &Self) -> bool {
-        match &self {
-            NodeKind::Document => matches!(other, NodeKind::Document),
-            NodeKind::Element(e1) => match &other {
-                NodeKind::Element(e2) => e1.kind == e2.kind,
-                _ => false,
-            },
-            NodeKind::Text(_) => matches!(other, NodeKind::Text(_)),
+        match (self, other) {
+            (Self::Document, Self::Document) => true,
+            (Self::Element(e1), Self::Element(e2)) => e1.kind == e2.kind,
+            (Self::Text(t1), Self::Text(t2)) => t1 == t2,
+            _ => false,
         }
     }
 }
@@ -380,5 +378,59 @@ impl FromStr for ElementKind {
             "img" => Ok(ElementKind::IMG),
             _ => Err(format!("unimplemented element name {:?}", s)),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::alloc::string::ToString;
+
+    #[test]
+    fn test_document_nodes() {
+        let n1 = Node::new(NodeKind::Document);
+        let n2 = Node::new(NodeKind::Document);
+
+        assert_eq!(n1, n2);
+    }
+
+    #[test]
+    fn test_element_nodes() {
+        let n1 = Node::new(NodeKind::Element(Element::new("html", Vec::new())));
+        let n2 = Node::new(NodeKind::Element(Element::new("html", Vec::new())));
+
+        assert_eq!(n1, n2);
+    }
+
+    #[test]
+    fn test_text_nodes() {
+        let n1 = Node::new(NodeKind::Text("text".to_string()));
+        let n2 = Node::new(NodeKind::Text("text".to_string()));
+
+        assert_eq!(n1, n2);
+    }
+
+    #[test]
+    fn test_different_nodes() {
+        let n1 = Node::new(NodeKind::Document);
+        let n2 = Node::new(NodeKind::Element(Element::new("html", Vec::new())));
+
+        assert_ne!(n1, n2);
+    }
+
+    #[test]
+    fn test_different_elements() {
+        let n1 = Node::new(NodeKind::Element(Element::new("html", Vec::new())));
+        let n2 = Node::new(NodeKind::Element(Element::new("body", Vec::new())));
+
+        assert_ne!(n1, n2);
+    }
+
+    #[test]
+    fn test_different_texts() {
+        let n1 = Node::new(NodeKind::Text("text".to_string()));
+        let n2 = Node::new(NodeKind::Text("different text".to_string()));
+
+        assert_ne!(n1, n2);
     }
 }
