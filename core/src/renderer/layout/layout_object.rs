@@ -183,7 +183,7 @@ impl LayoutObject {
     }
 
     pub fn node_kind(&self) -> NodeKind {
-        self.node.borrow().kind().clone()
+        self.node.borrow().kind()
     }
 
     pub fn set_first_child(&mut self, first_child: Option<Rc<RefCell<LayoutObject>>>) {
