@@ -82,15 +82,20 @@ pub struct HtmlTokenizer {
 
 impl HtmlTokenizer {
     pub fn new(browser: Weak<RefCell<Browser>>, html: String) -> Self {
+        let preprocessed_html = Self::preprocess(&html);
         Self {
             browser: browser,
             state: State::Data,
             pos: 0,
             reconsume: false,
             latest_token: None,
-            input: html.chars().collect(),
+            input: preprocessed_html.chars().collect(),
             buf: String::new(),
         }
+    }
+
+    fn preprocess(raw: &String) -> String {
+        return raw.replace("\r\n", "\n");
     }
 
     /// Consumes a next input character.
