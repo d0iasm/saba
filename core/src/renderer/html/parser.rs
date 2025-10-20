@@ -189,7 +189,7 @@ impl HtmlParser {
 
     /// Returns true if the stack of open elements has NodeKind::Element::<element_kind> node.
     fn contain_in_stack(&mut self, element_kind: ElementKind) -> bool {
-        for i in 0..self.stack_of_open_elements.len() {
+        for i in (0..self.stack_of_open_elements.len()).rev() {
             if self.stack_of_open_elements[i].borrow().element_kind() == Some(element_kind) {
                 return true;
             }
@@ -423,7 +423,9 @@ impl HtmlParser {
                                 "div" | "p" | "ul" => {
                                     // If the stack of open elements has a p element in button
                                     // scope, then close a p element.
-                                    //
+                                    if self.contain_in_stack(ElementKind::P) {
+                                        self.pop_until(ElementKind::P);
+                                    }
                                     // Insert an HTML element for the token.
                                     self.insert_element(tag, attributes.to_vec());
                                     token = self.t.next();
@@ -434,7 +436,9 @@ impl HtmlParser {
                                 "h1" | "h2" => {
                                     // If the stack of open elements has a p element in button
                                     // scope, then close a p element.
-                                    //
+                                    if self.contain_in_stack(ElementKind::P) {
+                                        self.pop_until(ElementKind::P);
+                                    }
                                     // If the current node is an HTML element whose tag name is one
                                     // of "h1", "h2", "h3", "h4", "h5", or "h6", then this is a
                                     // parse error; pop the current node off the stack of open
@@ -449,7 +453,9 @@ impl HtmlParser {
                                 "pre" => {
                                     // If the stack of open elements has a p element in button
                                     // scope, then close a p element.
-                                    //
+                                    if self.contain_in_stack(ElementKind::P) {
+                                        self.pop_until(ElementKind::P);
+                                    }
                                     // Insert an HTML element for the token.
                                     //
                                     // If the next token is a U+000A LINE FEED (LF) character
@@ -487,7 +493,9 @@ impl HtmlParser {
                                     //
                                     // 6. Done: If the stack of open elements has a p element in
                                     // button scope, then close a p element.
-                                    //
+                                    if self.contain_in_stack(ElementKind::P) {
+                                        self.pop_until(ElementKind::P);
+                                    }
                                     // 7. Finally, insert an HTML element for the token.
                                     self.insert_element(tag, attributes.to_vec());
                                     token = self.t.next();
